@@ -16,7 +16,7 @@ class DashboardController extends Controller
         // let's fetch this user's customers
         $customers = $user->customers;
 
-        $sales = $user->transactions()->count();
+        $sales = $user->transactions()->where('delivery_status', '!=', 'pending')->count();
         // $payment = $user->transactions()->where('payment_status', 'paid')->select(\DB::raw('SUM(amount_due) as amount_due'))->first();
         $all_debt = $user->transactions()->where('payment_status', 'unpaid')->select(\DB::raw('SUM(amount_due) as amount_due'))->first();
 
@@ -31,7 +31,9 @@ class DashboardController extends Controller
             $debt = ($all_debt->amount_due) ? $all_debt->amount_due : 0;
         }
 
+        $today_orders = $user->transactions()->where('delivery_status', 'pending')->where('created_at', '>=', $today)->get();
+        $today_visits = $user->visits()->where('created_at', '>=', $today)->get();
 
-        return response()->json(compact('customers', 'sales', 'debt', 'overdue', 'currency'), 200);
+        return response()->json(compact('customers', 'sales', 'debt', 'overdue', 'currency', 'today_orders', 'today_visits'), 200);
     }
 }

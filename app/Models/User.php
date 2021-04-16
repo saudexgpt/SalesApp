@@ -55,4 +55,8 @@ class User extends Authenticatable
     {
         return $this->hasMany(Transaction::class, 'field_staff', 'id');
     }
+    public function visits()
+    {
+        return $this->hasMany(Visit::class, 'visitor', 'id');
+    }
 }
