@@ -18,6 +18,7 @@ class CreateTransactionDetailsTable extends Migration
             $table->integer('transaction_id');
             $table->integer('product');
             $table->integer('quantity');
+            $table->string('packaging');
             $table->double('rate', 10, 2);
             $table->double('amount', 10, 2);
             $table->integer('quantity_supplied')->default(0);

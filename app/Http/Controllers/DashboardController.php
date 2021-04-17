@@ -31,9 +31,9 @@ class DashboardController extends Controller
             $debt = ($all_debt->amount_due) ? $all_debt->amount_due : 0;
         }
 
-        $today_orders = $user->transactions()->where('delivery_status', 'pending')->where('created_at', '>=', $today)->get();
-        $today_visits = $user->visits()->where('created_at', '>=', $today)->get();
+        $today_orders = $user->transactions()->with('customer', 'details')->where('delivery_status', 'pending')->where('created_at', '>=', $today)->get();
+        $today_visits = $user->visits()->with('customer')->where('created_at', '>=', $today)->get();
 
-        return response()->json(compact('customers', 'sales', 'debt', 'overdue', 'currency', 'today_orders', 'today_visits'), 200);
+        return response()->json(compact('user', 'customers', 'sales', 'debt', 'overdue', 'currency', 'today_orders', 'today_visits'), 200);
     }
 }
