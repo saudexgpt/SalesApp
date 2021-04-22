@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Region;
+use App\Models\Visit;
 use Illuminate\Http\Request;
 
-class RegionsController extends Controller
+class VisitsController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -14,8 +14,10 @@ class RegionsController extends Controller
      */
     public function index()
     {
-        $regions = Region::with('subRegions')->orderBy('name')->get();
-        return response()->json(compact('regions'), 200);
+        $user = $this->getUser();
+        // undelivered transactions are considered orders
+        $visits = $user->visits()->with('customer', 'visitedBy', 'details')->orderBy('id', 'DESC')->get();
+        return response()->json(compact('visits'), 200);
     }
 
     /**
@@ -42,10 +44,10 @@ class RegionsController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\Region  $region
+     * @param  \App\Models\Visit  $visit
      * @return \Illuminate\Http\Response
      */
-    public function show(Region $region)
+    public function show(Visit $visit)
     {
         //
     }
@@ -53,10 +55,10 @@ class RegionsController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\Region  $region
+     * @param  \App\Models\Visit  $visit
      * @return \Illuminate\Http\Response
      */
-    public function edit(Region $region)
+    public function edit(Visit $visit)
     {
         //
     }
@@ -65,10 +67,10 @@ class RegionsController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Region  $region
+     * @param  \App\Models\Visit  $visit
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Region $region)
+    public function update(Request $request, Visit $visit)
     {
         //
     }
@@ -76,10 +78,10 @@ class RegionsController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Region  $region
+     * @param  \App\Models\Visit  $visit
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Region $region)
+    public function destroy(Visit $visit)
     {
         //
     }

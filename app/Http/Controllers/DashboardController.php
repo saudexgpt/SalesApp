@@ -32,7 +32,7 @@ class DashboardController extends Controller
         }
 
         $today_orders = $user->transactions()->with('customer', 'details')->where('delivery_status', 'pending')->where('created_at', '>=', $today)->get();
-        $today_visits = $user->visits()->with('customer')->where('created_at', '>=', $today)->get();
+        $today_visits = $user->visits()->with('customer', 'visitedBy', 'details')->where('created_at', '>=', $today)->get();
 
         return response()->json(compact('user', 'customers', 'sales', 'debt', 'overdue', 'currency', 'today_orders', 'today_visits'), 200);
     }

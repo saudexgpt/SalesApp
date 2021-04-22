@@ -12,9 +12,10 @@ class CustomerTypesController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function fetch()
     {
-        //
+        $customer_types = CustomerType::select('id', 'name')->orderBy('name')->get();
+        return response()->json(compact('customer_types'), 200);
     }
 
     /**

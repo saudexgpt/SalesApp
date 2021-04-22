@@ -9,6 +9,23 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Customer extends Model
 {
     use HasFactory, SoftDeletes;
+    protected $fillable = [
+        'customer_type_id',
+        'tier_id',
+        'sub_region_id',
+        'region_id',
+        'business_name',
+        'email',
+        'phone1',
+        'phone2',
+        'address',
+        'street',
+        'area',
+        'longitude',
+        'latitude',
+        'registered_by',
+        'relating_officer',
+    ];
     public function customerType()
     {
         return $this->belongsTo(CustomerType::class);

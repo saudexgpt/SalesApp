@@ -14,7 +14,13 @@ class TiersController extends Controller
      */
     public function index()
     {
-        //
+        $tiers = Tier::orderBy('name')->get();
+        return response()->json(compact('tiers'), 200);
+    }
+    public function fetch()
+    {
+        $tiers = Tier::select('id', 'name')->orderBy('name')->get();
+        return response()->json(compact('tiers'), 200);
     }
 
     /**

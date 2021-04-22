@@ -15,8 +15,8 @@ class CreateCustomersTable extends Migration
     {
         Schema::create('customers', function (Blueprint $table) {
             $table->id();
-            $table->integer('customer_type_id');
-            $table->integer('tier_id');
+            $table->integer('customer_type_id')->nullable();
+            $table->integer('tier_id')->nullable();
             $table->integer('sub_region_id')->nullable();
             $table->integer('region_id')->nullable();
             $table->string('business_name')->unique();

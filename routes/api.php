@@ -4,7 +4,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CustomersController;
+use App\Http\Controllers\CustomerTypesController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\RegionsController;
+use App\Http\Controllers\TiersController;
+use App\Http\Controllers\TransactionsController;
+use App\Http\Controllers\VisitsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,6 +22,7 @@ use App\Http\Controllers\DashboardController;
 |
 */
 
+Route::post('get-location', [CustomersController::class, 'getLocation']);
 Route::group(['prefix' => 'auth'], function () {
     Route::post('login', [AuthController::class, 'login']);
     Route::post('register', [AuthController::class, 'register'])->middleware('permission:create-users');
@@ -30,12 +36,29 @@ Route::group(['prefix' => 'auth'], function () {
 
 Route::group(['middleware' => 'auth:sanctum'], function () {
     // Protected routes for authenticated users
-    Route::group(['prefix' => 'customers'], function () {
-
-        Route::get('fetch', [CustomersController::class, 'index'])->middleware('permission:read-customers');
-    });
 
     Route::group(['prefix' => 'dashboard'], function () {
         Route::get('sales-rep', [DashboardController::class, 'saleRepDashboard']);
+    });
+    Route::group(['prefix' => 'customers'], function () {
+
+        Route::get('fetch', [CustomersController::class, 'index'])->middleware('permission:read-customers');
+        Route::post('store', [CustomersController::class, 'store'])->middleware('permission:create-customers');
+    });
+    Route::group(['prefix' => 'orders'], function () {
+        Route::get('fetch', [TransactionsController::class, 'index']);
+    });
+    Route::group(['prefix' => 'visits'], function () {
+        Route::get('fetch', [VisitsController::class, 'index']);
+    });
+
+    Route::group(['prefix' => 'regions'], function () {
+        Route::get('index', [RegionsController::class, 'index']);
+    });
+    Route::group(['prefix' => 'tiers'], function () {
+        Route::get('fetch', [TiersController::class, 'fetch']);
+    });
+    Route::group(['prefix' => 'customer-types'], function () {
+        Route::get('fetch', [CustomerTypesController::class, 'fetch']);
     });
 });
