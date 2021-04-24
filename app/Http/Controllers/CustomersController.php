@@ -16,7 +16,9 @@ class CustomersController extends Controller
     {
         //
         $user = $this->getUser();
-        $customers = Customer::with(['customerType', 'tier', 'subRegion', 'region', 'registrar', 'assignedOfficer', 'verifier', 'payments', 'transactions'])->where('relating_officer', $user->id)->orderBy('id', 'DESC')->get();
+        $customers = Customer::with(['customerType', 'tier', 'subRegion', 'region', 'registrar', 'assignedOfficer', 'verifier', 'payments.confirmer', 'payments.transaction.staff' => function ($q) {
+            $q->orderBy('id', 'DESC');
+        }, 'transactions'])->where('relating_officer', $user->id)->orderBy('id', 'DESC')->get();
         return response()->json(compact('customers'), 200);
     }
     /**
@@ -59,11 +61,11 @@ class CustomersController extends Controller
     private function getLocation($address)
     {
 
-        $apiKey = 'AIzaSyCORGP_nMDblbbNkLXxGDBzQ0EOjO_CEpQ';
+        $apiKey = env('GOOGLE_API_KEY');
         $json = file_get_contents('https://maps.googleapis.com/maps/api/geocode/json?address=' . urlencode($address) . '&key=' . $apiKey);
 
         $json = json_decode($json);
-
+        print_r($json);
         // return $json;
         $lat = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lat'};
         $long = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lng'};
