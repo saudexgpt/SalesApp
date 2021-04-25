@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Controller;
 use App\Http\Controllers\CustomersController;
 use App\Http\Controllers\CustomerTypesController;
 use App\Http\Controllers\DashboardController;
@@ -36,7 +37,7 @@ Route::group(['prefix' => 'auth'], function () {
 
 Route::group(['middleware' => 'auth:sanctum'], function () {
     // Protected routes for authenticated users
-
+    Route::get('fetch-products', [Controller::class, 'fetchWarehouseProducts']);
     Route::group(['prefix' => 'dashboard'], function () {
         Route::get('sales-rep', [DashboardController::class, 'saleRepDashboard']);
     });

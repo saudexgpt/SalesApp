@@ -45,4 +45,24 @@ class Controller extends BaseController
     {
         return '₦';
     }
+
+    public function fetchWarehouseProducts()
+    {
+        // Create a stream
+        $opts = [
+            "http" => [
+                "method" => "GET",
+                "header" => "Content-type: application/x-www-form-urlencoded"
+            ]
+        ];
+
+        // DOCS: https://www.php.net/manual/en/function.stream-context-create.php
+        $context = stream_context_create($opts);
+
+        // Open the file using the HTTP headers set above
+        // DOCS: https://www.php.net/manual/en/function.file-get-contents.php
+        return file_get_contents('http://localhost:8080/api/get-warehouse-products', false, $context);
+        // $products = file_get_contents('http://localhost:8080/api/get-warehouse-products');
+        // print_r($products);
+    }
 }
