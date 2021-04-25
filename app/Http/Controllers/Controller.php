@@ -61,7 +61,7 @@ class Controller extends BaseController
 
         // Open the file using the HTTP headers set above
         // DOCS: https://www.php.net/manual/en/function.file-get-contents.php
-        return file_get_contents('http://localhost:8080/api/get-warehouse-products', false, $context);
+        return file_get_contents('https://gpl.3coretechnology.com/api/get-warehouse-products', false, $context);
         // $products = file_get_contents('http://localhost:8080/api/get-warehouse-products');
         // print_r($products);
     }
