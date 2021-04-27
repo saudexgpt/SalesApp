@@ -45,24 +45,17 @@ class Controller extends BaseController
     {
         return '₦';
     }
-
-    public function fetchWarehouseProducts()
+    public function getInvoiceNo($prefix, $next_no)
     {
-        // Create a stream
-        $opts = [
-            "http" => [
-                "method" => "GET",
-                "header" => "Content-type: application/x-www-form-urlencoded"
-            ]
-        ];
+        $no_of_digits = 5;
 
-        // DOCS: https://www.php.net/manual/en/function.stream-context-create.php
-        $context = stream_context_create($opts);
+        $digit_of_next_no = strlen($next_no);
+        $unused_digit = $no_of_digits - $digit_of_next_no;
+        $zeros = '';
+        for ($i = 1; $i <= $unused_digit; $i++) {
+            $zeros .= '0';
+        }
 
-        // Open the file using the HTTP headers set above
-        // DOCS: https://www.php.net/manual/en/function.file-get-contents.php
-        return file_get_contents('https://gpl.3coretechnology.com/api/get-warehouse-products', false, $context);
-        // $products = file_get_contents('http://localhost:8080/api/get-warehouse-products');
-        // print_r($products);
+        return $prefix . $zeros . $next_no;
     }
 }
