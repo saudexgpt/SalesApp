@@ -54,6 +54,10 @@ class Customer extends Model
     {
         return $this->belongsTo(User::class, 'verified_by', 'id');
     }
+    public function customerContacts()
+    {
+        return $this->hasMany(CustomerContact::class);
+    }
     public function payments()
     {
         return $this->hasMany(Payment::class);

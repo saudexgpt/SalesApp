@@ -19,7 +19,7 @@ class TransactionsController extends Controller
     {
         $user = $this->getUser();
         // undelivered transactions are considered orders
-        $orders = $user->transactions()->with('customer', 'payments')->where('delivery_status', 'pending')->orderBy('id', 'DESC')->get();
+        $orders = $user->transactions()->with('customer', 'payments', 'details')->where('delivery_status', 'pending')->orderBy('id', 'DESC')->get();
         return response()->json(compact('orders'), 200);
     }
 

@@ -12,13 +12,22 @@ class CustomersController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         //
         $user = $this->getUser();
+        $condition = ['relating_officer' => $user->id];
+        if (isset($request->customer_type_id)) {
+
+            $customer_type_id = $request->customer_type_id;
+            if ($customer_type_id != 'all') {
+                $condition = ['relating_officer' => $user->id, 'customer_type_id' => $customer_type_id];
+            }
+        }
+        $customer_type_id = $request->customer_type_id;
         $customers = Customer::with(['customerType', 'tier', 'subRegion', 'region', 'registrar', 'assignedOfficer', 'verifier', 'payments.confirmer', 'payments.transaction.staff' => function ($q) {
             $q->orderBy('id', 'DESC');
-        }, 'transactions'])->where('relating_officer', $user->id)->orderBy('id', 'DESC')->get();
+        }, 'transactions'])->where($condition)->orderBy('id', 'DESC')->paginate(20);
         return response()->json(compact('customers'), 200);
     }
     /**

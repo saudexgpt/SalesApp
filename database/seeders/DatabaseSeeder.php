@@ -15,6 +15,6 @@ class DatabaseSeeder extends Seeder
     {
         // \App\Models\User::factory(10)->create();
         // $this->call(LaratrustSeeder::class);
-        \App\Models\Customer::factory(5)->create();
+        \App\Models\Customer::factory(100)->create();
     }
 }

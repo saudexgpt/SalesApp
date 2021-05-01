@@ -36,6 +36,8 @@ class CustomerFactory extends Factory
             'area' => $this->faker->randomElement(['Ajah', 'Okota', 'Festac', 'Ilupeju']),
             'longitude' => $this->faker->randomFloat(10, 20, 5),
             'latitude' => $this->faker->randomFloat(10, 10, 5),
+            'registered_by' => 1,
+            'relating_officer' => 1
         ];
     }
 }
