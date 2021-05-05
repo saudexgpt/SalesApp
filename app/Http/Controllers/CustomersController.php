@@ -44,9 +44,16 @@ class CustomersController extends Controller
         foreach ($unsaved_customers as $unsaved_customer) {
             $user = $this->getUser();
             $customer = Customer::where('business_name', $unsaved_customer->business_name)->first();
-
+            $lat = $unsaved_customer->latitude;
+            $long = $unsaved_customer->longitude;
+            $formatted_address = $unsaved_customer->address;
+            $street = $unsaved_customer->area;
+            $area = $unsaved_customer->area;
             // we fetch the geo information of the given address
-            list($lat, $long, $formatted_address, $street, $area) = $this->getLocation($unsaved_customer->address);
+            if ($lat == '' || $long == '' ||  $area == '') {
+                list($lat, $long, $formatted_address, $street, $area) = $this->getLocationFromAddress($formatted_address);
+            }
+
             if (!$customer) {
                 $contacts = json_decode(json_encode($unsaved_customer->customer_contacts));
                 $customer = new Customer();
@@ -88,7 +95,47 @@ class CustomersController extends Controller
         return response()->json(['customers' => $customer_list, 'message' => 'success'], 200);
     }
 
-    private function getLocation($address)
+    public function getLatLongLocation(Request $request)
+    {
+        $lat = $request->latitude;
+        $long = $request->longitude;
+        return $this->getLocationFromLatLong($lat, $long);
+    }
+    private function getLocationFromLatLong($lat, $long)
+    {
+
+        // echo urlencode($address);
+        $apiKey = env('GOOGLE_API_KEY');
+        $json = file_get_contents('https://maps.googleapis.com/maps/api/geocode/json?latlng=' . $lat . ',' . $long . '&key=' . $apiKey);
+
+        // $json = json_decode($json);
+        // print_r($json);
+        return $json;
+        // $lat = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lat'};
+        // $long = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lng'};
+        // $formatted_address = $json->{'results'}[0]->{'formatted_address'};
+        // $street = '';
+        // $area = '';
+        // $address_components = $json->{'results'}[0]->{'address_components'};
+        // foreach ($address_components as $address_component) {
+        //     $types = $address_component->types;
+        //     foreach ($types as $key => $value) {
+        //         if ($value === 'route') {
+        //             $street = $address_component->long_name;
+        //         }
+        //         if ($value === 'administrative_area_level_2') {
+        //             $area = $address_component->long_name;
+        //         } else if ($value === 'locality') {
+        //             $area = $address_component->long_name;
+        //         }
+        //     }
+        // }
+        // // $formatted_address = $json->{'results'}[0]->{'formatted_address'};
+        // // $street = $json->{'results'}[0]->{'address_components'}[1]->{'long_name'};
+        // // $area = $json->{'results'}[0]->{'address_components'}[4]->{'long_name'};
+        // return array($lat, $long, $formatted_address, $street, $area);
+    }
+    private function getLocationFromAddress($address)
     {
         $address = str_replace(',', '', $address);
         // echo urlencode($address);

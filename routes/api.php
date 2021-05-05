@@ -23,7 +23,7 @@ use App\Http\Controllers\VisitsController;
 |
 */
 
-Route::post('get-location', [CustomersController::class, 'getLocation']);
+
 
 Route::group(['prefix' => 'auth'], function () {
     Route::post('login', [AuthController::class, 'login']);
@@ -38,7 +38,7 @@ Route::group(['prefix' => 'auth'], function () {
 
 Route::group(['middleware' => 'auth:sanctum'], function () {
     // Protected routes for authenticated users
-
+    Route::get('get-lat-long-location', [CustomersController::class, 'getLatLongLocation']);
     Route::group(['prefix' => 'customers'], function () {
 
         Route::get('fetch', [CustomersController::class, 'index'])->middleware('permission:read-customers');
