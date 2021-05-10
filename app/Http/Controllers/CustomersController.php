@@ -44,8 +44,10 @@ class CustomersController extends Controller
         foreach ($unsaved_customers as $unsaved_customer) {
             $user = $this->getUser();
             $customer = Customer::where('business_name', $unsaved_customer->business_name)->first();
-            $lat = $unsaved_customer->latitude;
-            $long = $unsaved_customer->longitude;
+            $lat = $unsaved_customer->customer_latitude;
+            $long = $unsaved_customer->customer_longitude;
+            $reg_lat = $unsaved_customer->registrar_lat;
+            $reg_lng = $unsaved_customer->registrar_lng;
             $formatted_address = $unsaved_customer->address;
             $street = $unsaved_customer->area;
             $area = $unsaved_customer->area;
@@ -71,6 +73,8 @@ class CustomersController extends Controller
                 $customer->longitude = $long;
                 $customer->latitude = $lat;
                 $customer->registered_by = $user->id;
+                $customer->registrar_lat = $reg_lat;
+                $customer->registrar_lng = $reg_lng;
                 $customer->relating_officer = $user->id;
                 if ($customer->save()) {
                     if (count($contacts) > 0) {

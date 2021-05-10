@@ -31,6 +31,8 @@ class CreateCustomersTable extends Migration
             $table->integer('credit_limit')->nullable();
             $table->integer('yearly_target')->nullable();
             $table->integer('registered_by')->nullable();
+            $table->double('registrar_lng', 10, 2)->nullable();
+            $table->double('registrar_lat', 10, 2)->nullable();
             $table->integer('relating_officer')->nullable();
             $table->integer('verified_by')->nullable();
             $table->string('photo')->default('assets/images/profile-image.png');
