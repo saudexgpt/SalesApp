@@ -8,8 +8,10 @@ use App\Http\Controllers\CustomersController;
 use App\Http\Controllers\CustomerTypesController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RegionsController;
+use App\Http\Controllers\SchedulesController;
 use App\Http\Controllers\TiersController;
 use App\Http\Controllers\TransactionsController;
+use App\Http\Controllers\UsersController;
 use App\Http\Controllers\VisitsController;
 
 /*
@@ -39,10 +41,12 @@ Route::group(['prefix' => 'auth'], function () {
 Route::group(['middleware' => 'auth:sanctum'], function () {
     // Protected routes for authenticated users
     Route::get('get-lat-long-location', [CustomersController::class, 'getLatLongLocation']);
+
     Route::group(['prefix' => 'customers'], function () {
 
         Route::get('fetch', [CustomersController::class, 'index'])->middleware('permission:read-customers');
         Route::post('store', [CustomersController::class, 'store'])->middleware('permission:create-customers');
+        Route::post('add-customer-contact', [CustomersController::class, 'addCustomerContact'])->middleware('permission:create-customers');
     });
     Route::group(['prefix' => 'customer-types'], function () {
         Route::get('fetch', [CustomerTypesController::class, 'fetch']);
@@ -62,8 +66,16 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('fetch', [TransactionsController::class, 'index']);
         Route::post('store', [TransactionsController::class, 'store']); //->middleware('permission:create-sales');
     });
+    Route::group(['prefix' => 'schedules'], function () {
+        Route::get('fetch', [SchedulesController::class, 'index']);
+        Route::post('store', [SchedulesController::class, 'store']); //->middleware('permission:create-sales');
+    });
     Route::group(['prefix' => 'tiers'], function () {
         Route::get('fetch', [TiersController::class, 'fetch']);
+    });
+    Route::group(['prefix' => 'users'], function () {
+
+        Route::get('fetch-sales-reps', [UsersController::class, 'fetchSalesReps']);
     });
     Route::group(['prefix' => 'visits'], function () {
         Route::get('fetch', [VisitsController::class, 'index']);

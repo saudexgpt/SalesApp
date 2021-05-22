@@ -16,7 +16,7 @@ class DashboardController extends Controller
         // let's fetch this user's customers
         $customers = $user->customers;
 
-        $sales = $user->transactions()->where('delivery_status', '!=', 'pending')->count();
+        $sales = $user->transactions()->where('payment_status', 'paid')->count();
         // $payment = $user->transactions()->where('payment_status', 'paid')->select(\DB::raw('SUM(amount_due) as amount_due'))->first();
         $all_debt = $user->transactions()->where('payment_status', 'unpaid')->select(\DB::raw('SUM(amount_due) as amount_due'))->first();
 
@@ -31,8 +31,8 @@ class DashboardController extends Controller
             $debt = ($all_debt->amount_due) ? $all_debt->amount_due : 0;
         }
 
-        $today_orders = $user->transactions()->with('customer', 'details')->where('delivery_status', 'pending')->where('created_at', '>=', $today)->get();
-        $today_visits = $user->visits()->with('customer', 'visitedBy', 'details')->where('created_at', '>=', $today)->get();
+        $today_orders = $user->transactions()->with('customer', 'details')->where('delivery_status', 'pending')->where('created_at', '>=', $today)->orderBy('id', 'DESC')->get();
+        $today_visits = $user->visits()->with('customer', 'visitedBy', 'details')->where('created_at', '>=', $today)->orderBy('id', 'DESC')->get();
 
         return response()->json(compact('user', 'customers', 'sales', 'debt', 'overdue', 'currency', 'today_orders', 'today_visits'), 200);
     }

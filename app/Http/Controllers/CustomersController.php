@@ -26,9 +26,9 @@ class CustomersController extends Controller
             }
         }
         $customer_type_id = $request->customer_type_id;
-        $customers = Customer::with(['customerContacts', 'customerType', 'tier', 'subRegion', 'region', 'registrar', 'assignedOfficer', 'verifier', 'payments.confirmer', 'payments.transaction.staff' => function ($q) {
+        $customers = Customer::with(['customerContacts', 'customerType', 'tier', 'subRegion', 'region', 'registrar', 'assignedOfficer', 'verifier', 'payments' => function ($q) {
             $q->orderBy('id', 'DESC');
-        }, 'transactions'])->where($condition)->orderBy('id', 'DESC')->paginate(20);
+        }, 'payments.confirmer', 'payments.transaction.staff', 'transactions'])->where($condition)->orderBy('id', 'DESC')->paginate(20);
         return response()->json(compact('customers'), 200);
     }
     /**
@@ -39,68 +39,86 @@ class CustomersController extends Controller
      */
     public function store(Request $request)
     {
+        $user = $this->getUser();
         $unsaved_customers = json_decode(json_encode($request->unsaved_customers));
         $customer_list = [];
+        $unsaved_list = [];
         foreach ($unsaved_customers as $unsaved_customer) {
-            $user = $this->getUser();
             $customer = Customer::where('business_name', $unsaved_customer->business_name)->first();
-            $lat = $unsaved_customer->customer_latitude;
-            $long = $unsaved_customer->customer_longitude;
-            $reg_lat = $unsaved_customer->registrar_lat;
-            $reg_lng = $unsaved_customer->registrar_lng;
-            $formatted_address = $unsaved_customer->address;
-            $street = $unsaved_customer->street;
-            $area = $unsaved_customer->area;
 
 
             if (!$customer) {
 
-                // we fetch the geo information of the given address
-                if ($lat == '' || $long == '' ||  $area == '') {
-                    list($lat, $long, $formatted_address, $street, $area) = $this->getLocationFromAddress($formatted_address);
-                }
-                $contacts = json_decode(json_encode($unsaved_customer->customer_contacts));
-                $customer = new Customer();
-                $customer->customer_type_id = $unsaved_customer->customer_type_id;
-                $customer->tier_id = $unsaved_customer->tier_id;
-                $customer->sub_region_id = $unsaved_customer->sub_region_id;
-                $customer->region_id = $unsaved_customer->region_id;
-                $customer->business_name = $unsaved_customer->business_name;
-                $customer->email = $unsaved_customer->email;
-                // $customer->phone1 = $unsaved_customer->phone1;
-                // $customer->phone2 = $unsaved_customer->phone2;
-                $customer->address = $formatted_address;
-                $customer->street = $street;
-                $customer->area = $area;
-                $customer->longitude = $long;
-                $customer->latitude = $lat;
-                $customer->registered_by = $user->id;
-                $customer->registrar_lat = $reg_lat;
-                $customer->registrar_lng = $reg_lng;
-                $customer->relating_officer = $user->id;
-                if ($customer->save()) {
-                    if (count($contacts) > 0) {
-                        foreach ($contacts as $contact) {
-                            $new_contact = new CustomerContact();
-                            $new_contact->customer_id = $customer->id;
-                            $new_contact->name = $contact->name;
-                            $new_contact->phone1 = $contact->phone1;
-                            $new_contact->phone2 = $contact->phone2;
-                            $new_contact->role = $contact->role;
-                            $new_contact->save();
-                        }
+                $lat = $unsaved_customer->customer_latitude;
+                $long = $unsaved_customer->customer_longitude;
+                $reg_lat = $unsaved_customer->registrar_lat;
+                $reg_lng = $unsaved_customer->registrar_lng;
+                $formatted_address = $unsaved_customer->address;
+                $street = $unsaved_customer->street;
+                $area = $unsaved_customer->area;
+                try {
+
+                    // we fetch the geo information of the given address
+                    if ($lat == '' || $long == '' ||  $area == '') {
+                        list($lat, $long, $formatted_address, $street, $area) = $this->getLocationFromAddress($formatted_address);
                     }
+                    $contacts = json_decode(json_encode($unsaved_customer->customer_contacts));
+                    $customer = new Customer();
+                    $customer->customer_type_id = $unsaved_customer->customer_type_id;
+                    $customer->tier_id = $unsaved_customer->tier_id;
+                    // $customer->sub_region_id = $unsaved_customer->sub_region_id;
+                    // $customer->region_id = $unsaved_customer->region_id;
+                    $customer->business_name = $unsaved_customer->business_name;
+                    $customer->email = $unsaved_customer->email;
+                    // $customer->phone1 = $unsaved_customer->phone1;
+                    // $customer->phone2 = $unsaved_customer->phone2;
+                    $customer->address = $formatted_address;
+                    $customer->street = $street;
+                    $customer->area = $area;
+                    $customer->longitude = $long;
+                    $customer->latitude = $lat;
+                    $customer->registered_by = $user->id;
+                    $customer->registrar_lat = $reg_lat;
+                    $customer->registrar_lng = $reg_lng;
+                    $customer->relating_officer = $user->id;
+                    if ($customer->save()) {
+                        if (count($contacts) > 0) {
+                            $this->saveCustomerContact($customer->id, $contacts);
+                        }
 
-                    $customer_list[] = $this->show($customer);
+                        $customer_list[] = $this->show($customer);
+                    }
+                    // Generate notification before returning ///////////////////////
+                    // Write notification code here////////////////////////////
+
+                } catch (\Throwable $th) {
+                    $unsaved_list[] = $unsaved_customer;
                 }
-                // Generate notification before returning ///////////////////////
-                // Write notification code here////////////////////////////
-
             }
         }
-        return response()->json(['customers' => $customer_list, 'message' => 'success'], 200);
+        return response()->json(['customers' => $customer_list, 'unsaved_list' => $unsaved_list, 'message' => 'success'], 200);
     }
-
+    private function saveCustomerContact($customer_id, $contacts)
+    {
+        foreach ($contacts as $contact) {
+            $new_contact = new CustomerContact();
+            $new_contact->customer_id = $customer_id;
+            $new_contact->name = $contact->name;
+            $new_contact->phone1 = $contact->phone1;
+            $new_contact->phone2 = $contact->phone2;
+            $new_contact->role = $contact->role;
+            $new_contact->save();
+        }
+    }
+    public function addCustomerContact(Request $request)
+    {
+        $customer_id = $request->customer_id;
+        $contacts = json_decode(json_encode($request->customer_contacts));
+        if (count($contacts) > 0) {
+            $this->saveCustomerContact($customer_id, $contacts);
+        }
+        return 'success';
+    }
     public function getLatLongLocation(Request $request)
     {
         $lat = $request->latitude;
