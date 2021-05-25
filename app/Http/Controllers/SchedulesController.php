@@ -16,7 +16,7 @@ class SchedulesController extends Controller
     {
         $user = $this->getUser();
         $today = date('Y-m-d', strtotime('now'));
-        $schedules = Schedule::with(['scheduledBy', 'rep', 'customer'])->where('schedule_date', '>=', $today)->where('rep', $user->id)->orderBy('schedule_date')->get()->groupBy('schedule_date');
+        $schedules = Schedule::with(['scheduledBy', 'rep', 'customer'])->where('schedule_date', '>=', $today)->orWhere('repeat_schedule', 'yes')->where('rep', $user->id)->orderBy('day_num')->get()->groupBy('day');
         return response()->json(compact('schedules'), 200);
     }
 
@@ -29,19 +29,25 @@ class SchedulesController extends Controller
     public function store(Request $request)
     {
         $user = $this->getUser();
-        $schedule_date = $request->schedule_date;
-        $schedule_time = $request->schedule_time;
+        $schedule_date = date('Y-m-d', strtotime($request->schedule_date));
+        $schedule_time = date('H:i:s', strtotime($request->schedule_time));
         $customer_id = $request->customer_id;
         $rep = $request->rep;
         $note = $request->note;
+        $repeat_schedule = $request->repeat_schedule;
+        $day = date('l', strtotime($request->schedule_date)); // returns 'Monday' or 'Tuesday' , etc
+        $day_num = workingDaysStr($day);
         $schedule = Schedule::where(['customer_id' => $customer_id, 'rep' => $rep, 'schedule_date' => $schedule_date])->first();
         if (!$schedule) {
             $schedule = new Schedule();
+            $schedule->day = $day;
+            $schedule->day_num = $day_num;
             $schedule->schedule_date = date('Y-m-d', strtotime($schedule_date));
             $schedule->schedule_time = date('H:i:s', strtotime($schedule_time));
             $schedule->customer_id = $customer_id;
             $schedule->rep = $rep;
             $schedule->note = $note;
+            $schedule->repeat_schedule = $repeat_schedule;
             $schedule->scheduled_by = $user->id;
             $schedule->save();
         }

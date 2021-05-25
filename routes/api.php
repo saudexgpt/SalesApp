@@ -63,7 +63,9 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('index', [RegionsController::class, 'index']);
     });
     Route::group(['prefix' => 'sales'], function () {
-        Route::get('fetch', [TransactionsController::class, 'index']);
+        Route::get('orders', [TransactionsController::class, 'orders']);
+        Route::get('fetch', [TransactionsController::class, 'fetchSales']);
+
         Route::post('store', [TransactionsController::class, 'store']); //->middleware('permission:create-sales');
     });
     Route::group(['prefix' => 'schedules'], function () {

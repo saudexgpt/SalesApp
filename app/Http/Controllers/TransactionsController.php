@@ -15,7 +15,7 @@ class TransactionsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function orders()
     {
         $user = $this->getUser();
         // undelivered transactions are considered orders
@@ -23,6 +23,14 @@ class TransactionsController extends Controller
             $q->orderBy('id', 'DESC');
         }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('delivery_status', 'pending')->orderBy('id', 'DESC')->get();
         return response()->json(compact('orders'), 200);
+    }
+    public function fetchSales()
+    {
+        $user = $this->getUser();
+        $sales = $user->transactions()->with(['customer', 'payments' => function ($q) {
+            $q->orderBy('id', 'DESC');
+        }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->orderBy('id', 'DESC')->paginate(20);
+        return response()->json(compact('sales'), 200);
     }
 
     /**
