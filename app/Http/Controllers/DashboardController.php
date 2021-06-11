@@ -10,6 +10,7 @@ class DashboardController extends Controller
     public function saleRepDashboard()
     {
         $today = date('Y-m-d', strtotime('now'));
+        $day = date('l', strtotime('now'));
         $user = $this->getUser();
         $currency = $this->currency();
 
@@ -32,8 +33,14 @@ class DashboardController extends Controller
         }
 
         $today_orders = $user->transactions()->with('customer', 'details')->where('delivery_status', 'pending')->where('created_at', '>=', $today)->orderBy('id', 'DESC')->get();
+
         $today_visits = $user->visits()->with('customer', 'visitedBy', 'details')->where('created_at', '>=', $today)->orderBy('id', 'DESC')->get();
 
-        return response()->json(compact('user', 'customers', 'sales', 'debt', 'overdue', 'currency', 'today_orders', 'today_visits'), 200);
+        $today_schedule = $user->mySchedules()->where('schedule_date', $today)->orWhere(function ($q) use ($day) {
+            $q->where('repeat_schedule', 'yes');
+            $q->where('day', $day);
+        })->get();
+
+        return response()->json(compact('user', 'customers', 'sales', 'debt', 'overdue', 'currency', 'today_orders', 'today_visits', 'today_schedule'), 200);
     }
 }

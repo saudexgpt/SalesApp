@@ -24,12 +24,13 @@ class TransactionsController extends Controller
         }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('delivery_status', 'pending')->orderBy('id', 'DESC')->get();
         return response()->json(compact('orders'), 200);
     }
-    public function fetchSales()
+    public function fetchSales(Request $request)
     {
         $user = $this->getUser();
+        $delivery_status = $request->delivery_status;
         $sales = $user->transactions()->with(['customer', 'payments' => function ($q) {
             $q->orderBy('id', 'DESC');
-        }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->orderBy('id', 'DESC')->paginate(20);
+        }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where(['payment_status' => 'paid', 'delivery_status' => $delivery_status])->orderBy('id', 'DESC')->paginate(5);
         return response()->json(compact('sales'), 200);
     }
 

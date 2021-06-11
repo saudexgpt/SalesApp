@@ -16,6 +16,7 @@ class CustomersController extends Controller
     public function index(Request $request)
     {
         //
+        $today  = date('Y-m-d', strtotime('now'));
         $user = $this->getUser();
         $condition = ['relating_officer' => $user->id];
         if (isset($request->customer_type_id)) {
@@ -26,9 +27,16 @@ class CustomersController extends Controller
             }
         }
         $customer_type_id = $request->customer_type_id;
-        $customers = Customer::with(['customerContacts', 'customerType', 'tier', 'subRegion', 'region', 'registrar', 'assignedOfficer', 'verifier', 'payments' => function ($q) {
-            $q->orderBy('id', 'DESC');
-        }, 'payments.confirmer', 'payments.transaction.staff', 'transactions'])->where($condition)->orderBy('id', 'DESC')->paginate(20);
+        $customers = Customer::with([
+            'customerContacts', 'customerType', 'tier', 'subRegion', 'region', 'registrar', 'assignedOfficer', 'verifier',
+            'payments' => function ($q) {
+                $q->orderBy('id', 'DESC');
+            },
+            'payments.confirmer', 'payments.transaction.staff', 'transactions',
+            'schedules' => function ($query) use ($user, $today) {
+                $query->where('schedule_date', '>=', $today)->orWhere('repeat_schedule', 'yes')->where('rep', $user->id)->orderBy('day_num');
+            }
+        ])->where($condition)->orderBy('id', 'DESC')->paginate(20);
         return response()->json(compact('customers'), 200);
     }
     /**
@@ -201,9 +209,18 @@ class CustomersController extends Controller
      */
     public function show(Customer $customer)
     {
-        $customer = $customer::with(['customerContacts', 'customerType', 'tier', 'subRegion', 'region', 'registrar', 'assignedOfficer', 'verifier', 'payments.confirmer', 'payments.transaction.staff' => function ($q) {
-            $q->orderBy('id', 'DESC');
-        }, 'transactions'])->find($customer->id);
+        $user = $this->getUser();
+        $today  = date('Y-m-d', strtotime('now'));
+        $customer = $customer::with([
+            'customerContacts', 'customerType', 'tier', 'subRegion', 'region', 'registrar', 'assignedOfficer', 'verifier',
+            'payments' => function ($q) {
+                $q->orderBy('id', 'DESC');
+            },
+            'payments.confirmer', 'payments.transaction.staff', 'transactions',
+            'schedules' => function ($query) use ($user, $today) {
+                $query->where('schedule_date', '>=', $today)->orWhere('repeat_schedule', 'yes')->where('rep', $user->id)->orderBy('day_num');
+            }
+        ])->find($customer->id);
         return $customer;
     }
 

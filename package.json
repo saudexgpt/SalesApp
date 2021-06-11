@@ -92,7 +92,7 @@
         "vue-mj-daterangepicker": "^0.1.11",
         "vue-router": "^3.1.6",
         "vue-splitpane": "^1.0.4",
-        "vue-tables-2": "^2.0.23",
+        "vue-tables-2": "^2.3.1",
         "vue-timeago": "^5.1.2",
         "vuedraggable": "^2.23.0",
         "vuex": "^3.6.2",
