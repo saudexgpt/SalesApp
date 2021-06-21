@@ -12,4 +12,8 @@ class VisitDetail extends Model
     {
         return $this->belongsTo(Visit::class);
     }
+    public function contact()
+    {
+        return $this->belongsTo(CustomerContact::class, 'customer_contact_id', 'id');
+    }
 }

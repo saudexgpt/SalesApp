@@ -36,7 +36,7 @@ class DashboardController extends Controller
 
         $today_visits = $user->visits()->with('customer', 'visitedBy', 'details')->where('created_at', '>=', $today)->orderBy('id', 'DESC')->get();
 
-        $today_schedule = $user->mySchedules()->where('schedule_date', $today)->orWhere(function ($q) use ($day) {
+        $today_schedule = $user->mySchedules()->with('customer')->where('schedule_date', $today)->orWhere(function ($q) use ($day) {
             $q->where('repeat_schedule', 'yes');
             $q->where('day', $day);
         })->get();

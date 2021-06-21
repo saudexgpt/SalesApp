@@ -32,6 +32,10 @@ class CustomersController extends Controller
             'payments' => function ($q) {
                 $q->orderBy('id', 'DESC');
             },
+            'visits' => function ($q) use ($user) {
+                $q->where('visitor', $user->id)->orderBy('id', 'DESC');
+            },
+            'visits.details.contact',
             'payments.confirmer', 'payments.transaction.staff', 'transactions',
             'schedules' => function ($query) use ($user, $today) {
                 $query->where('schedule_date', '>=', $today)->orWhere('repeat_schedule', 'yes')->where('rep', $user->id)->orderBy('day_num');
@@ -216,6 +220,10 @@ class CustomersController extends Controller
             'payments' => function ($q) {
                 $q->orderBy('id', 'DESC');
             },
+            'visits' => function ($q) use ($user) {
+                $q->where('visitor', $user->id)->orderBy('id', 'DESC');
+            },
+            'visits.details.contact',
             'payments.confirmer', 'payments.transaction.staff', 'transactions',
             'schedules' => function ($query) use ($user, $today) {
                 $query->where('schedule_date', '>=', $today)->orWhere('repeat_schedule', 'yes')->where('rep', $user->id)->orderBy('day_num');

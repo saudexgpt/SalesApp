@@ -150,9 +150,34 @@ class TransactionsController extends Controller
      * @param  \App\Models\Transaction  $transaction
      * @return \Illuminate\Http\Response
      */
-    public function edit(Transaction $transaction)
+    public function supplyOrders(Request $request, TransactionDetail $transaction_detail)
     {
-        //
+        $quantity_for_supply = $request->quantity_for_supply;
+        $quantity = $transaction_detail->quantity;
+        $total_quantity_supplied = $quantity_for_supply + $transaction_detail->quantity_supplied;
+        if ($total_quantity_supplied <= $quantity) {
+            $transaction_detail->quantity_supplied = $total_quantity_supplied;
+            $transaction_detail->save();
+            if ($transaction_detail->quantity_supplied == $quantity) {
+                $transaction_detail->supply_status = 'Completely Supplied';
+                $transaction_detail->save();
+            } else {
+                $transaction_detail->supply_status = 'Partially Supplied';
+                $transaction_detail->save();
+            }
+        }
+        $transaction = $transaction_detail->transaction()->with('details')->first();
+        $is_partial = 0;
+        foreach ($transaction->details as $detail) {
+            if ($detail->supply_status != 'Completely Supplied') {
+                $is_partial++;
+            }
+        }
+        if ($is_partial === 0) {
+            $transaction->delivery_status = 'delivered';
+            $transaction->save();
+        }
+        return $this->show($transaction);
     }
 
     /**

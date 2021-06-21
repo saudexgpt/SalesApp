@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Visit;
+use App\Models\VisitDetail;
 use Illuminate\Http\Request;
 
 class VisitsController extends Controller
@@ -38,7 +39,29 @@ class VisitsController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $user = $this->getUser();
+        $customer_id = $request->customer_id;
+        $date = date('Y-m-d', strtotime('now'));
+        $visit = Visit::where(['customer_id' => $customer_id, 'visitor' => $user->id, 'visit_date' => $date])->first();
+        if (!$visit) {
+            $visit = new Visit();
+            $visit->customer_id = $customer_id;
+            $visit->visitor = $user->id;
+            $visit->visit_date = $date;
+            $visit->save();
+        }
+        $this->saveVisitDetails($request, $visit->id);
+        return $this->show($visit);
+    }
+    private function saveVisitDetails($request, $visit_id)
+    {
+        $visit_detail = new VisitDetail();
+        $visit_detail->visit_id = $visit_id;
+        $visit_detail->customer_contact_id = $request->contact_id;
+        $visit_detail->visit_type = $request->visit_type;
+        $visit_detail->purpose = $request->purpose;
+        $visit_detail->description = $request->description;
+        $visit_detail->save();
     }
 
     /**
@@ -50,6 +73,8 @@ class VisitsController extends Controller
     public function show(Visit $visit)
     {
         //
+        $visit =  $visit->with('customer', 'visitedBy', 'details')->find($visit->id);
+        return response()->json(compact('visit'), 200);
     }
 
     /**

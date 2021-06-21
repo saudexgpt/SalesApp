@@ -70,4 +70,12 @@ class Customer extends Model
     {
         return $this->hasMany(Transaction::class, 'customer_id', 'id');
     }
+    public function visits()
+    {
+        return $this->hasMany(Visit::class, 'customer_id', 'id');
+    }
+    public function calls()
+    {
+        return $this->hasMany(CustomerCall::class, 'customer_id', 'id');
+    }
 }

@@ -67,6 +67,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('fetch', [TransactionsController::class, 'fetchSales']);
 
         Route::post('store', [TransactionsController::class, 'store']); //->middleware('permission:create-sales');
+        Route::put('supply-orders/{transaction_detail}', [TransactionsController::class, 'supplyOrders']);
     });
     Route::group(['prefix' => 'schedules'], function () {
         Route::get('fetch', [SchedulesController::class, 'index']);
@@ -81,5 +82,6 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     });
     Route::group(['prefix' => 'visits'], function () {
         Route::get('fetch', [VisitsController::class, 'index']);
+        Route::post('store', [VisitsController::class, 'store']);
     });
 });
