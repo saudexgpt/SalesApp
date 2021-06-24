@@ -30,7 +30,7 @@ class TransactionsController extends Controller
         $delivery_status = $request->delivery_status;
         $sales = $user->transactions()->with(['customer', 'payments' => function ($q) {
             $q->orderBy('id', 'DESC');
-        }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where(['payment_status' => 'paid', 'delivery_status' => $delivery_status])->orderBy('id', 'DESC')->paginate(5);
+        }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where(['payment_status' => 'paid', 'delivery_status' => $delivery_status])->orderBy('id', 'DESC')->paginate(10);
         return response()->json(compact('sales'), 200);
     }
 

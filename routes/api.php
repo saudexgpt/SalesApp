@@ -47,6 +47,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('fetch', [CustomersController::class, 'index'])->middleware('permission:read-customers');
         Route::post('store', [CustomersController::class, 'store'])->middleware('permission:create-customers');
         Route::post('add-customer-contact', [CustomersController::class, 'addCustomerContact'])->middleware('permission:create-customers');
+
+        Route::post('save-customer-calls', [CustomersController::class, 'saveCustomerCalls']);
     });
     Route::group(['prefix' => 'customer-types'], function () {
         Route::get('fetch', [CustomerTypesController::class, 'fetch']);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\CustomerCall;
 use App\Models\CustomerContact;
 use Illuminate\Http\Request;
 
@@ -230,6 +231,40 @@ class CustomersController extends Controller
             }
         ])->find($customer->id);
         return $customer;
+    }
+    public function saveCustomerCalls(Request $request)
+    {
+        $user = $this->getUser();
+        $calls_made = json_decode(json_encode($request->calls_made));
+        foreach ($calls_made as $call) {
+
+            $duration_in_seconds = $call->duration;
+            if ($duration_in_seconds > 0) {
+
+                $phone_number = $call->number;
+                $date = date('Y-m-d', strtotime($call->date));
+                $customer_call = CustomerCall::where([
+                    'phone_no' => $phone_number,
+                    'date' => $date,
+                    'duration_in_seconds' => $duration_in_seconds,
+                    'caller' => $user->id
+                ])->first();
+                if (!$customer_call) {
+                    // add customer call
+                    $customer_contact = CustomerContact::where('phone1', $phone_number)
+                        ->orWhere('phone2', $phone_number)
+                        ->first();
+                    $customer_id = ($customer_contact) ? $customer_contact->customer_id : null;
+                    $customer_call = new CustomerCall();
+                    $customer_call->customer_id = $customer_id;
+                    $customer_call->phone_no = $phone_number;
+                    $customer_call->caller = $user->id;
+                    $customer_call->date = $date;
+                    $customer_call->duration_in_seconds = $duration_in_seconds;
+                    $customer_call->save();
+                }
+            }
+        }
     }
 
     /**
