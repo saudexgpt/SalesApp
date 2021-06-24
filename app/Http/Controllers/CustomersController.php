@@ -242,7 +242,7 @@ class CustomersController extends Controller
             if ($duration_in_seconds > 0) {
 
                 $phone_number = $call->number;
-                $date = date('Y-m-d', strtotime($call->date));
+                $date = $call->date;
                 $customer_call = CustomerCall::where([
                     'phone_no' => $phone_number,
                     'date' => $date,
