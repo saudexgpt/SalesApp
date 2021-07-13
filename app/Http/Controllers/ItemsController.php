@@ -23,9 +23,20 @@ class ItemsController extends Controller
         return response()->json(compact('items'));
     }
 
+    public function myProducts()
+    {
+        //
+        $user = $this->getUser();
+        $items = Item::with(['category', 'price', 'inventories' => function ($q) use ($user) {
+            $q->groupBy('item_id')->where('staff_id', $user->id)->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(sold) as total_sold'), \DB::raw('SUM(balance) as total_balance'));
+        }])->orderBy('name')->get();
+
+        return response()->json(compact('items'));
+    }
     public function fetchWarehouseProducts()
     {
         // Create a stream
+        set_time_limit(0);
         $opts = [
             "http" => [
                 "method" => "GET",
@@ -38,7 +49,11 @@ class ItemsController extends Controller
 
         // Open the file using the HTTP headers set above
         // DOCS: https://www.php.net/manual/en/function.file-get-contents.php
-        return file_get_contents('https://gpl.3coretechnology.com/api/get-warehouse-products', false, $context);
+        $products =  file_get_contents('https://gpl.3coretechnology.com/api/get-warehouse-products', false, $context);
+        $products_in_json =  json_decode($products);
+        $items = $products_in_json->items;
+        $this->store($items);
+        return 'successful';
         // $products = file_get_contents('http://localhost:8080/api/get-warehouse-products');
         // print_r($products);
     }
@@ -65,22 +80,24 @@ class ItemsController extends Controller
      * @return \Illuminate\Http\Response
      */
 
-    public function store(Request $request, Item $item)
+    public function store($warehouse_items)
     {
         //
-        $user = $this->getUser();
-        $tax_ids =  $request->tax_ids;
-        $name = $request->name;
-        $category_id = $request->category_id;
-        // $sku = $request->sku;
-        $package_type = $request->package_type;
-        $quantity_per_carton = $request->quantity_per_carton;
-        $description = $request->description;
-        $picture = $request->picture;
-        $item = Item::where('name', $name)->first();
+        // $user = $this->getUser();
+        foreach ($warehouse_items as $warehouse_item) {
+            $id = $warehouse_item->id;
+            $name = $warehouse_item->name;
+            $category_id = $warehouse_item->category_id;
+            $package_type = $warehouse_item->package_type;
+            $quantity_per_carton = $warehouse_item->quantity_per_carton;
+            $description = $warehouse_item->description;
+            $picture = $warehouse_item->picture;
+            $item = Item::where('name', $name)->first();
+            if (!$item) {
+                $item = new Item();
+            }
 
-        if (!$item) {
-            $item = new Item();
+            $item->id = $id;
             $item->name = $name;
             $item->package_type = $package_type;
             $item->quantity_per_carton = $quantity_per_carton;
@@ -90,111 +107,16 @@ class ItemsController extends Controller
             $item->picture = $picture;
             $item->save();
 
-            // save item taxes
-            if ($tax_ids) {
-                foreach ($tax_ids  as $tax_id) {
-                    $item_tax = new ItemTax();
-                    $item_tax->tax_id = $tax_id;
-                    $item_tax->item_id = $item->id;
-                    $item_tax->save();
-                }
+            $item_price = ItemPrice::where('item_id', $item->id)->first();
+            if (!$item_price) {
+                $item_price = new ItemPrice();
             }
-            //save item price
-            $item_price = new ItemPrice();
-            $item_price->item_id = $item->id;
-            $item_price->currency_id = $request->currency_id;
-            $item_price->sale_price = $request->sale_price;
-            // $item_price->purchase_price = $request->purchase_price;
+            $item_price->id = $warehouse_item->price->id;
+            $item_price->item_id = $warehouse_item->price->item_id;
+            $item_price->currency_id = $warehouse_item->price->currency_id;
+            $item_price->sale_price = $warehouse_item->price->sale_price;
+            // $item_price->purchase_price = $warehouse_item->purchase_price;
             $item_price->save();
-            // log this action
-            $title = "Product Added";
-            $description = $name . " added to list of products by " . $user->name;;
-            $roles = ['assistant admin', 'warehouse manager', 'warehouse auditor'];
-            $this->logUserActivity($title, $description, $roles);
-            return $this->show($item);
         }
-        return response()->json(['message' => 'Duplicate SKU'], 500);
-    }
-
-
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Item\Item  $item
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Item $item)
-    {
-        //
-        $user = $this->getUser();
-        $tax_ids =  $request->tax_ids;
-        $item->name = $request->name;
-        $item->category_id = $request->category_id;
-        $item->package_type = $request->package_type;
-        $item->quantity_per_carton = $request->quantity_per_carton;
-        // $item->sku = $request->sku;
-        $item->description = $request->description;
-        $item->picture = $request->picture;
-        $item->save();
-
-        //update item price
-        $item_price = ItemPrice::where('item_id', $item->id)->first();
-        if (!$item_price) {
-            $item_price = new ItemPrice();
-        }
-        $item_price->item_id = $item->id;
-        $item_price->currency_id = $request->currency_id;
-        $item_price->sale_price = $request->sale_price;
-        // $item_price->purchase_price = $request->purchase_price;
-        $item_price->save();
-
-        //update item tax
-        if ($tax_ids) {
-            foreach ($tax_ids  as $tax_id) {
-                $item_tax = ItemTax::where(['item_id' => $item->id, 'tax_id' => $tax_id])->first();
-                if (!$item_tax) {
-                    $item_tax = new ItemTax();
-                    $item_tax->tax_id = $tax_id;
-                    $item_tax->item_id = $item->id;
-                    $item_tax->save();
-                }
-            }
-        }
-        $title = "Product details modified";
-        $description = "Product information with ID $item->id  was modified by " . $user->name;;
-        $roles = ['assistant admin', 'warehouse manager', 'warehouse auditor'];
-        $this->logUserActivity($title, $description, $roles);
-        return $this->show($item);
-    }
-    public function destroyItemTax(Request $request)
-    {
-        //
-        $tax = Item::find($request->item_id); // ->taxes()->where('tax_id', $request->tax_id)->first();
-        $tax->taxes()->detach($request->tax_id);
-
-        //$item_tax->delete();
-        return response()->json(null, 204);
-    }
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Item\Item  $item
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Item $item)
-    {
-        // first log this event
-        $user = $this->getUser();
-        $title = "Product deleted";
-        $description = $item->name . " was removed from list of products by " . $user->name;
-        $roles = ['assistant admin', 'warehouse manager', 'warehouse auditor'];
-        $this->logUserActivity($title, $description, $roles);
-
-        $item->taxes()->detach(); //use detach for pivoted relationship (hasManyThrough)
-        $item->price()->delete();
-        $item->delete();
-        return response()->json(null, 204);
     }
 }

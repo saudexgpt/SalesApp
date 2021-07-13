@@ -9,6 +9,10 @@ use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\UserResource;
+use App\Models\Role;
+use App\Models\User;
+use App\Notifications\AuditTrail;
+use Notification;
 
 class Controller extends BaseController
 {
@@ -57,5 +61,42 @@ class Controller extends BaseController
         }
 
         return $prefix . $zeros . $next_no;
+    }
+    public function fetchNecessayParams()
+    {
+        $user = $this->getUser();
+        $all_roles = Role::orderBy('name')->get();
+        $default_roles = Role::orderBy('name')->get();
+
+        return response()->json([
+            'params' => compact('all_roles', 'default_roles')
+        ]);
+    }
+    public function logUserActivity($title, $description, $roles = [])
+    {
+        // $user = $this->getUser();
+        // if ($role) {
+        //     $role->notify(new AuditTrail($title, $description));
+        // }
+        // return $user->notify(new AuditTrail($title, $description));
+        // send notification to admin at all times
+        $users = User::whereHas('roles', function ($query) {
+            $query->where('name', '=', 'super')->orWhere('name', '=', 'admin'); // this is the role id inside of this callback
+        })->get();
+
+        if (in_array('sales_rep', $roles)) {
+            $sales_rep = User::whereHas('roles', function ($query) {
+                $query->where('name', '=', 'sales_rep'); // this is the role id inside of this callback
+            })->get();
+            $users = $users->merge($sales_rep);
+        }
+        // var_dump($users);
+        $notification = new AuditTrail($title, $description);
+        return Notification::send($users->unique(), $notification);
+        // $activity_log = new ActivityLog();
+        // $activity_log->user_id = $user->id;
+        // $activity_log->action = $action;
+        // $activity_log->user_type = $user->roles[0]->name;
+        // $activity_log->save();
     }
 }

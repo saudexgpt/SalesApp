@@ -19,4 +19,8 @@ class Item extends Model
     {
         return $this->hasOne(ItemPrice::class);
     }
+    public function inventories()
+    {
+        return $this->hasMany(SubInventory::class, 'item_id', 'id');
+    }
 }

@@ -5,16 +5,104 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use App\Models\CustomerCall;
 use App\Models\CustomerContact;
+use App\Models\Schedule;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 
 class CustomersController extends Controller
 {
+    const ITEM_PER_PAGE = 10;
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
     public function index(Request $request)
+    {
+        $searchParams = $request->all();
+        $userQuery = Customer::query();
+        $limit = Arr::get($searchParams, 'limit', static::ITEM_PER_PAGE);
+        $keyword = Arr::get($searchParams, 'keyword', '');
+        if (!empty($keyword)) {
+            $userQuery->where(function ($q) use ($keyword) {
+                $q->where('business_name', 'LIKE', '%' . $keyword . '%');
+                $q->orWhere('email', 'LIKE', '%' . $keyword . '%');
+                $q->orWhere('address', 'LIKE', '%' . $keyword . '%');
+            });
+        }
+        $today  = date('Y-m-d', strtotime('now'));
+        $condition = [];
+        if (isset($request->customer_type_id)) {
+
+            $customer_type_id = $request->customer_type_id;
+            if ($customer_type_id != 'all') {
+                $condition = ['customer_type_id' => $customer_type_id];
+            }
+        }
+
+        $customers = $userQuery->with([
+            'customerType', /*'tier', 'subRegion', 'region',*/ 'registrar', 'assignedOfficer', 'verifier',
+
+            'visits' => function ($q) {
+                $q->orderBy('id', 'DESC')->paginate(10);
+            },
+
+        ])->where($condition)->orderBy('id', 'DESC')->paginate($limit);
+        return response()->json(compact('customers'), 200);
+    }
+    public function all(Request $request)
+    {
+        $customers = Customer::get();
+        return response()->json(compact('customers'), 200);
+    }
+
+    // public function schedules(Customer $customer)
+    // {
+    //     $today = date('Y-m-d', strtotime('now'));
+    //     $schedules = Schedule::where('customer_id', $customer->id)
+    //         ->where(function ($q) use ($today) {
+    //             $q->where('schedule_date', '>=', $today);
+    //             $q->orWhere('repeat_schedule', 'yes');
+    //         })
+    //         ->orderBy('day_num')
+    //         ->get()
+    //         ->groupBy('day');
+    //     return response()->json(compact('schedules'), 200);
+    // }
+    public function customerDetails(Customer $customer)
+    {
+        $today  = date('Y-m-d', strtotime('now'));
+        $customer = $customer::with([
+            'customerContacts', 'customerType', 'tier', 'subRegion', 'region', 'registrar', 'assignedOfficer', 'verifier',
+            'payments' => function ($q) {
+                $q->orderBy('id', 'DESC');
+            },
+            'visits' => function ($q) {
+                $q->orderBy('id', 'DESC')->paginate(10);
+            },
+            'visits.details.contact',
+            'visits.visitedBy',
+            'payments.confirmer',
+            'payments.transaction.staff',
+            'transactions' => function ($q) {
+                $q->orderBy('id', 'DESC')->paginate(10);
+            },
+            'transactions.details',
+            'schedules' => function ($query) use ($today) {
+                $query->where('schedule_date', '>=', $today)->orWhere('repeat_schedule', 'yes')->orderBy('day_num');
+            }
+        ])->find($customer->id);
+        $schedules = Schedule::where('customer_id', $customer->id)
+            ->where(function ($q) use ($today) {
+                $q->where('schedule_date', '>=', $today);
+                $q->orWhere('repeat_schedule', 'yes');
+            })
+            ->orderBy('day_num')
+            ->get()
+            ->groupBy('day');
+        return response()->json(compact('schedules', 'customer'), 200);
+    }
+    public function myCustomers(Request $request)
     {
         //
         $today  = date('Y-m-d', strtotime('now'));
@@ -27,7 +115,6 @@ class CustomersController extends Controller
                 $condition = ['relating_officer' => $user->id, 'customer_type_id' => $customer_type_id];
             }
         }
-        $customer_type_id = $request->customer_type_id;
         $customers = Customer::with([
             'customerContacts', 'customerType', 'tier', 'subRegion', 'region', 'registrar', 'assignedOfficer', 'verifier',
             'payments' => function ($q) {
@@ -41,7 +128,7 @@ class CustomersController extends Controller
             'schedules' => function ($query) use ($user, $today) {
                 $query->where('schedule_date', '>=', $today)->orWhere('repeat_schedule', 'yes')->where('rep', $user->id)->orderBy('day_num');
             }
-        ])->where($condition)->orderBy('id', 'DESC')->paginate(20);
+        ])->where($condition)->orderBy('id', 'DESC')->paginate(10);
         return response()->json(compact('customers'), 200);
     }
     /**

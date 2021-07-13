@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Item;
 use App\Models\Payment;
+use App\Models\Schedule;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
 use Illuminate\Http\Request;
@@ -53,7 +54,6 @@ class TransactionsController extends Controller
     public function store(Request $request)
     {
         //
-
         $prefix = 'INV-';
         $user = $this->getUser();
         $unsaved_orders = json_decode(json_encode($request->unsaved_orders));
@@ -103,16 +103,49 @@ class TransactionsController extends Controller
     private function createInvoiceItems($invoice, $invoice_items)
     {
         foreach ($invoice_items as $item) {
-            // $batches = $item->batches;
+            $delivery_mode = $item->delivery_mode;
             $invoice_item = new TransactionDetail();
             $invoice_item->transaction_id = $invoice->id;
             $invoice_item->product = Item::find($item->item_id)->name;
             $invoice_item->quantity = $item->quantity;
+            $invoice_item->quantity_supplied = $item->quantity_supplied;
             $invoice_item->packaging = $item->type;
             $invoice_item->rate = $item->rate;
             $invoice_item->amount = $item->amount;
             $invoice_item->save();
+
+            if ($delivery_mode == 'later') {
+                // set schedule for delivery
+                $this->scheduleDeliveryDate($invoice->customer_id, $invoice_item, $item->delivery_date);
+            }
         }
+    }
+
+    private function scheduleDeliveryDate($customer_id, $item, $delivery_date)
+    {
+        $user = $this->getUser();
+        // $time = 'Tue May 15 10:14:30 +0000 2012';
+        $date = new \DateTime($delivery_date);
+        $date->modify('+ 1 hour');
+        $schedule_date = $date->format('Y-m-d'); //  date('Y-m-d', strtotime($delivery_date));
+        $schedule_time = $date->format('H:i:s'); // date('H:i:s', strtotime($delivery_date) + 3600); // add one hour to get the normal time in our time zone
+        $customer_id = $customer_id;
+        $rep = $user->id;
+        $note = 'Delivery of ' . $item->quantity . ' ' . $item->packaging . ' of ' . $item->product;
+        $repeat_schedule = 'no';
+        $day = date('l', strtotime($delivery_date)); // returns 'Monday' or 'Tuesday' , etc
+        $day_num = workingDaysStr($day);
+        $schedule = new Schedule();
+        $schedule->day = $day;
+        $schedule->day_num = $day_num;
+        $schedule->schedule_date = $schedule_date;
+        $schedule->schedule_time = $schedule_time;
+        $schedule->customer_id = $customer_id;
+        $schedule->rep = $rep;
+        $schedule->note = $note;
+        $schedule->repeat_schedule = $repeat_schedule;
+        $schedule->scheduled_by = $user->id;
+        $schedule->save();
     }
 
     private function makePayments($transaction)

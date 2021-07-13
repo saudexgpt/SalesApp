@@ -17,7 +17,7 @@ class UserResource extends JsonResource
     {
         $currentUser = Auth::user();
         $can_edit = false;
-        if ($this->id === $currentUser->id || $currentUser->hasRole('admin')) {
+        if ($this->id === $currentUser->id || $currentUser->hasRole('super')) {
             $can_edit = true;
         }
 

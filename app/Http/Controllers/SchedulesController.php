@@ -42,8 +42,8 @@ class SchedulesController extends Controller
             $schedule = new Schedule();
             $schedule->day = $day;
             $schedule->day_num = $day_num;
-            $schedule->schedule_date = date('Y-m-d', strtotime($schedule_date));
-            $schedule->schedule_time = date('H:i:s', strtotime($schedule_time));
+            $schedule->schedule_date = $schedule_date;
+            $schedule->schedule_time = $schedule_time;
             $schedule->customer_id = $customer_id;
             $schedule->rep = $rep;
             $schedule->note = $note;
