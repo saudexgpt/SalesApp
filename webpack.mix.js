@@ -1,26 +1,6 @@
-const config = require('./webpack.config');
 const mix = require('laravel-mix');
-require('laravel-mix-eslint');
-
-function resolve(dir) {
-  return path.join(
-    __dirname,
-    '/resources/js',
-    dir
-  );
-}
-
-Mix.listen('configReady', webpackConfig => {
-  // Add "svg" to image loader test
-  const imageLoaderConfig = webpackConfig.module.rules.find(
-    rule =>
-      String(rule.test) ===
-      String(/(\.(png|jpe?g|gif|webp)$|^((?!font).)*\.svg$)/)
-  );
-  imageLoaderConfig.exclude = resolve('icons');
-});
-
-mix.webpackConfig(config);
+const tailwindcss = require('tailwindcss');
+require('dotenv').config();
 
 /*
  |--------------------------------------------------------------------------
@@ -33,40 +13,50 @@ mix.webpackConfig(config);
  |
  */
 
-mix
-  .js('resources/js/app.js', 'public/js')
-  .extract([
-    'vue',
-    'axios',
-    'vuex',
-    'vue-router',
-    'vue-i18n',
-    'element-ui',
-    'echarts',
-    'highlight.js',
-    'sortablejs',
-    'dropzone',
-    'xlsx',
-    'tui-editor',
-    'codemirror',
-  ])
-  .options({
-    processCssUrls: false,
+mix.js('resources/js/app.js', 'public/js')
+  .webpackConfig({
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, 'resources/js/src'),
+        '@assets': path.resolve(__dirname, 'resources/assets'),
+        '@sass': path.resolve(__dirname, 'resources/sass'),
+      },
+    },
   })
-  .sass('resources/js/styles/index.scss', 'public/css/app.css', {
-    implementation: require('node-sass'),
-  });
+  .sass('resources/sass/app.scss', 'public/css').options({
+    postCss: [require('autoprefixer'), require('postcss-rtl')],
+  })
+  .postCss('resources/assets/css/main.css', 'public/css', [tailwindcss('tailwind.js'), require('postcss-rtl')()])
+  .copy('node_modules/vuesax/dist/vuesax.css', 'public/css/vuesax.css') // Vuesax framework css
+  .copy('resources/assets/css/iconfont.css', 'public/css/iconfont.css') // Feather Icon Font css
+  .copyDirectory('resources/assets/fonts', 'public/fonts') // Feather Icon fonts
+  .copyDirectory('node_modules/material-icons/iconfont', 'public/css/material-icons') // Material Icon fonts
+  .copyDirectory('node_modules/material-icons/iconfont/material-icons.css', 'public/css/material-icons/material-icons.css') // Material Icon fonts css
+  .copy('node_modules/prismjs/themes/prism-tomorrow.css', 'public/css/prism-tomorrow.css') // Prism Tomorrow theme css
+  .copyDirectory('resources/assets/images', 'public/images'); // Copy all images from resources to public folder
 
-if (mix.inProduction()) {
-  mix.version();
-} else {
-  if (process.env.LARAVUE_USE_ESLINT === 'true') {
-    mix.eslint();
-  }
-  // Development settings
-  mix
-    .sourceMaps()
-    .webpackConfig({
-      devtool: 'cheap-eval-source-map', // Fastest for development
-    });
-}
+// Change below options according to your requirement
+// if (mix.inProduction()) {
+//     mix.version();
+//     mix.webpackConfig({
+//         output: {
+//             publicPath: '/demo/vuexy-vuejs-laravel-admin-template/demo-1/',
+//             chunkFilename: 'js/chunks/[name].[chunkhash].js',
+//         }
+//     });
+//     mix.setResourceRoot("/demo/vuexy-vuejs-laravel-admin-template/demo-1/");
+// }
+// else{
+//     mix.webpackConfig({
+//         output: {
+//             chunkFilename: 'js/chunks/[name].js',
+//         }
+//     });
+// }
+
+mix.webpackConfig({
+  output: {
+    chunkFilename: 'js/chunks/[name].js',
+  },
+});
+
