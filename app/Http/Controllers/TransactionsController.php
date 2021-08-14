@@ -123,17 +123,18 @@ class TransactionsController extends Controller
 
     private function scheduleDeliveryDate($customer_id, $item, $delivery_date)
     {
-        $user = $this->getUser();
-        // $time = 'Tue May 15 10:14:30 +0000 2012';
         $date = new \DateTime($delivery_date);
-        $date->modify('+ 1 hour');
+        // $date->modify('+ 1 hour'); // add one hour to get the normal time in our time zone
         $schedule_date = $date->format('Y-m-d'); //  date('Y-m-d', strtotime($delivery_date));
-        $schedule_time = $date->format('H:i:s'); // date('H:i:s', strtotime($delivery_date) + 3600); // add one hour to get the normal time in our time zone
+        $schedule_time = $date->format('H:i:s');
+        $user = $this->getUser();
+        // $schedule_date = date('Y-m-d', strtotime($delivery_date));
+        // $schedule_time = date('H:i:s', strtotime($delivery_date));
         $customer_id = $customer_id;
         $rep = $user->id;
         $note = 'Delivery of ' . $item->quantity . ' ' . $item->packaging . ' of ' . $item->product;
         $repeat_schedule = 'no';
-        $day = date('l', strtotime($delivery_date)); // returns 'Monday' or 'Tuesday' , etc
+        $day = date('l', strtotime($schedule_date)); // returns 'Monday' or 'Tuesday' , etc
         $day_num = workingDaysStr($day);
         $schedule = new Schedule();
         $schedule->day = $day;

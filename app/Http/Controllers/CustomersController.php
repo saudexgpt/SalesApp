@@ -17,6 +17,10 @@ class CustomersController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+    public function uploadImage(Request $request)
+    {
+        $this->uploadFile($request);
+    }
     public function index(Request $request)
     {
         $searchParams = $request->all();
@@ -171,7 +175,7 @@ class CustomersController extends Controller
                     $customer->business_name = $unsaved_customer->business_name;
                     $customer->email = $unsaved_customer->email;
                     // $customer->phone1 = $unsaved_customer->phone1;
-                    // $customer->phone2 = $unsaved_customer->phone2;
+                    $customer->photo = $this->uploadFile($unsaved_customer);
                     $customer->address = $formatted_address;
                     $customer->street = $street;
                     $customer->area = $area;

@@ -19,14 +19,14 @@ class Controller extends BaseController
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
     protected $user;
-    public function uploadFile(Request $request)
+    public function uploadFile($request)
     {
         if ($request->file('avatar') != null && $request->file('avatar')->isValid()) {
             $mime = $request->file('avatar')->getClientMimeType();
 
             if ($mime == 'image/png' || $mime == 'image/jpeg' || $mime == 'image/jpg' || $mime == 'image/gif') {
                 $name = time() . "." . $request->file('avatar')->guessClientExtension();
-                $folder = "items";
+                $folder = "customers";
                 $avatar = $request->file('avatar')->storeAs($folder, $name, 'public');
 
                 return response()->json(['avatar' => 'storage/' . $avatar], 200);
