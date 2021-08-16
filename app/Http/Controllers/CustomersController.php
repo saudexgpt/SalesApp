@@ -24,6 +24,7 @@ class CustomersController extends Controller
         $path = "$upload_folder/" . $id . '.jpeg';
         $data = explode(',', $avatar);
         $actualpath = "https://sales.3coretechnology.com/$path";
+        // $actualpath = "http://localhost:8000/$path";
         file_put_contents($path, base64_decode($data[1]));
         return $actualpath;
     }
@@ -182,6 +183,7 @@ class CustomersController extends Controller
                     $customer->email = $unsaved_customer->email;
                     // $customer->phone1 = $unsaved_customer->phone1;
                     $customer->photo = $this->uploadPhoto($unsaved_customer->avatar);
+                    $customer->base64_encoded_image = $unsaved_customer->avatar;
                     $customer->address = $formatted_address;
                     $customer->street = $street;
                     $customer->area = $area;
