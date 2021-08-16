@@ -21,7 +21,7 @@ class CustomersController extends Controller
     {
         $id = time();
         $upload_folder = 'uploads/customers';
-        $path = "$upload_folder/" . $id . 'jpeg';
+        $path = "$upload_folder/" . $id . '.jpeg';
 
         $actualpath = "https://sales.3coretechnology.com/$path";
         file_put_contents($path, base64_decode($avatar));
