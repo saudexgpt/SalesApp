@@ -22,9 +22,9 @@ class CustomersController extends Controller
         $id = time();
         $upload_folder = 'uploads/customers';
         $path = "$upload_folder/" . $id . '.jpeg';
-
+        $data = explode(',', $avatar);
         $actualpath = "https://sales.3coretechnology.com/$path";
-        file_put_contents($path, base64_decode($avatar));
+        file_put_contents($path, base64_decode($data[1]));
         return $actualpath;
     }
     public function index(Request $request)
