@@ -60,8 +60,6 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         Route::get('fetch', [CustomersController::class, 'myCustomers'])->middleware('permission:read-customers');
 
-        Route::post('upload/image', [CustomersController::class, 'uploadImage']);
-
         // Route::delete('{user}', [UsersController::class, 'destroyCustomer'])->middleware('permission:delete-customers');
     });
     Route::group(['prefix' => 'customer-types'], function () {

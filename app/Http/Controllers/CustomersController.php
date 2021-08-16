@@ -17,9 +17,15 @@ class CustomersController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function uploadImage(Request $request)
+    private function uploadPhoto($avatar)
     {
-        $this->uploadFile($request);
+        $id = time();
+        $upload_folder = 'uploads/customers';
+        $path = "$upload_folder/" . $id . 'jpeg';
+
+        $actualpath = "https://sales.3coretechnology.com/$path";
+        file_put_contents($path, base64_decode($avatar));
+        return $actualpath;
     }
     public function index(Request $request)
     {
@@ -175,7 +181,7 @@ class CustomersController extends Controller
                     $customer->business_name = $unsaved_customer->business_name;
                     $customer->email = $unsaved_customer->email;
                     // $customer->phone1 = $unsaved_customer->phone1;
-                    $customer->photo = $this->uploadFile($unsaved_customer);
+                    $customer->photo = $this->uploadPhoto($unsaved_customer->avatar);
                     $customer->address = $formatted_address;
                     $customer->street = $street;
                     $customer->area = $area;
