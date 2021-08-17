@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Region;
+use App\Models\State;
 use Illuminate\Http\Request;
 
 class RegionsController extends Controller
@@ -14,7 +15,8 @@ class RegionsController extends Controller
      */
     public function index()
     {
-        $regions = Region::with('subRegions')->orderBy('name')->get();
+        // $regions = Region::with('subRegions')->orderBy('name')->get();
+        $regions = State::with('lgas')->orderBy('name')->get();
         return response()->json(compact('regions'), 200);
     }
 

@@ -177,8 +177,8 @@ class CustomersController extends Controller
                     $customer = new Customer();
                     $customer->customer_type_id = $unsaved_customer->customer_type_id;
                     $customer->tier_id = $unsaved_customer->tier_id;
-                    // $customer->sub_region_id = $unsaved_customer->sub_region_id;
-                    // $customer->region_id = $unsaved_customer->region_id;
+                    $customer->lga_id = $unsaved_customer->sub_region_id;
+                    $customer->state_id = $unsaved_customer->region_id;
                     $customer->business_name = $unsaved_customer->business_name;
                     $customer->email = $unsaved_customer->email;
                     // $customer->phone1 = $unsaved_customer->phone1;
