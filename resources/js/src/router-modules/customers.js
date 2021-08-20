@@ -19,11 +19,30 @@ const customersRoutes = {
     },
     {
       hidden: false,
+      path: '/customers/sample',
+      name: 'ViewSampleCustomer',
+      slug: 'view-sample-customer',
+      i18n: 'Sample Customers',
+      component: () => import('@/views/apps/customers/Sample'),
+    },
+    {
+      hidden: false,
       component: () => import('@/views/apps/customers/Map'),
       path: '/customers/map',
       name: 'CustomersMap',
       slug: 'customer-map',
       i18n: 'Customers Map',
+      meta: {
+        // permissions: ['create-users', 'read-users', 'update-users', 'delete-users'],
+      },
+    },
+    {
+      hidden: true,
+      component: () => import('@/views/apps/customers/MapSampleCustomers'),
+      path: '/customers/sample-map',
+      name: 'SampleCustomersMap',
+      slug: 'sample-customer-map',
+      i18n: 'Sample Customers Map',
       meta: {
         // permissions: ['create-users', 'read-users', 'update-users', 'delete-users'],
       },

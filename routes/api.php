@@ -48,10 +48,13 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('user-notifications', [UsersController::class, 'userNotifications']);
 
     Route::group(['prefix' => 'customers'], function () {
+        Route::get('/sample', [CustomersController::class, 'sampleCustomers'])->middleware('permission:read-customers');
         Route::get('/', [CustomersController::class, 'index'])->middleware('permission:read-customers');
         Route::get('/all', [CustomersController::class, 'all'])->middleware('permission:read-customers');
 
         Route::post('store', [CustomersController::class, 'store'])->middleware('permission:create-customers');
+
+        Route::put('sample/update/{sample_customer}', [CustomersController::class, 'updateSampleCustomer'])->middleware('permission:create-customers');
         Route::post('add-customer-contact', [CustomersController::class, 'addCustomerContact'])->middleware('permission:create-customers');
 
         Route::post('save-customer-calls', [CustomersController::class, 'saveCustomerCalls']);

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use App\Models\CustomerCall;
 use App\Models\CustomerContact;
+use App\Models\SampleCustomer;
 use App\Models\Schedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -60,6 +61,19 @@ class CustomersController extends Controller
         ])->where($condition)->orderBy('id', 'DESC')->paginate($limit);
         return response()->json(compact('customers'), 200);
     }
+    public function sampleCustomers(Request $request)
+    {
+        $customers = SampleCustomer::get();
+
+        return response()->json(compact('customers'), 200);
+    }
+    public function updateSampleCustomer(Request $request, SampleCustomer $sample_customer)
+    {
+        $sample_customer->address = $request->address;
+        $sample_customer->save();
+        return response()->json([], 204);
+    }
+
     public function all(Request $request)
     {
         $customers = Customer::get();

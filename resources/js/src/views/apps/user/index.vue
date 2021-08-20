@@ -90,8 +90,8 @@
             placement="top-start"
           >
             <el-button
-              v-if="!scope.row.roles.includes('admin')"
               v-permission="['update-users']"
+              v-if="!scope.row.roles.includes('admin')"
               round
               type="warning"
               size="small"
@@ -106,8 +106,8 @@
             placement="top-start"
           >
             <el-button
-              v-if="!scope.row.roles.includes('admin')"
               v-permission="['delete-users']"
+              v-if="!scope.row.roles.includes('admin')"
               round
               type="danger"
               size="small"
@@ -135,27 +135,27 @@
         <form >
           <div class="vx-row">
             <div class="vx-col sm:w-1/2 w-full mb-2">
-              <vs-input v-model="newUser.first_name" v-validate="'required'" name="first_name" label-placeholder="First Name" class="mt-3 w-full" data-vv-validate-on="blur"/>
+              <vs-input v-validate="'required'" v-model="newUser.first_name" name="first_name" label-placeholder="First Name" class="mt-3 w-full" data-vv-validate-on="blur"/>
               <span v-show="errors.has('first_name')" class="text-danger text-sm">{{ errors.first('first_name') }}</span>
             </div>
             <div class="vx-col sm:w-1/2 w-full mb-2">
-              <vs-input v-model="newUser.last_name" v-validate="'required'" name="last_name" label-placeholder="Last Name" class="mt-3 w-full" data-vv-validate-on="blur"/>
+              <vs-input v-validate="'required'" v-model="newUser.last_name" name="last_name" label-placeholder="Last Name" class="mt-3 w-full" data-vv-validate-on="blur"/>
               <span v-show="errors.has('last_name')" class="text-danger text-sm">{{ errors.first('last_name') }}</span>
             </div>
           </div>
           <div class="vx-row">
             <div class="vx-col sm:w-1/2 w-full mb-2">
-              <vs-input v-model="newUser.email" v-validate="'required'" type="email" name="email" label-placeholder="Email" class="mt-3 w-full" data-vv-validate-on="blur"/>
+              <vs-input v-validate="'required'" v-model="newUser.email" type="email" name="email" label-placeholder="Email" class="mt-3 w-full" data-vv-validate-on="blur"/>
               <span v-show="errors.has('email')" class="text-danger text-sm">{{ errors.first('email') }}</span>
             </div>
             <div class="vx-col sm:w-1/2 w-full mb-2">
-              <vs-input v-model="newUser.username" v-validate="'required'" name="username" label-placeholder="Username" class="mt-3 w-full" data-vv-validate-on="blur"/>
+              <vs-input v-validate="'required'" v-model="newUser.username" name="username" label-placeholder="Username" class="mt-3 w-full" data-vv-validate-on="blur"/>
               <span v-show="errors.has('username')" class="text-danger text-sm">{{ errors.first('username') }}</span>
             </div>
           </div>
           <div class="vx-row">
             <div class="vx-col sm:w-1/2 w-full mb-2">
-              <vs-input v-model="newUser.phone" v-validate="'required'" name="phone" label-placeholder="Phone" class="mt-3 w-full" data-vv-validate-on="blur"/>
+              <vs-input v-validate="'required'" v-model="newUser.phone" name="phone" label-placeholder="Phone" class="mt-3 w-full" data-vv-validate-on="blur"/>
               <span v-show="errors.has('phone')" class="text-danger text-sm">{{ errors.first('phone') }}</span>
             </div>
             <div class="vx-col sm:w-1/2 w-full mb-2">
@@ -177,11 +177,11 @@
           </div>
           <div class="vx-row">
             <div class="vx-col sm:w-1/2 w-full mb-2">
-              <vs-input v-model="newUser.password" v-validate="'required|min:8'" name="password" type="password" show-password label-placeholder="Password" class="mt-3 w-full" data-vv-validate-on="blur"/>
+              <vs-input v-validate="'required|min:8'" v-model="newUser.password" name="password" type="password" show-password label-placeholder="Password" class="mt-3 w-full" data-vv-validate-on="blur"/>
               <span v-show="errors.has('password')" class="text-danger text-sm">{{ errors.first('password') }}</span>
             </div>
             <div class="vx-col sm:w-1/2 w-full mb-2">
-              <vs-input v-model="newUser.confirmPassword" v-validate="'required|min:8|confirmed:password'" name="confirm-password" type="password" show-password label-placeholder="Confirm Password" class="mt-3 w-full" data-vv-validate-on="blur"/>
+              <vs-input v-validate="'required|min:8|confirmed:password'" v-model="newUser.confirmPassword" name="confirm-password" type="password" show-password label-placeholder="Confirm Password" class="mt-3 w-full" data-vv-validate-on="blur"/>
               <span v-show="errors.has('confirm-password')" class="text-danger text-sm">{{ errors.first('confirm-password') }}</span>
             </div>
           </div>

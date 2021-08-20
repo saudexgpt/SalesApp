@@ -4,7 +4,7 @@
     <div v-if="customer">
       <vx-card class="mb-base">
         <div class="vx-row">
-          <div class="vx-col lg:w-5/6 w-full">
+          <div class="vx-col lg:w-5/6  w-full">
             <div class="flex items-end px-3">
               <feather-icon svg-classes="w-6 h-6" icon="UserIcon" class="mr-2" />
               <span class="font-medium text-lg">Customer Account</span>
@@ -34,10 +34,17 @@
 
           <!-- Avatar Col -->
           <div id="avatar-col" class="vx-col">
-            <div class="img-container mb-4">
-              <img :src="'/'+customer.photo" class="rounded w-full" >
+            <div class="img-container mb-4" @click="showFullPhoto = true">
+              <img :src="'data:image/png;base64,'+customer.base64_encoded_image" class="rounded w-full" >
             </div>
           </div>
+          <vs-popup
+            :active.sync="showFullPhoto"
+            title="Customer Photo">
+            <div class="con-exemple-prompt">
+              <img :src="'data:image/png;base64,'+customer.base64_encoded_image" class="rounded w-full" >
+            </div>
+          </vs-popup>
 
           <!-- Information - Col 1 -->
           <div id="account-info-col-1" class="vx-col flex-1">
@@ -301,6 +308,7 @@ export default {
   components: { swiper, swiperSlide },
   data() {
     return {
+      showFullPhoto: false,
       customer: null,
       // /////////////for map /////////////////
       center: { lat: 3.3792, lng: 6.5244 }, // default to greenlife office
