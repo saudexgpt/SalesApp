@@ -344,6 +344,17 @@ class CustomersController extends Controller
         ])->find($customer->id);
         return $customer;
     }
+    public function verify(Customer $customer)
+    {
+        $user = $this->getUser();
+        $today  = date('Y-m-d', strtotime('now'));
+        $customer->verified_by = $user->id;
+        $customer->date_verified = $today;
+        $customer->save();
+        return $this->show($customer);
+    }
+
+
     public function saveCustomerCalls(Request $request)
     {
         $user = $this->getUser();

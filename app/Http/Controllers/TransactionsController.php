@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Item;
 use App\Models\Payment;
 use App\Models\Schedule;
+use App\Models\SubInventory;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
 use Illuminate\Http\Request;
@@ -106,6 +107,7 @@ class TransactionsController extends Controller
             $delivery_mode = $item->delivery_mode;
             $invoice_item = new TransactionDetail();
             $invoice_item->transaction_id = $invoice->id;
+            $invoice_item->item = $item->item_id;
             $invoice_item->product = Item::find($item->item_id)->name;
             $invoice_item->quantity = $item->quantity;
             $invoice_item->quantity_supplied = $item->quantity_supplied;
@@ -186,19 +188,24 @@ class TransactionsController extends Controller
      */
     public function supplyOrders(Request $request, TransactionDetail $transaction_detail)
     {
+        $item_id = $transaction_detail->item_id;
         $quantity_for_supply = $request->quantity_for_supply;
+        $stock_balance = $this->checkForStockBalance($item_id, $quantity_for_supply);
+        if ($quantity_for_supply > $stock_balance) {
+            return response()->json(['message' => 'Insufficient Stock'], 422);
+        }
         $quantity = $transaction_detail->quantity;
         $total_quantity_supplied = $quantity_for_supply + $transaction_detail->quantity_supplied;
         if ($total_quantity_supplied <= $quantity) {
             $transaction_detail->quantity_supplied = $total_quantity_supplied;
-            $transaction_detail->save();
             if ($transaction_detail->quantity_supplied == $quantity) {
                 $transaction_detail->supply_status = 'Completely Supplied';
-                $transaction_detail->save();
             } else {
                 $transaction_detail->supply_status = 'Partially Supplied';
-                $transaction_detail->save();
             }
+
+            $transaction_detail->save();
+            $this->deductFromSubInventory($item_id, $quantity_for_supply);
         }
         $transaction = $transaction_detail->transaction()->with('details')->first();
         $is_partial = 0;
@@ -212,6 +219,33 @@ class TransactionsController extends Controller
             $transaction->save();
         }
         return $this->show($transaction);
+    }
+    private function checkForStockBalance($item_id, $quantity)
+    {
+        $user = $this->getUser();
+        $balance = SubInventory::where(['staff_id' => $user->id, 'item_id' => $item_id])->sum('balance');
+        return $balance;
+    }
+    private function deductFromSubInventory($item_id, $quantity)
+    {
+        $user = $this->getUser();
+        $sub_inventories = SubInventory::where(['staff_id' => $user->id, 'item_id' => $item_id])->where('balance', '>', 0)->get();
+        $to_supply = $quantity;
+        foreach ($sub_inventories as $sub_inventory) {
+            $stock_balance = $sub_inventory->balance;
+            if ($to_supply <= $stock_balance) {
+                $sub_inventory->sold += $to_supply;
+                $sub_inventory->balance -= $to_supply;
+                $sub_inventory->save();
+                $to_supply = 0;
+                break;
+            } else {
+                $sub_inventory->sold += $stock_balance;
+                $sub_inventory->balance = 0;
+                $sub_inventory->save();
+                $to_supply -= $stock_balance;
+            }
+        }
     }
 
     /**

@@ -62,6 +62,9 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('details/{customer}', [CustomersController::class, 'customerDetails']);
 
         Route::get('fetch', [CustomersController::class, 'myCustomers'])->middleware('permission:read-customers');
+        Route::put('verify/{customer}', [CustomersController::class, 'verify'])->middleware('permission:verify-customers');
+
+
 
         // Route::delete('{user}', [UsersController::class, 'destroyCustomer'])->middleware('permission:delete-customers');
     });

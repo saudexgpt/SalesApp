@@ -23,14 +23,14 @@
                 >Map
                 </el-button>
               </router-link>
-              <!-- <el-button
+              <el-button
                 :loading="downloading"
                 round
                 class="filter-item"
                 type="primary"
                 icon="el-icon-download"
                 @click="fetchAddress()"
-              >Fetch Addresses</el-button> -->
+              >Fetch Addresses</el-button>
             </span>
           </div>
         </div>
