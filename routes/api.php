@@ -86,6 +86,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('/view-by-staff', [SubInventoriesController::class, 'viewByStaff']);
         Route::get('/view-details', [SubInventoriesController::class, 'viewDetails']);
         Route::post('store', [SubInventoriesController::class, 'store']);
+        Route::get('/my-inventory', [SubInventoriesController::class, 'myInventory']);
     });
     Route::group(['prefix' => 'regions'], function () {
         Route::get('index', [RegionsController::class, 'index']);

@@ -7,6 +7,22 @@ use Illuminate\Http\Request;
 
 class SubInventoriesController extends Controller
 {
+    public function myInventory()
+    {
+        $user = $this->getUser();
+        $inventories = SubInventory::with('item')
+            ->groupBy('item_id')
+            ->where('staff_id', $user->id)
+            ->where('balance', '>', 0)
+            ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(sold) as total_sold'), \DB::raw('SUM(balance) as total_balance'))
+            ->get();
+        $sub_inventories = SubInventory::with('item')
+            ->where('staff_id', $user->id)
+            ->where('balance', '>', 0)
+            ->get()
+            ->groupBy('item_id');
+        return response()->json(compact('inventories', 'sub_inventories'), 200);
+    }
     /**
      * Display a listing of the resource.
      *

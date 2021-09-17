@@ -32,7 +32,7 @@ class DashboardController extends Controller
             $debt = ($all_debt->amount_due) ? $all_debt->amount_due : 0;
         }
 
-        $today_orders = $user->transactions()->with('customer', 'details')->where('delivery_status', 'pending')->where('created_at', '>=', $today)->orderBy('id', 'DESC')->get();
+        $today_orders = $user->transactions()->with('customer', 'details')->where('created_at', '>=', $today)->orderBy('id', 'DESC')->get();
 
         $today_visits = $user->visits()->with('customer', 'visitedBy', 'details')->where('created_at', '>=', $today)->orderBy('id', 'DESC')->get();
 

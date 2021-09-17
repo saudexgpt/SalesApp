@@ -23,7 +23,7 @@ class TransactionsController extends Controller
         // undelivered transactions are considered orders
         $orders = $user->transactions()->with(['customer', 'payments' => function ($q) {
             $q->orderBy('id', 'DESC');
-        }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('delivery_status', 'pending')->orderBy('id', 'DESC')->get();
+        }, 'payments.transaction.staff', 'payments.confirmer', 'details'])/*->where('delivery_status', 'pending')*/->orderBy('id', 'DESC')->get();
         return response()->json(compact('orders'), 200);
     }
     public function fetchSales(Request $request)
@@ -107,10 +107,15 @@ class TransactionsController extends Controller
             $delivery_mode = $item->delivery_mode;
             $invoice_item = new TransactionDetail();
             $invoice_item->transaction_id = $invoice->id;
-            $invoice_item->item = $item->item_id;
+            $invoice_item->item_id = $item->item_id;
             $invoice_item->product = Item::find($item->item_id)->name;
             $invoice_item->quantity = $item->quantity;
-            $invoice_item->quantity_supplied = $item->quantity_supplied;
+
+
+            // if ($delivery_mode == 'now') {
+            //     // set quantity for supply
+            //     $invoice_item->quantity_supplied = $item->quantity_supplied;
+            // }
             $invoice_item->packaging = $item->type;
             $invoice_item->rate = $item->rate;
             $invoice_item->amount = $item->amount;
@@ -119,6 +124,9 @@ class TransactionsController extends Controller
             if ($delivery_mode == 'later') {
                 // set schedule for delivery
                 $this->scheduleDeliveryDate($invoice->customer_id, $invoice_item, $item->delivery_date);
+            }
+            if ($delivery_mode == 'now') {
+                $this->performProductSupply($invoice_item, $item->quantity_supplied, $item->item_id);
             }
         }
     }
@@ -190,7 +198,12 @@ class TransactionsController extends Controller
     {
         $item_id = $transaction_detail->item_id;
         $quantity_for_supply = $request->quantity_for_supply;
-        $stock_balance = $this->checkForStockBalance($item_id, $quantity_for_supply);
+
+        return $this->performProductSupply($transaction_detail, $quantity_for_supply, $item_id);
+    }
+    private function performProductSupply(TransactionDetail $transaction_detail, $quantity_for_supply, $item_id)
+    {
+        $stock_balance = $this->checkForStockBalance($item_id);
         if ($quantity_for_supply > $stock_balance) {
             return response()->json(['message' => 'Insufficient Stock'], 422);
         }
@@ -220,7 +233,7 @@ class TransactionsController extends Controller
         }
         return $this->show($transaction);
     }
-    private function checkForStockBalance($item_id, $quantity)
+    private function checkForStockBalance($item_id)
     {
         $user = $this->getUser();
         $balance = SubInventory::where(['staff_id' => $user->id, 'item_id' => $item_id])->sum('balance');
