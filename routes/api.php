@@ -14,6 +14,7 @@ use App\Http\Controllers\TransactionsController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\VisitsController;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\SubInventoriesController;
 
 /*
@@ -74,10 +75,13 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix' => 'dashboard'], function () {
         Route::get('sales-rep', [DashboardController::class, 'saleRepDashboard']);
     });
-    Route::group(['prefix' => 'products'], function () {
-        Route::get('/', [ItemsController::class, 'index']);
-        Route::get('fetch-warehouse-products', [ItemsController::class, 'fetchWarehouseProducts']);
-        Route::get('my-products', [ItemsController::class, 'myProducts']);
+    Route::group(['prefix' => 'daily-report'], function () {
+        Route::get('index', [DailyReportController::class, 'index']);
+        Route::get('visited-customers', [DailyReportController::class, 'visitedCustomers']);
+        Route::get('my-reports', [DailyReportController::class, 'myReports']);
+
+        Route::post('store', [DailyReportController::class, 'store']);
+        Route::get('details', [DailyReportController::class, 'reportDetails']);
     });
 
     Route::group(['prefix' => 'inventory'], function () {
@@ -87,6 +91,11 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('/view-details', [SubInventoriesController::class, 'viewDetails']);
         Route::post('store', [SubInventoriesController::class, 'store']);
         Route::get('/my-inventory', [SubInventoriesController::class, 'myInventory']);
+    });
+    Route::group(['prefix' => 'products'], function () {
+        Route::get('/', [ItemsController::class, 'index']);
+        Route::get('fetch-warehouse-products', [ItemsController::class, 'fetchWarehouseProducts']);
+        Route::get('my-products', [ItemsController::class, 'myProducts']);
     });
     Route::group(['prefix' => 'regions'], function () {
         Route::get('index', [RegionsController::class, 'index']);

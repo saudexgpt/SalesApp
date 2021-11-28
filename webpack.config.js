@@ -13,7 +13,7 @@ function resolve(dir) {
 const rawArgv = process.argv.slice(2);
 const args = rawArgv.join(' ');
 const report = rawArgv.includes('--report');
-let plugins = [];
+const plugins = [];
 if (report) {
   plugins.push(new BundleAnalyzerPlugin({
     openAnalyzer: true,
@@ -25,6 +25,7 @@ module.exports = {
     alias: {
       vue$: 'vue/dist/vue.esm.js',
       '@': path.join(__dirname, '/resources/js'),
+      '@assets': path.join(__dirname, '/resources/assets'),
     },
   },
   module: {

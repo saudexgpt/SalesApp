@@ -5,10 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class SubInventory extends Model
+class VanInventory extends Model
 {
     use HasFactory;
-
     public function staff()
     {
         return $this->belongsTo(User::class, 'staff_id', 'id');
@@ -17,8 +16,8 @@ class SubInventory extends Model
     {
         return $this->belongsTo(Item::class, 'item_id', 'id');
     }
-    public function vanInventories()
+    public function mainInventory()
     {
-        return $this->hasMany(VanInventory::class, 'sub_inventory_id', 'id');
+        return $this->belongsTo(SubInventory::class, 'sub_inventory_id', 'id');
     }
 }
