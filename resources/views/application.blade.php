@@ -22,7 +22,7 @@
   </head>
   <body>
     <noscript>
-      <strong>We're sorry but Vuexy  - Vuejs, HTML & Laravel Admin Dashboard Template doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+      <strong>We're sorry but this template doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
     </noscript>
     <div id="app">
     </div>

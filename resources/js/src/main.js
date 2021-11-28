@@ -7,11 +7,12 @@
   Author URL: http://www.themeforest.net/user/pixinvent
 ==========================================================================================*/
 import './styles/element-variables.scss';
+import 'vue-mj-daterangepicker/dist/vue-mj-daterangepicker.css';
 import '@/styles/index.scss'; // global css
 import Vue from 'vue';
 import App from './App.vue';
 import ElementUI from 'element-ui';
-
+import DateRangePicker from 'vue-mj-daterangepicker';
 import locale from 'element-ui/lib/locale/lang/en';
 import * as VueGoogleMaps from 'vue2-google-maps';
 Vue.use(VueGoogleMaps, {
@@ -43,6 +44,7 @@ Vue.use(ElementUI, { locale });
 import Vuesax from 'vuesax';
 
 Vue.use(Vuesax);
+Vue.use(DateRangePicker);
 // axios
 // import axios from './axios.js'
 // Vue.prototype.$http = axios

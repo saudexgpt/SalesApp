@@ -13,7 +13,7 @@
 =========================================================*/
 
 $spacer: 2.2rem;
-$spacer-sm: math.div($spacer, 2);
+$spacer-sm: 1.1rem;
 $spacer-lg: ($spacer * 2);
 
 
@@ -62,7 +62,7 @@ $headings-font-family:    inherit !default;
 $headings-font-weight:    500 !default;
 $headings-line-height:    1.2 !default;
 $headings-color:          #2c2c2c;
-$headings-margin-bottom:      math.div($spacer, 2) !default;
+$headings-margin-bottom:      1.1rem !default;
 
 $font-weight-light:           300;
 $font-weight-normal:          400;

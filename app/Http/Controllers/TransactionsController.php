@@ -8,6 +8,7 @@ use App\Models\Schedule;
 use App\Models\SubInventory;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
+use App\Models\VanInventory;
 use Illuminate\Http\Request;
 
 class TransactionsController extends Controller
@@ -87,6 +88,11 @@ class TransactionsController extends Controller
                     $this->makePayments($invoice);
                 }
 
+                if (isset($unsaved_order->amount_collected) && $unsaved_order->amount_collected > 0) {
+                    $this->payAmount($invoice, $unsaved_order->amount_collected);
+                }
+
+
                 $order_list[] = $this->show($invoice);
             } catch (\Throwable $th) {
                 $unsaved_list[] = $unsaved_order;
@@ -161,15 +167,65 @@ class TransactionsController extends Controller
 
     private function makePayments($transaction)
     {
-
+        $user = $this->getUser()->id;
         // $batches = $item->batches;
         $payment = new Payment();
         $payment->transaction_id = $transaction->id;
         $payment->customer_id = $transaction->customer_id;
         $payment->amount = $transaction->amount_due;
+        $payment->payment_date = date('Y-m-d H:i:s', strtotime('now'));
+        $payment->received_by = $user->id;
         if ($payment->save()) {
             $transaction->amount_paid = $transaction->amount_due;
             $transaction->save();
+        }
+    }
+
+    private function payAmount($transaction, $amount)
+    {
+        $user = $this->getUser()->id;
+        $customer_id = $transaction->customer_id;
+        $customer_transactions = Transaction::where('customer_id', $customer_id)->whereRaw('amount_due - amount_paid > 0')->orderBy('id')->get();
+        foreach ($customer_transactions as $customer_transaction) {
+            $debt = $customer_transaction->amount_due - $customer_transaction->amount_paid;
+            if ($debt <= $amount) {
+
+                $customer_transaction->amount_paid += $debt;
+                $customer_transaction->payment_status = 'paid';
+                $customer_transaction->save();
+
+                $payment = new Payment();
+                $payment->transaction_id = $customer_transaction->id;
+                $payment->customer_id = $customer_transaction->customer_id;
+                $payment->amount = $debt;
+                $payment->payment_date = date('Y-m-d H:i:s', strtotime('now'));
+                $payment->received_by = $user->id;
+                $payment->save();
+
+                $amount -= $debt;
+            } else {
+                $customer_transaction->amount_paid += $amount;
+                $customer_transaction->save();
+
+                $payment = new Payment();
+                $payment->transaction_id = $customer_transaction->id;
+                $payment->customer_id = $customer_transaction->customer_id;
+                $payment->amount = $amount;
+                $payment->payment_date = date('Y-m-d H:i:s', strtotime('now'));
+                $payment->received_by = $user->id;
+                $payment->save();
+                $amount = 0;
+                break;
+            }
+        }
+        if ($amount > 0) {
+            $payment = new Payment();
+            // $payment->transaction_id = $customer_transaction->id;
+            $payment->customer_id = $customer_id;
+            $payment->amount = $amount;
+            $payment->payment_date = date('Y-m-d H:i:s', strtotime('now'));
+            $payment->received_by = $user->id;
+            $payment->save();
         }
     }
 
@@ -218,7 +274,7 @@ class TransactionsController extends Controller
             }
 
             $transaction_detail->save();
-            $this->deductFromSubInventory($item_id, $quantity_for_supply);
+            $this->deductFromVanInventory($item_id, $quantity_for_supply);
         }
         $transaction = $transaction_detail->transaction()->with('details')->first();
         $is_partial = 0;
@@ -236,26 +292,26 @@ class TransactionsController extends Controller
     private function checkForStockBalance($item_id)
     {
         $user = $this->getUser();
-        $balance = SubInventory::where(['staff_id' => $user->id, 'item_id' => $item_id])->sum('balance');
+        $balance = VanInventory::where(['staff_id' => $user->id, 'item_id' => $item_id])->sum('balance');
         return $balance;
     }
-    private function deductFromSubInventory($item_id, $quantity)
+    private function deductFromVanInventory($item_id, $quantity)
     {
         $user = $this->getUser();
-        $sub_inventories = SubInventory::where(['staff_id' => $user->id, 'item_id' => $item_id])->where('balance', '>', 0)->get();
+        $van_inventories = VanInventory::where(['staff_id' => $user->id, 'item_id' => $item_id])->where('balance', '>', 0)->get();
         $to_supply = $quantity;
-        foreach ($sub_inventories as $sub_inventory) {
-            $stock_balance = $sub_inventory->balance;
+        foreach ($van_inventories as $van_inventory) {
+            $stock_balance = $van_inventory->balance;
             if ($to_supply <= $stock_balance) {
-                $sub_inventory->sold += $to_supply;
-                $sub_inventory->balance -= $to_supply;
-                $sub_inventory->save();
+                $van_inventory->sold += $to_supply;
+                $van_inventory->balance -= $to_supply;
+                $van_inventory->save();
                 $to_supply = 0;
                 break;
             } else {
-                $sub_inventory->sold += $stock_balance;
-                $sub_inventory->balance = 0;
-                $sub_inventory->save();
+                $van_inventory->sold += $stock_balance;
+                $van_inventory->balance = 0;
+                $van_inventory->save();
                 $to_supply -= $stock_balance;
             }
         }

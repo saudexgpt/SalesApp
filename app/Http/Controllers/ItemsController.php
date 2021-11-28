@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Item;
 use App\Models\ItemPrice;
 use App\Models\ItemTax;
+use App\Models\VanInventory;
 use Illuminate\Http\Request;
 
 class ItemsController extends Controller
@@ -27,11 +28,9 @@ class ItemsController extends Controller
     {
         //
         $user = $this->getUser();
-        $items = Item::with(['category', 'price', 'inventories' => function ($q) use ($user) {
-            $q->groupBy('item_id')->where('staff_id', $user->id)->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(sold) as total_sold'), \DB::raw('SUM(balance) as total_balance'));
-        }])->orderBy('name')->get();
+        $products = VanInventory::with(['item.price'])->groupBy('item_id')->where('staff_id', $user->id)->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(sold) as total_sold'), \DB::raw('SUM(balance) as total_balance'))->get();
 
-        return response()->json(compact('items'));
+        return response()->json(compact('products'));
     }
     public function fetchWarehouseProducts()
     {
