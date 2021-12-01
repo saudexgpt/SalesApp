@@ -136,4 +136,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('fetch', [VisitsController::class, 'index']);
         Route::post('store', [VisitsController::class, 'store']);
     });
+
+    Route::group(['prefix' => 'reports'], function () {
+        Route::get('customer-statement', [TransactionsController::class, 'customerStatement']);
+    });
 });

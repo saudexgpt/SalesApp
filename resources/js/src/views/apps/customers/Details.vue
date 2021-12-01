@@ -4,14 +4,14 @@
     <div v-if="customer">
       <vx-card class="mb-base">
         <div class="vx-row">
-          <div class="vx-col lg:w-5/6  w-full">
+          <div class="vx-col lg:w-3/5  w-3/5">
             <div class="flex items-end px-3">
               <feather-icon svg-classes="w-6 h-6" icon="UserIcon" class="mr-2" />
               <span class="font-medium text-lg">Customer Account</span>
             </div>
             <vs-divider />
           </div>
-          <div class="vx-col lg:w-1/6 w-full">
+          <div class="vx-col lg:w-2/5 w-2/5 pull-right">
             <div class="flex items-end px-3">
               <span class="vx-col flex-1">
                 <router-link
@@ -20,12 +20,24 @@
                   <el-button
                     round
                     class="filter-item"
+                    size="small"
                     type="danger"
                     icon="el-icon-back"
-                  >Go Back
+                  />
+                </router-link>
+                <router-link
+                  :to="'/report/customer-statement/' + $route.params.id"
+                >
+                  <el-button
+                    round
+                    type="success"
+                    size="small"
+                    icon="el-icon-view"
+                  >View Statement
                   </el-button>
                 </router-link>
               </span>
+
             </div>
           </div>
         </div>

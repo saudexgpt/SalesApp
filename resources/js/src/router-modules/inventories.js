@@ -7,7 +7,9 @@ const inventoryRoutes = {
   i18n: 'Inventory',
   slug: 'inventory',
   redirect: '/inventory/view',
-  roles: ['admin', 'super'],
+  meta: {
+    // roles: ['admin', 'super'],
+  },
   children: [
     {
       hidden: false,
@@ -25,7 +27,7 @@ const inventoryRoutes = {
       slug: 'add-inventory',
       i18n: 'Add Inventory',
       meta: {
-        // permissions: ['create-users', 'read-users', 'update-users', 'delete-users'],
+        permissions: ['add-stock'],
       },
     },
     // {

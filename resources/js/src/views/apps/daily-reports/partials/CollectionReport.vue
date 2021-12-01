@@ -12,7 +12,10 @@
       </thead>
       <tbody>
         <tr v-for="(customer, index) in visitedCustomersList" :key="index">
-          <td>{{ customer.business_name }}</td>
+          <td>
+            {{ customer.business_name }}
+            <el-button circle type="danger" icon="el-icon-delete" @click="removeExtraCustomer(customer.id)" />
+          </td>
           <!-- <td>0</td> -->
           <td>
             <el-input
@@ -34,6 +37,24 @@
             </el-select>
           </td>
           <!-- <td>0</td> -->
+        </tr>
+        <tr>
+          <td colspan="3">
+            <el-select
+              v-model="extra_customers"
+              placeholder="Select Customer"
+              filterable
+              style="width: 100%"
+              @input="addExtraCustomers($event)"
+            >
+              <el-option
+                v-for="(customer, item_index) in myCustomers"
+                :key="item_index"
+                :value="item_index"
+                :label="customer.business_name"
+              />
+            </el-select>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -59,9 +80,28 @@ export default {
         closing_debt: 0,
         payment_method: 'Cash',
       },
+
+      extra_customers: '',
     };
   },
   methods: {
+    addExtraCustomers(value) {
+      const app = this;
+      const customer_id = app.myCustomers[value].id;
+      if (!app.visitedCustomersList.filter(e => e.id === customer_id).length > 0) {
+        app.myCustomers[value].customer_id = customer_id;
+        app.myCustomers[value].payment_mode = 'later';
+        app.visitedCustomersList.push(app.myCustomers[value]);
+      }
+    },
+    removeExtraCustomer(customer_id) {
+      const app = this;
+      for (let count = 0; count < app.visitedCustomersList.length; count++) {
+        if (app.visitedCustomersList[count].id === customer_id) {
+          app.visitedCustomersList.splice(count, 1);
+        }
+      }
+    },
   },
 };
 </script>

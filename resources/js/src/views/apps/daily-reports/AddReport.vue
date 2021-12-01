@@ -1,21 +1,22 @@
 
 <template>
   <el-card>
-    <form-wizard :title="null" :subtitle="null" color="rgba(var(--vs-primary), 1)" finish-button-text="Submit" @on-complete="formSubmitted">
+    <!-- tab 1 content -->
+    <div title="Report Date" class="mb-5" icon="el-icon-date">
+      <strong>Pick Report Date</strong>
+      <el-date-picker
+        v-model="form.date"
+        :picker-options="pickerOptions"
+        type="date"
+        placeholder="Report Date"
+        style="width: 100%;"
+        format="dd-MM-yyyy"
+        value-format="yyyy-MM-dd"
+        @input="visitedCustomers()"
+      />
+    </div>
+    <form-wizard v-loading="loadForm" v-if="form.date !== ''" :title="null" :subtitle="null" color="rgba(var(--vs-primary), 1)" finish-button-text="Submit" @on-complete="formSubmitted">
 
-      <!-- tab 1 content -->
-      <tab-content title="Report Date" class="mb-5" icon="el-icon-date">
-        <el-date-picker
-          v-model="form.date"
-          :picker-options="pickerOptions"
-          type="date"
-          placeholder="Report Date"
-          style="width: 100%;"
-          format="dd-MM-yyyy"
-          value-format="yyyy-MM-dd"
-          @input="visitedCustomers()"
-        />
-      </tab-content>
       <tab-content title="Sales Report" class="mb-5" icon="feather icon-shopping-cart">
         <div v-if="show_reported_message">
           <reported-message />
@@ -97,6 +98,9 @@
           </div>
         </div>
       </tab-content>
+      <el-button slot="prev" type="danger">Back</el-button>
+      <el-button slot="next" type="primary">Next</el-button>
+      <el-button slot="finish" type="success">Submit</el-button>
     </form-wizard>
   </el-card>
 </template>
@@ -142,6 +146,7 @@ export default {
         hospital_report: [],
       },
       show_reported_message: false,
+      loadForm: false,
     };
   },
   created() {
@@ -164,6 +169,7 @@ export default {
       app.customersSalesList = [];
       app.visitedHospitalsList = [];
       app.show_reported_message = false;
+      app.loadForm = true;
       getCustomers.list(param).then((response) => {
         if (response.message === 'reported') {
           app.show_reported_message = true;
@@ -181,6 +187,7 @@ export default {
           });
           app.my_customers = response.my_customers;
         }
+        app.loadForm = false;
       });
     },
     formSubmitted() {

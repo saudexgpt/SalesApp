@@ -351,3 +351,25 @@
     }
   }
 }
+
+
+@media print {
+    #theme-customizer {
+        display: none !important;
+    }
+    .no-print {
+        display: none !important;
+    }
+    .v-nav-menu {
+        display: none !important;
+    }
+    .vs-sidebar{
+        display: none !important;
+    }
+    .vx-navbar-wrapper{
+        display: none !important;
+    }
+    .content-area-reduced {
+        margin-left: 0 !important;
+    }
+}

@@ -56,10 +56,35 @@ export default {
     canSee() {
       // this.$acl.check(this.$store.state.AppActiveUser.rights)
       // return this.to ? this.$acl.check(this.$router.match(this.to).meta.rule) : true
-      return true;
+      return this.canAccess(this.$store.getters.roles, this.$store.getters.permissions, this.$route); // true;
     },
     activeLink() {
       return !!((this.to === this.$route.path || this.$route.meta.parent === this.slug) && this.to);
+    },
+  },
+  methods: {
+    canAccess(roles, permissions, route) {
+      if (route.meta) {
+        let hasRole = true;
+        let hasPermission = true;
+        if (route.meta.roles || route.meta.permissions) {
+          // If it has meta.roles or meta.permissions, accessible = hasRole || permission
+          hasRole = false;
+          hasPermission = false;
+          if (route.meta.roles) {
+            hasRole = roles.some(role => route.meta.roles.includes(role));
+          }
+
+          if (route.meta.permissions) {
+            hasPermission = permissions.some(permission => route.meta.permissions.includes(permission));
+          }
+        }
+
+        return hasRole || hasPermission;
+      }
+
+      // If no meta.roles/meta.permissions inputted - the route should be accessible
+      return true;
     },
   },
 };

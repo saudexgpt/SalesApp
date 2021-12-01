@@ -55,6 +55,14 @@ const customersRoutes = {
       i18n: 'Customer Details',
       component: () => import('@/views/apps/customers/Details'),
     },
+
+    {
+        hidden: true,
+        path: '/report/customer-statement/:id(\\d+)',
+        name: 'CustomerStatement',
+        slug: 'CustomerStatement',
+        component: () => import('@/views/apps/customers/CustomerStatements'),
+      },
   ],
 };
 

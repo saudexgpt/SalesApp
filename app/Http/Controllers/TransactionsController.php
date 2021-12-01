@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\Item;
 use App\Models\Payment;
 use App\Models\Schedule;
@@ -10,6 +11,7 @@ use App\Models\Transaction;
 use App\Models\TransactionDetail;
 use App\Models\VanInventory;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class TransactionsController extends Controller
 {
@@ -317,6 +319,96 @@ class TransactionsController extends Controller
         }
     }
 
+    public function customerStatement(Request $request)
+    {
+        $customer_id = $request->customer_id;
+        $customer = Customer::find($customer_id);
+        $date_from = Carbon::now()->startOfMonth();
+        $date_to = Carbon::now()->endOfMonth();
+        $panel = 'month';
+        if (isset($request->from, $request->to)) {
+            $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
+            $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
+            $panel = $request->panel;
+        }
+        list($total_debt_till_date, $past_payments_till_date, $payments, $debts) = $this->getCustomerTransactions($customer_id, $date_from, $date_to);
+
+        $past_debt = ($total_debt_till_date) ? $total_debt_till_date->total_amount_due : 0;
+        $past_payments = ($past_payments_till_date) ? $past_payments_till_date->total_amount_paid : 0;
+
+        $brought_forward = (int)$past_debt - (int) $past_payments;
+        $statements = [];
+        if ($payments->isNotEmpty()) {
+            foreach ($payments as $payment) {
+                //$running_balance += $inbound->quantity;
+                $statements[]  = [
+                    'type' => 'paid',
+                    'amount_transacted' => $payment->total_amount_paid,
+                    'description' => '',
+                    'date' => $payment->created_at,
+                    'debt' => '',
+                    'paid' => $payment->total_amount_paid,
+                    'balance' => 0, // initially set to zero
+                    // 'packaging' => $inbound->item->package_type,
+                    // 'physical_quantity' => '',
+                    // 'sign' => '',
+                ];
+            }
+        }
+        if ($debts->isNotEmpty()) {
+            foreach ($debts as $debt) {
+                //$running_balance -= $outbound->quantity_supplied;
+                $statements[] = [
+                    'type' => 'debt',
+                    'amount_transacted' => $debt->amount_due,
+                    'description' => '',
+                    'date' => $debt->created_at,
+                    'debt' => $debt->amount_due,
+                    'paid' => '',
+                    'balance' => 0, // initially set to zero
+                    // 'packaging' => $outbound->itemStock->item->package_type,
+                    // 'physical_quantity' => '',
+                    // 'sign' => '',
+                ];
+            }
+        }
+        usort($statements, function ($a, $b) {
+            return strtotime($a['date']) - strtotime($b['date']);
+        });
+        $date_from_formatted = date('Y-m-d', strtotime($date_from));
+        $date_to_formatted = date('Y-m-d', strtotime($date_to));
+        return  response()->json(compact('statements', 'brought_forward', 'date_from_formatted', 'date_to_formatted', 'customer'), 200);
+    }
+
+    private function getCustomerTransactions($customer_id, $date_from, $date_to)
+    {
+
+        $total_debt_till_date = Transaction::groupBy('customer_id')
+            ->where('customer_id', $customer_id)
+            ->where('created_at', '<', $date_from)
+            // ->where('confirmed_by', '!=', null)
+            ->select('*', \DB::raw('SUM(amount_due) as total_amount_due'))
+            ->first();
+        $past_payments_till_date = Payment::groupBy('customer_id')
+            ->where('customer_id', $customer_id)
+            ->where('created_at', '<', $date_from)
+            // ->where('confirmed_by', '!=', null)
+            ->select('*', \DB::raw('SUM(amount) as total_amount_paid'))
+            ->first();
+
+        $payments = Payment::groupBy('payment_date')
+            ->where(['customer_id' => $customer_id])
+            ->where('created_at', '>=', $date_from)
+            ->where('created_at', '<=', $date_to)
+            ->select('*', \DB::raw('SUM(amount) as total_amount_paid'))
+            ->orderby('created_at')
+            ->get();
+        $debts = Transaction::where('customer_id', $customer_id)
+            ->where('created_at', '>=', $date_from)
+            ->where('created_at', '<=', $date_to)
+            ->get();
+        return array($total_debt_till_date, $past_payments_till_date, $payments, $debts);
+    }
     /**
      * Update the specified resource in storage.
      *

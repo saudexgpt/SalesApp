@@ -17,7 +17,10 @@
               <el-button circle type="primary" icon="el-icon-goods" @click="setCustomerSales(index, customer)" />
             </el-tooltip>
           </td>
-          <td>{{ customer.business_name }}</td>
+          <td>
+            {{ customer.business_name }}
+            <el-button circle type="danger" icon="el-icon-delete" @click="removeExtraCustomer(customer.id)" />
+          </td>
           <!-- <td>0</td> -->
           <td>{{ customer.amount }}</td>
           <td>
@@ -30,6 +33,24 @@
               format="yyyy/MM/dd"
               value-format="yyyy-MM-dd"
             />
+          </td>
+        </tr>
+        <tr>
+          <td colspan="4">
+            <el-select
+              v-model="extra_customers"
+              placeholder="Select Customer"
+              filterable
+              style="width: 100%"
+              @input="addExtraCustomers($event)"
+            >
+              <el-option
+                v-for="(customer, item_index) in myCustomers"
+                :key="item_index"
+                :value="item_index"
+                :label="customer.business_name"
+              />
+            </el-select>
           </td>
         </tr>
       </tbody>
@@ -143,6 +164,7 @@ export default {
       dialogVisible: false,
       fill_fields_error: false,
       showSaveButton: true,
+      extra_customers: '',
     };
   },
   methods: {
@@ -278,6 +300,23 @@ export default {
     //   ).toFixed(2);
     //   // subtract discount
     //   app.form.amount = parseFloat(subtotal - app.form.discount).toFixed(2);
+    },
+    addExtraCustomers(value) {
+      const app = this;
+      const customer_id = app.myCustomers[value].id;
+      if (!app.visitedCustomersList.filter(e => e.id === customer_id).length > 0) {
+        app.myCustomers[value].customer_id = customer_id;
+        app.myCustomers[value].payment_mode = 'later';
+        app.visitedCustomersList.push(app.myCustomers[value]);
+      }
+    },
+    removeExtraCustomer(customer_id) {
+      const app = this;
+      for (let count = 0; count < app.visitedCustomersList.length; count++) {
+        if (app.visitedCustomersList[count].id === customer_id) {
+          app.visitedCustomersList.splice(count, 1);
+        }
+      }
     },
   },
 };
