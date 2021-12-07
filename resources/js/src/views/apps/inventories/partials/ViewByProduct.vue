@@ -2,35 +2,35 @@
   <div v-loading="load_table" v-if="page==='list'">
     <div class="vx-row">
       <div class="vx-col lg:w-3/4 w-full">
-        <div class="flex items-end px-3">
+        <div class="flex staffs-end px-3">
           <feather-icon svg-classes="w-6 h-6" icon="ShoppingBagIcon" class="mr-2" />
-          <span class="font-medium text-lg">Inventory of Products {{ sub_title }}</span>
+          <span class="font-medium text-lg">Inventory {{ sub_title }}</span>
         </div>
         <vs-divider />
       </div>
       <div class="vx-col lg:w-1/4 w-full">
-        <div class="flex items-end px-3">
+        <div class="flex staffs-end px-3">
           <span class="pull-right">
             <el-select
-              v-model="selected_staff_index"
-              placeholder="Select Staff"
+              v-model="selected_item_index"
+              placeholder="Select Product"
               clearable
               style="width: 100%"
-              class="filter-item"
+              class="filter-staff"
               filterable
-              @change="viewByStaff"
+              @change="viewByProduct"
             >
               <el-option
-                v-for="(rep, index) in sales_reps"
+                v-for="(product, index) in products"
                 :key="index"
-                :label="rep.name"
+                :label="product.name"
                 :value="index"
               />
             </el-select>
             <!-- <el-button
                 :loading="downloading"
                 round
-                class="filter-item"
+                class="filter-staff"
                 type="primary"
                 icon="el-icon-download"
                 @click="handleDownload"
@@ -39,75 +39,91 @@
         </div>
       </div>
     </div>
-    <v-client-table
-      v-model="list"
-      :columns="columns"
-      :options="options"
-    >
-      <template slot="total_stocked" slot-scope="scope">
-        <span>{{ scope.row.total_stocked + ' ' + scope.row.item.package_type }}</span>
-      </template>
-      <template slot="total_sold" slot-scope="scope">
-        <span>{{ scope.row.total_sold + ' ' + scope.row.item.package_type }}</span>
-      </template>
-      <template slot="total_balance" slot-scope="scope">
-        <span>{{ scope.row.total_balance + ' ' + scope.row.item.package_type }}</span>
-      </template>
-      <template slot="action" slot-scope="scope">
-        <el-tooltip
-          class="item"
-          effect="dark"
-          content="View Stock Details"
-          placement="top-start"
-        >
-          <vs-button radius color="dark" type="filled" icon-pack="feather" icon="icon-eye" @click="showInventoryDetails(scope.row)"/>
-          <!-- <el-button
-            round
-            type="success"
-            size="small"
-            icon="el-icon-view"
-            @click="showInventoryDetails(scope.row)"
-          /> -->
-        </el-tooltip>
-      </template>
-    </v-client-table>
-    <vs-popup :active.sync="popupActive" :title="details_title">
-      <inventory-detail v-if="popupActive" :selected-item="selected_detail_item" />
-    </vs-popup>
+    <vs-tabs>
+      <vs-tab label="Main Inventory">
+        <div class="tab-text">
+          <br>
+
+          <v-client-table
+            v-model="inventories"
+            :columns="columns"
+            :options="options"
+          >
+            <template slot="total_stocked" slot-scope="scope">
+              <span>{{ scope.row.total_stocked + ' ' + scope.row.item.package_type }}</span>
+            </template>
+            <template slot="van_quantity" slot-scope="scope">
+              <span>{{ scope.row.van_quantity + ' ' + scope.row.item.package_type }}</span>
+            </template>
+            <template slot="total_balance" slot-scope="scope">
+              <span>{{ scope.row.total_balance + ' ' + scope.row.item.package_type }}</span>
+            </template>
+          </v-client-table>
+        </div>
+      </vs-tab>
+      <vs-tab label="Van Inventory">
+        <div class="tab-text">
+          <br>
+
+          <v-client-table
+            v-model="sub_inventories"
+            :columns="columns_2"
+            :options="options"
+          >
+            <template slot="total_stocked" slot-scope="scope">
+              <span>{{ scope.row.total_stocked + ' ' + scope.row.item.package_type }}</span>
+            </template>
+            <template slot="total_sold" slot-scope="scope">
+              <span>{{ scope.row.total_sold + ' ' + scope.row.item.package_type }}</span>
+            </template>
+            <template slot="total_balance" slot-scope="scope">
+              <span>{{ scope.row.total_balance + ' ' + scope.row.item.package_type }}</span>
+            </template>
+          </v-client-table>
+        </div>
+      </vs-tab>
+    </vs-tabs>
   </div>
 </template>
 
 <script>
 import moment from 'moment';
-import InventoryDetail from './InventoryDetail'; // Secondary package based on el-pagination
+import Pagination from '@/components/Pagination'; // Secondary package based on el-pagination
 import Resource from '@/api/resource';
 import permission from '@/directive/permission'; // Permission directive
 import checkPermission from '@/utils/permission'; // Permission checking
-const salesRepResource = new Resource('users/fetch-sales-reps');
-const staffResource = new Resource('inventory/view-by-staff');
+const productsResource = new Resource('products');
+const productInventoryResource = new Resource('inventory/view-by-product');
 export default {
   name: 'Customers',
-  components: { InventoryDetail },
+  components: { Pagination },
   directives: { permission },
   data() {
     return {
-      sales_reps: [],
-      selected_staff_index: '',
+      products: [],
+      selected_item_index: '',
       sub_title: '',
-      list: [],
+      inventories: [],
+      sub_inventories: [],
       columns: [
-        'item.name',
+        'staff.name',
+        'total_stocked',
+        'van_quantity',
+        'total_balance',
+      ],
+      columns_2: [
+        'staff.name',
         'total_stocked',
         'total_sold',
         'total_balance',
-        'action',
       ],
 
       options: {
         headings: {
-          'item.name': 'Product',
+          'staff.name': 'Staff',
           total_stocked: 'Total Stocked',
           total_sold: 'Total Sold',
+          van_quantity: 'Van Quantity',
           total_balance: 'Total Balance',
         },
         pagination: {
@@ -120,33 +136,24 @@ export default {
         //   filter: 'Search:',
         // },
         // editableColumns:['name', 'category.name', 'sku'],
-        sortable: ['item.name'],
-        filterable: ['item.name'],
+        sortable: ['staff.name'],
+        filterable: ['staff.name'],
       },
       page: 'list',
-      popupActive: false,
-      details_title: '',
-      selected_detail_item: '',
     };
   },
   created() {
-    this.fetchSalesReps();
+    this.fetchProducts();
   },
   methods: {
     moment,
     checkPermission,
-    showInventoryDetails(selected_item) {
-      const app = this;
-      app.details_title = 'Stock Details for ' + selected_item.item.name;
-      app.selected_detail_item = selected_item;
-      app.popupActive = true;
-    },
-    fetchSalesReps() {
+    fetchProducts() {
       this.load_table = true;
-      salesRepResource
+      productsResource
         .list()
         .then((response) => {
-          this.sales_reps = response.sales_reps;
+          this.products = response.items;
           this.load_table = false;
         })
         .catch((error) => {
@@ -154,16 +161,17 @@ export default {
           this.load_table = false;
         });
     },
-    viewByStaff() {
+    viewByProduct() {
       const app = this;
-      const staff = app.sales_reps[app.selected_staff_index];
-      const param = { staff_id: staff.id };
-      app.sub_title = 'for ' + staff.name;
+      const product = app.products[app.selected_item_index];
+      const param = { item_id: product.id };
+      app.sub_title = 'of ' + product.name;
       app.$vs.loading();
-      staffResource
+      productInventoryResource
         .list(param)
         .then((response) => {
-          app.list = response.inventories;
+          app.inventories = response.inventories;
+          app.sub_inventories = response.sub_inventories;
           app.$vs.loading.close();
         })
         .catch((error) => {
@@ -186,13 +194,13 @@ export default {
     export(export_data) {
       import('@/vendor/Export2Excel').then((excel) => {
         const tHeader = [
-          'PRODUCT',
+          'STAFF',
           'TOTAL STOCKED',
           'TOTAL SOLD',
           'TOTAL BALANCE',
         ];
         const filterVal = [
-          'item.name',
+          'staff.name',
           'total_stocked',
           'total_sold',
           'total_balance',
@@ -201,7 +209,7 @@ export default {
         excel.export_json_to_excel({
           header: tHeader,
           data,
-          filename: 'inventory-by-staff',
+          filename: 'inventory-by-product',
         });
         this.downloading = false;
       });
@@ -209,8 +217,8 @@ export default {
     formatJson(filterVal, jsonData) {
       return jsonData.map((v) =>
         filterVal.map((j) => {
-          if (j === 'item.name') {
-            return v['item']['name'];
+          if (j === 'staff.name') {
+            return v['staff']['name'];
           }
           return v[j];
         }),

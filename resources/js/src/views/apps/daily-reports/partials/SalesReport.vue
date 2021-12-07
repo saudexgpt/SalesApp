@@ -89,8 +89,11 @@
                   v-for="(product, item_index) in products"
                   :key="item_index"
                   :value="item_index"
-                  :label="product.item.name"
-                />
+                  :label="product.item.name + ' (Bal: ' + product.total_balance + ')'"
+                >
+                  <span style="float: left">{{ product.item.name }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">{{ ' (Bal: ' + product.total_balance + ')' }}</span>
+                </el-option>
               </el-select>
             </td>
             <td>
@@ -101,6 +104,7 @@
                 placeholder="Quantity"
                 min="1"
                 @input="calculateTotal(index);"
+                @blur="deductProduct(index);"
               />
             </td>
             <td>
@@ -222,10 +226,10 @@ export default {
         this.invoice_items.push({
           item_index: null,
           item_id: '',
-          quantity: 1,
+          quantity: 0,
           rate: '',
           delivery_mode: 'now',
-          quantity_supplied: 1,
+          quantity_supplied: 0,
           amount: 0,
         });
       }
@@ -236,6 +240,28 @@ export default {
         this.invoice_items.splice(detailId, 1);
         this.calculateTotal(null);
       }
+    },
+    deductProduct(index) {
+      const app = this;
+      const item_index = app.invoice_items[index].item_index;
+      const quantity = parseInt(app.invoice_items[index].quantity);
+      const quantity_supplied = app.invoice_items[index].quantity_supplied;
+      let balance = parseInt(app.products[item_index].total_balance) + parseInt(quantity_supplied);
+
+      if (balance >= quantity){
+        balance -= parseInt(quantity);
+
+        app.invoice_items[index].quantity_supplied = quantity;
+      } else {
+        app.invoice_items[index].quantity = 0;
+
+        app.invoice_items[index].quantity_supplied = 0;
+        // balance += (quantity_supplied) ? parseInt(quantity_supplied) : 0;
+        app.$alert('You are out of van product for supply. Kindly restock your van. You can do that under Inventory Menu');
+      }
+
+      app.products[item_index].total_balance = balance;
+      // const item = app.products[item_index].item;
     },
     clearForm() {
       this.invoice_items = [];
@@ -280,7 +306,7 @@ export default {
         app.invoice_items[index].amount = parseFloat(
           quantity * unit_rate,
         ).toFixed(2); // + parseFloat(tax);
-        app.invoice_items[index].quantity_supplied = quantity;
+        // app.invoice_items[index].quantity_supplied = quantity;
       }
 
       // we now calculate the running total of items invoiceed for with tax //////////

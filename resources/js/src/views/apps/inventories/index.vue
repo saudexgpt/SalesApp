@@ -20,8 +20,8 @@
 </template>
 
 <script>
-import ViewByProduct from './ViewByProduct';
-import ViewByStaff from './ViewByStaff';
+import ViewByProduct from './partials/ViewByProduct';
+import ViewByStaff from './partials/ViewByStaff';
 export default {
   name: 'Customers',
   components: { ViewByProduct, ViewByStaff },

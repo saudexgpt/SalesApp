@@ -18,6 +18,20 @@ const inventoryRoutes = {
       slug: 'view-inventory',
       i18n: 'View Inventory',
       component: () => import('@/views/apps/inventories'),
+      meta: {
+        roles: ['admin', 'super'],
+      },
+    },
+    {
+      hidden: false,
+      path: '/my-inventory',
+      name: 'MyInventory',
+      slug: 'my-inventory',
+      i18n: 'View Inventory',
+      component: () => import('@/views/apps/inventories/SalesRepInventory'),
+      meta: {
+        roles: ['sales_rep'],
+      },
     },
     {
       hidden: false,

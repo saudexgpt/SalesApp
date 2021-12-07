@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use App\Models\CustomerCall;
 use App\Models\CustomerContact;
+use App\Models\CustomerVerification;
 use App\Models\SampleCustomer;
 use App\Models\Schedule;
 use Illuminate\Http\Request;
@@ -52,7 +53,7 @@ class CustomersController extends Controller
         }
 
         $customers = $userQuery->with([
-            'customerType', /*'tier', 'subRegion', 'region',*/ 'registrar', 'assignedOfficer', 'verifier',
+            'customerType', /*'tier', 'subRegion', 'region',*/ 'registrar', 'assignedOfficer',
 
             'visits' => function ($q) {
                 $q->orderBy('id', 'DESC')->paginate(10);
@@ -97,7 +98,9 @@ class CustomersController extends Controller
     {
         $today  = date('Y-m-d', strtotime('now'));
         $customer = $customer::with([
-            'customerContacts', 'customerType', 'tier', 'subRegion', 'region', 'registrar', 'assignedOfficer', 'verifier',
+            'customerContacts', 'customerType', 'tier', 'subRegion', 'region', 'registrar', 'assignedOfficer', 'verifications.verifier' => function ($q) {
+                $q->orderBy('id', 'DESC');
+            },
             'payments' => function ($q) {
                 $q->orderBy('id', 'DESC');
             },
@@ -347,11 +350,13 @@ class CustomersController extends Controller
     public function verify(Customer $customer)
     {
         $user = $this->getUser();
+        $customer_verification = new CustomerVerification();
         $today  = date('Y-m-d', strtotime('now'));
-        $customer->verified_by = $user->id;
-        $customer->date_verified = $today;
-        $customer->save();
-        return $this->show($customer);
+        $customer_verification->verified_by = $user->id;
+        $customer_verification->customer_id = $customer->id;
+        $customer_verification->date = $today;
+        $customer_verification->save();
+        return $this->customerDetails($customer);
     }
 
 

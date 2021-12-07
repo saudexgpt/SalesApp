@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SubInventory;
+use App\Models\VanInventory;
 use Illuminate\Http\Request;
 
 class SubInventoriesController extends Controller
@@ -10,17 +11,30 @@ class SubInventoriesController extends Controller
     public function myInventory()
     {
         $user = $this->getUser();
+        // $inventories = SubInventory::with('item')
+        //     ->groupBy('item_id')
+        //     ->where('staff_id', $user->id)
+        //     ->where('balance', '>', 0)
+        //     ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(sold) as total_sold'), \DB::raw('SUM(balance) as total_balance'))
+        //     ->get();
+        // $sub_inventories = SubInventory::with('item')
+        //     ->where('staff_id', $user->id)
+        //     ->where('balance', '>', 0)
+        //     ->get()
+        //     ->groupBy('item_id');
+        // return response()->json(compact('inventories', 'sub_inventories'), 200);
         $inventories = SubInventory::with('item')
+            ->groupBy('item_id')
+            ->where('staff_id', $user->id)
+            ->where('balance', '>', 0)
+            ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(moved_to_van) as van_quantity'), \DB::raw('SUM(balance) as total_balance'))
+            ->get();
+        $sub_inventories = VanInventory::with('item')
             ->groupBy('item_id')
             ->where('staff_id', $user->id)
             ->where('balance', '>', 0)
             ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(sold) as total_sold'), \DB::raw('SUM(balance) as total_balance'))
             ->get();
-        $sub_inventories = SubInventory::with('item')
-            ->where('staff_id', $user->id)
-            ->where('balance', '>', 0)
-            ->get()
-            ->groupBy('item_id');
         return response()->json(compact('inventories', 'sub_inventories'), 200);
     }
     /**
@@ -35,9 +49,15 @@ class SubInventoriesController extends Controller
             ->groupBy('staff_id')
             ->where('item_id', $item_id)
             ->where('balance', '>', 0)
+            ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(moved_to_van) as van_quantity'), \DB::raw('SUM(balance) as total_balance'))
+            ->get();
+        $sub_inventories = VanInventory::with('staff', 'item')
+            ->groupBy('staff_id')
+            ->where('item_id', $item_id)
+            ->where('balance', '>', 0)
             ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(sold) as total_sold'), \DB::raw('SUM(balance) as total_balance'))
             ->get();
-        return response()->json(compact('inventories'), 200);
+        return response()->json(compact('inventories', 'sub_inventories'), 200);
     }
 
     public function viewByStaff(Request $request)
@@ -47,9 +67,15 @@ class SubInventoriesController extends Controller
             ->groupBy('item_id')
             ->where('staff_id', $staff_id)
             ->where('balance', '>', 0)
+            ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(moved_to_van) as van_quantity'), \DB::raw('SUM(balance) as total_balance'))
+            ->get();
+        $sub_inventories = VanInventory::with('item')
+            ->groupBy('item_id')
+            ->where('staff_id', $staff_id)
+            ->where('balance', '>', 0)
             ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(sold) as total_sold'), \DB::raw('SUM(balance) as total_balance'))
             ->get();
-        return response()->json(compact('inventories'), 200);
+        return response()->json(compact('inventories', 'sub_inventories'), 200);
     }
 
     /**
@@ -96,9 +122,28 @@ class SubInventoriesController extends Controller
      * @param  \App\Models\SubInventory  $subInventory
      * @return \Illuminate\Http\Response
      */
-    public function show(SubInventory $subInventory)
+    public function stockVan(Request $request, SubInventory $subInventory)
     {
-        //
+        $user = $this->getUser();
+        $van_inventory = new VanInventory();
+        $van_inventory->staff_id = $user->id;
+        $van_inventory->sub_inventory_id = $subInventory->id;
+        $van_inventory->item_id = $subInventory->item_id;
+        $van_inventory->quantity_stocked = $request->quantity;
+        $van_inventory->balance = $request->quantity;
+        $van_inventory->save();
+
+        $subInventory->moved_to_van += $request->quantity;
+        $subInventory->balance -= $request->quantity;
+        $subInventory->save();
+
+        $inventories = SubInventory::with('item')
+            ->groupBy('item_id')
+            ->where('staff_id', $user->id)
+            ->where('balance', '>', 0)
+            ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(moved_to_van) as van_quantity'), \DB::raw('SUM(balance) as total_balance'))
+            ->get();
+        return $inventories;
     }
 
     /**

@@ -84,6 +84,23 @@
           <el-tooltip
             class="item"
             effect="dark"
+            content="View Customer Statement"
+            placement="top-start"
+          >
+            <router-link
+              :to="'/report/customer-statement/' + scope.row.id"
+            >
+              <el-button
+                round
+                type="warning"
+                size="small"
+                icon="el-icon-document"
+              />
+            </router-link>
+          </el-tooltip>
+          <el-tooltip
+            class="item"
+            effect="dark"
             content="Edit User"
             placement="top-start"
           >

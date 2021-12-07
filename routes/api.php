@@ -91,6 +91,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('/view-details', [SubInventoriesController::class, 'viewDetails']);
         Route::post('store', [SubInventoriesController::class, 'store']);
         Route::get('/my-inventory', [SubInventoriesController::class, 'myInventory']);
+        Route::put('/stock-van/{subInventory}', [SubInventoriesController::class, 'stockVan']);
     });
     Route::group(['prefix' => 'products'], function () {
         Route::get('/', [ItemsController::class, 'index']);

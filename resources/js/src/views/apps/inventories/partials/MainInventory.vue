@@ -1,14 +1,14 @@
 <template>
-  <div v-loading="load_table" v-if="page==='list'">
+  <div v-if="page==='list'">
     <div class="vx-row">
       <div class="vx-col lg:w-3/4 w-full">
         <div class="flex staffs-end px-3">
           <feather-icon svg-classes="w-6 h-6" icon="ShoppingBagIcon" class="mr-2" />
-          <span class="font-medium text-lg">Inventory {{ sub_title }}</span>
+          <span class="font-medium text-lg">Main Inventory</span>
         </div>
         <vs-divider />
       </div>
-      <div class="vx-col lg:w-1/4 w-full">
+      <!-- <div class="vx-col lg:w-1/4 w-full">
         <div class="flex staffs-end px-3">
           <span class="pull-right">
             <el-select
@@ -27,31 +27,33 @@
                 :value="index"
               />
             </el-select>
-            <!-- <el-button
-                :loading="downloading"
-                round
-                class="filter-staff"
-                type="primary"
-                icon="el-icon-download"
-                @click="handleDownload"
-              >Export</el-button> -->
           </span>
         </div>
-      </div>
+      </div> -->
     </div>
     <v-client-table
-      v-model="list"
+      v-model="inventories"
       :columns="columns"
       :options="options"
     >
       <template slot="total_stocked" slot-scope="scope">
         <span>{{ scope.row.total_stocked + ' ' + scope.row.item.package_type }}</span>
       </template>
-      <template slot="total_sold" slot-scope="scope">
-        <span>{{ scope.row.total_sold + ' ' + scope.row.item.package_type }}</span>
+      <template slot="moved_to_van" slot-scope="scope">
+        <span>{{ scope.row.moved_to_van + ' ' + scope.row.item.package_type }}</span>
       </template>
       <template slot="total_balance" slot-scope="scope">
         <span>{{ scope.row.total_balance + ' ' + scope.row.item.package_type }}</span>
+      </template>
+      <template slot="action" slot-scope="props">
+        <el-button
+          v-if="checkRole(['sales_rep'])"
+          round
+          class="filter-item"
+          type="danger"
+          @click="stockVan(props.index, props.row)"
+        >Stock Van
+        </el-button>
       </template>
     </v-client-table>
   </div>
@@ -59,16 +61,16 @@
 
 <script>
 import moment from 'moment';
-import Pagination from '@/components/Pagination'; // Secondary package based on el-pagination
+import checkRole from '@/utils/role';
 import Resource from '@/api/resource';
-import permission from '@/directive/permission'; // Permission directive
-import checkPermission from '@/utils/permission'; // Permission checking
-const productsResource = new Resource('products');
-const productInventoryResource = new Resource('inventory/view-by-product');
+// import Pagination from '@/components/Pagination'; // Secondary package based on el-pagination
 export default {
-  name: 'Customers',
-  components: { Pagination },
-  directives: { permission },
+  props: {
+    inventories: {
+      type: Array,
+      default: () => [],
+    },
+  },
   data() {
     return {
       products: [],
@@ -76,17 +78,19 @@ export default {
       sub_title: '',
       list: [],
       columns: [
-        'staff.name',
+        'action',
+        'item.name',
         'total_stocked',
-        'total_sold',
+        'moved_to_van',
         'total_balance',
       ],
 
       options: {
         headings: {
-          'staff.name': 'Staff',
+          action: '',
+          'item.name': 'Product',
           total_stocked: 'Total Stocked',
-          total_sold: 'Total Sold',
+          moved_to_van: 'Moved To Van',
           total_balance: 'Total Balance',
         },
         pagination: {
@@ -99,47 +103,46 @@ export default {
         //   filter: 'Search:',
         // },
         // editableColumns:['name', 'category.name', 'sku'],
-        sortable: ['staff.name'],
-        filterable: ['staff.name'],
+        sortable: ['item.name'],
+        filterable: ['item.name'],
       },
       page: 'list',
     };
   },
-  created() {
-    this.fetchProducts();
-  },
   methods: {
     moment,
-    checkPermission,
-    fetchProducts() {
-      this.load_table = true;
-      productsResource
-        .list()
-        .then((response) => {
-          this.products = response.items;
-          this.load_table = false;
-        })
-        .catch((error) => {
-          console.log(error);
-          this.load_table = false;
+    checkRole,
+    stockVan(index, row) {
+      this.$prompt('Please input quantity to stock', 'Enter Quantity', {
+        confirmButtonText: 'OK',
+        cancelButtonText: 'Cancel',
+        inputType: 'number',
+        inputValue: row.balance,
+        inputValidator: function(value) {
+          return row.balance >= value;
+        },
+        inputErrorMessage: 'Overflow Value',
+      }).then(({ value }) => {
+        if (row.balance >= value) {
+          const stockVanResource = new Resource('inventory/stock-van');
+          const param = { quantity: value };
+          stockVanResource.update(row.id, param)
+            .then(response => {
+              this.inventories = response;
+              this.$message({
+                type: 'success',
+                message: 'Van Stocked Successfully',
+              });
+            });
+        } else {
+          this.$alert('Quantity should not be more than ' + row.balance);
+        }
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: 'Van Stocking canceled',
         });
-    },
-    viewByProduct() {
-      const app = this;
-      const product = app.products[app.selected_item_index];
-      const param = { item_id: product.id };
-      app.sub_title = 'of ' + product.name;
-      app.$vs.loading();
-      productInventoryResource
-        .list(param)
-        .then((response) => {
-          app.list = response.inventories;
-          app.$vs.loading.close();
-        })
-        .catch((error) => {
-          console.log(error);
-          app.$vs.loading.close();
-        });
+      });
     },
     handleDownload(){
       const app = this;

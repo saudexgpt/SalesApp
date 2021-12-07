@@ -36,6 +36,15 @@
                   >View Statement
                   </el-button>
                 </router-link>
+                <el-button
+                  v-if="checkPermission(['verify-customers'])"
+                  round
+                  type="primary"
+                  size="small"
+                  icon="el-icon-thumb"
+                  @click="verifyCustomer(customer.id)"
+                >Verify
+                </el-button>
               </span>
 
             </div>
@@ -114,27 +123,23 @@
         <div class="vx-col lg:w-1/2 w-full">
           <vx-card class="mb-base">
             <div class="flex items-end px-3">
-              <feather-icon svg-classes="w-6 h-6" icon="UsersIcon" class="mr-2" />
-              <span class="font-medium text-lg leading-none">Contacts Information</span>
+              <feather-icon svg-classes="w-6 h-6" icon="ThumbsUpIcon" class="mr-2" />
+              <span class="font-medium text-lg leading-none">Verifications</span>
             </div>
             <vs-divider />
             <div class="block overflow-x-auto">
               <table class="table table-striped">
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Phone No.</th>
-                    <th>Alt No.</th>
-                    <th>Role</th>
+                    <th>Verified By</th>
+                    <th>Date</th>
                   </tr>
                 </thead>
                 <tbody>
 
-                  <tr v-for="(contact, index) in customer.customer_contacts" :key="index">
-                    <td class="px-3 py-2">{{ contact.name }}</td>
-                    <td class="px-3 py-2">{{ contact.phone1 }}</td>
-                    <td class="px-3 py-2">{{ contact.phone2 }}</td>
-                    <td class="px-3 py-2">{{ contact.role }}</td>
+                  <tr v-for="(verification, index) in customer.verifications" :key="index">
+                    <td class="px-3 py-2">{{ verification.verifier.name }}</td>
+                    <td class="px-3 py-2">{{ moment(verification.created_at).format('lll') }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -172,6 +177,34 @@
         </div>
 
         <div v-loading="loader" class="vx-col lg:w-1/2 w-full">
+          <vx-card class="mb-base">
+            <div class="flex items-end px-3">
+              <feather-icon svg-classes="w-6 h-6" icon="UsersIcon" class="mr-2" />
+              <span class="font-medium text-lg leading-none">Contacts Information</span>
+            </div>
+            <vs-divider />
+            <div class="block overflow-x-auto">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Phone No.</th>
+                    <th>Alt No.</th>
+                    <th>Role</th>
+                  </tr>
+                </thead>
+                <tbody>
+
+                  <tr v-for="(contact, index) in customer.customer_contacts" :key="index">
+                    <td class="px-3 py-2">{{ contact.name }}</td>
+                    <td class="px-3 py-2">{{ contact.phone1 }}</td>
+                    <td class="px-3 py-2">{{ contact.phone2 }}</td>
+                    <td class="px-3 py-2">{{ contact.role }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </vx-card>
           <vx-card class="mb-base">
             <div class="flex items-end px-3">
               <feather-icon svg-classes="w-6 h-6" icon="MapPinIcon" class="mr-2" />
@@ -312,6 +345,7 @@
 
 <script>
 import moment from 'moment';
+import checkPermission from '@/utils/permission';
 import 'swiper/dist/css/swiper.min.css';
 import { swiper, swiperSlide } from 'vue-awesome-swiper';
 import Resource from '@/api/resource';
@@ -376,11 +410,29 @@ export default {
   },
   methods: {
     moment,
+    checkPermission,
+
     // loadMap() {
     //   this.$refs.mapRef.$mapPromise.then((map) => {
     //     map.panTo({ lat: this.customer.latitude, lng: this.customer.longitude });
     //   });
     // },
+    verifyCustomer(id) {
+      const app = this;
+      const storeResource = new Resource('customers/verify');
+      app.$confirm('Click OK to confirm customer verification', 'Warning', {
+        confirmButtonText: 'OK',
+        cancelButtonText: 'Cancel',
+        type: 'warning',
+      }).then(() => {
+        app.loader = true;
+        storeResource.update(id)
+          .then(response => {
+            app.customer = response.customer;
+            app.loader = false;
+          });
+      }).catch(() => {});
+    },
     fetchDetails() {
       const id = this.$route.params && this.$route.params.id;
       this.loader = true;
