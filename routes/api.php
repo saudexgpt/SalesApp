@@ -92,6 +92,9 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('store', [SubInventoriesController::class, 'store']);
         Route::get('/my-inventory', [SubInventoriesController::class, 'myInventory']);
         Route::put('/stock-van/{subInventory}', [SubInventoriesController::class, 'stockVan']);
+        Route::post('stock-product-from-warehouse', [ItemsController::class, 'stockProductsFromWarehouse']);
+        Route::put('accept-warehouse-products/{warehouse_stock}', [SubInventoriesController::class, 'acceptWarehouseProducts']);
+        Route::get('/warehouse-stock', [SubInventoriesController::class, 'showWarehouseStock']);
     });
     Route::group(['prefix' => 'products'], function () {
         Route::get('/', [ItemsController::class, 'index']);
@@ -104,6 +107,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix' => 'sales'], function () {
         Route::get('orders', [TransactionsController::class, 'orders']);
         Route::get('fetch', [TransactionsController::class, 'fetchSales']);
+        Route::get('fetch-debts', [TransactionsController::class, 'fetchDebts']);
+
 
         Route::post('store', [TransactionsController::class, 'store']); //->middleware('permission:create-sales');
         Route::put('supply-orders/{transaction_detail}', [TransactionsController::class, 'supplyOrders']);

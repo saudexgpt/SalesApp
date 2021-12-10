@@ -15,7 +15,28 @@
               <el-button circle type="primary" icon="el-icon-goods" @click="setVisitDetails(index, customer)" />
             </el-tooltip>
           </td>
-          <td>{{ customer.business_name }}</td>
+          <td>
+            {{ customer.business_name }}
+            <el-button circle type="danger" icon="el-icon-delete" @click="removeExtraCustomer(customer.id)" />
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2">
+            <el-select
+              v-model="extra_customers"
+              placeholder="Select Customer"
+              filterable
+              style="width: 100%"
+              @input="addExtraCustomers($event)"
+            >
+              <el-option
+                v-for="(customer, item_index) in myCustomers"
+                :key="item_index"
+                :value="item_index"
+                :label="customer.business_name"
+              />
+            </el-select>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -141,6 +162,7 @@ export default {
       contacts: [],
       selected_index: '',
       customer_name: '',
+      extra_customers: '',
     };
   },
   methods: {
@@ -194,6 +216,23 @@ export default {
       app.visitedCustomersList[app.selected_index].hospital_visit_details = hospital_visit_details;
       // console.log(app.visitedCustomersList[app.selected_index]);
       this.dialogVisible = false;
+    },
+    addExtraCustomers(value) {
+      const app = this;
+      const customer_id = app.myCustomers[value].id;
+      if (!app.visitedCustomersList.filter(e => e.id === customer_id).length > 0) {
+        app.myCustomers[value].customer_id = customer_id;
+        app.myCustomers[value].payment_mode = 'later';
+        app.visitedCustomersList.push(app.myCustomers[value]);
+      }
+    },
+    removeExtraCustomer(customer_id) {
+      const app = this;
+      for (let count = 0; count < app.visitedCustomersList.length; count++) {
+        if (app.visitedCustomersList[count].id === customer_id) {
+          app.visitedCustomersList.splice(count, 1);
+        }
+      }
     },
   },
 };

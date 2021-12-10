@@ -7,6 +7,7 @@ use App\Models\Item;
 use App\Models\ItemPrice;
 use App\Models\ItemTax;
 use App\Models\VanInventory;
+use App\Models\WarehouseStock;
 use Illuminate\Http\Request;
 
 class ItemsController extends Controller
@@ -56,6 +57,66 @@ class ItemsController extends Controller
         // $products = file_get_contents('http://localhost:8080/api/get-warehouse-products');
         // print_r($products);
     }
+
+    public function stockProductsFromWarehouse()
+    {
+        $user_id = $this->getUser()->id;
+        // Create a stream
+        set_time_limit(0);
+        $parameters = [
+            "rep" => $user_id
+        ];
+
+        $params =  http_build_query($parameters);
+
+        $opts = array(
+            'http' => [
+                'method'  => 'POST',
+                'header'  => 'Content-type: application/x-www-form-urlencoded',
+                'content' => $params
+            ]
+        );
+
+        // DOCS: https://www.php.net/manual/en/function.stream-context-create.php
+        $context = stream_context_create($opts);
+
+        // Open the file using the HTTP headers set above
+        // DOCS: https://www.php.net/manual/en/function.file-get-contents.php
+        // $products =  file_get_contents('https://gpl.3coretechnology.com/api/rep-stock?rep='.$user_id, false, $context);
+        $products =  file_get_contents('http://localhost:8001/api/rep-stock', false, $context);
+        $products_in_json =  json_decode($products);
+        $items = $products_in_json->items;
+        $this->storeWarehouseStock($user_id, $items);
+        // return $this->showWarehouseStock();
+        // $products = file_get_contents('http://localhost:8080/api/get-warehouse-products');
+        // print_r($products);
+    }
+    private function storeWarehouseStock($user_id, $items)
+    {
+        //
+        // $user = $this->getUser();
+        foreach ($items as $warehouse_item) {
+            $id = $warehouse_item->id;
+            $waybill_item_id = $warehouse_item->waybill_item_id;
+            $item_stock_sub_batch_id = $warehouse_item->item_stock_sub_batch_id;
+            $stock = WarehouseStock::where(['dispatched_product_id' => $id, 'waybill_item_id' => $waybill_item_id, 'item_stock_sub_batch_id' => $item_stock_sub_batch_id])->first();
+            if (!$stock) {
+                $stock = new WarehouseStock();
+                $stock->dispatched_product_id = $id;
+                $stock->waybill_item_id = $waybill_item_id;
+                $stock->item_stock_sub_batch_id = $item_stock_sub_batch_id;
+
+                $stock->user_id = $user_id;
+                $stock->item_id = $warehouse_item->item_id;
+                $stock->quantity_supplied = $warehouse_item->total_quantity_supplied;
+                // $stock->sku = $sku;
+                $stock->batch_no = $warehouse_item->batch_no;
+                $stock->sub_batch_no = $warehouse_item->sub_batch_no;
+                $stock->save();
+            }
+        }
+    }
+
 
     /**
      * Display the specified resource.

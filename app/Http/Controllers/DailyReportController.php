@@ -7,6 +7,7 @@ use App\Models\CustomerReport;
 use App\Models\DailyReport;
 use App\Models\HospitalReport;
 use App\Models\Payment;
+use App\Models\ReturnedProduct;
 use App\Models\Schedule;
 use App\Models\Transaction;
 use App\Models\Visit;
@@ -31,7 +32,7 @@ class DailyReportController extends Controller
             $visits = Visit::with(['customer' => function ($q) {
                 $q->select('id', 'customer_type_id', 'business_name');
             }, 'customer.customerContacts'])->where('visitor', $user->id)->where('visit_date', $date)->get();
-            $my_customers = Customer::where('relating_officer', $user->id)->get();
+            $my_customers = Customer::with('customerContacts')->where('relating_officer', $user->id)->get();
             return response()->json(compact('message', 'visits', 'my_customers'), 200);
         }
         return response()->json(['message' => 'reported'], 200);
@@ -70,7 +71,7 @@ class DailyReportController extends Controller
 
             $sales_details = Transaction::with(['customer', 'payments' => function ($q) {
                 $q->orderBy('id', 'DESC');
-            }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('field_staff', $user_id)->where('created_at', 'LIKE', '%' . $report_details->date . '%')->orderBy('id', 'DESC')->get();
+            }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('field_staff', $user_id)->where('entry_date', 'LIKE', '%' . $report_details->date . '%')->orderBy('id', 'DESC')->get();
 
             $payments = Payment::with('customer')->groupBy('customer_id')->where('payment_date', 'LIKE', '%' . $report_details->date . '%')->where('received_by', $user_id)->select('*', \DB::raw('SUM(amount) as total'))->get();
         }
@@ -80,7 +81,7 @@ class DailyReportController extends Controller
     public function store(Request $request)
     {
         $user = $this->getUser();
-        $date = date('Y-m-d', strtotime('now'));
+        $date = date('Y-m-d', strtotime($request->date));
         $existing_report = DailyReport::where('date', 'LIKE', '%' . $date . '%')
             ->where('report_by', $user->id)
             ->first();
@@ -105,6 +106,11 @@ class DailyReportController extends Controller
 
                     $hospital_report = json_decode(json_encode($request->hospital_report));
                     $this->saveHospitalReport($daily_report->id, $hospital_report);
+                }
+
+                if (isset($request->returns_report) && $request->returns_report != '') {
+                    $returns_report = json_decode(json_encode($request->returns_report));
+                    $this->saveReturnsReport($returns_report);
                 }
             }
         }
@@ -137,6 +143,24 @@ class DailyReportController extends Controller
                 $hosp_report->save();
 
                 $this->saveSchedule($hosp_report->customer_id, $hosp_report->follow_up_schedule);
+            }
+        }
+    }
+    private function saveReturnsReport($returns_report)
+    {
+        $user = $this->getUser();
+        foreach ($returns_report as $return_report) {
+            $details = json_decode(json_encode($return_report->returns));
+            foreach ($details as $detail) {
+
+                $return = new ReturnedProduct();
+                $return->customer_id = $return_report->customer_id;
+                $return->item_id = $detail->product_id;
+                $return->expiry_date = date('Y-m-d', strtotime($detail->expiry_date));
+                $return->stocked_by = $user->id;
+                $return->quantity = $detail->quantity_returned;
+                $return->reason = $detail->reason;
+                $return->save();
             }
         }
     }

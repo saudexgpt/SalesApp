@@ -64,6 +64,7 @@
           <tr>
             <th/>
             <th>Product</th>
+            <th>Package Type</th>
             <th>Quantity Sold</th>
             <th>Rate (NGN)</th>
             <th>Total (NGN)</th>
@@ -96,6 +97,7 @@
                 </el-option>
               </el-select>
             </td>
+            <td>{{ sale.type }}</td>
             <td>
               <el-input
                 v-model="sale.quantity"
@@ -194,14 +196,17 @@ export default {
       const app = this;
       const invoice_items = app.invoice_items;
       var total_sales = 0;
+      var original_total_amount = 0;
       for (let count = 0; count < invoice_items.length; count++) {
         // const tax_rate = app.invoice_items[count].tax;
         // const quantity = app.invoice_items[count].quantity;
         // const unit_rate = app.invoice_items[count].rate;
         // total_tax += parseFloat(tax_rate * quantity * unit_rate);
         total_sales += parseFloat(app.invoice_items[count].amount);
+        original_total_amount += parseFloat(app.invoice_items[count].main_amount);
       }
       app.visitedCustomersList[app.selected_index].amount = total_sales;
+      app.visitedCustomersList[app.selected_index].main_amount = original_total_amount;
       app.visitedCustomersList[app.selected_index].invoice_items = invoice_items;
       // console.log(app.visitedCustomersList[app.selected_index]);
       this.dialogVisible = false;
@@ -272,6 +277,7 @@ export default {
       const app = this;
       const item_index = app.invoice_items[index].item_index;
       const item = app.products[item_index].item;
+      app.invoice_items[index].main_rate = item.price.sale_price;
       app.invoice_items[index].rate = item.price.sale_price;
       app.invoice_items[index].item_id = item.id;
       app.invoice_items[index].type = item.package_type;
@@ -303,9 +309,13 @@ export default {
       if (index !== null) {
         const quantity = app.invoice_items[index].quantity;
         const unit_rate = app.invoice_items[index].rate;
+        const main_unit_rate = app.invoice_items[index].main_rate;
         app.invoice_items[index].amount = parseFloat(
           quantity * unit_rate,
-        ).toFixed(2); // + parseFloat(tax);
+        ).toFixed(2);
+        app.invoice_items[index].main_amount = parseFloat(
+          quantity * main_unit_rate,
+        ).toFixed(2);// + parseFloat(tax);
         // app.invoice_items[index].quantity_supplied = quantity;
       }
 

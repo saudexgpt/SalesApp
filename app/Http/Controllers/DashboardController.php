@@ -17,19 +17,24 @@ class DashboardController extends Controller
         // let's fetch this user's customers
         $customers = $user->customers;
 
-        $sales = $user->transactions()->where('payment_status', 'paid')->count();
+        /// $sales = $user->transactions()->where('payment_status', 'paid')->count();
+        $all_sales = $user->transactions()->select(\DB::raw('SUM(amount_due) as amount_due'))->first();
         // $payment = $user->transactions()->where('payment_status', 'paid')->select(\DB::raw('SUM(amount_due) as amount_due'))->first();
-        $all_debt = $user->transactions()->where('payment_status', 'unpaid')->select(\DB::raw('SUM(amount_due) as amount_due'))->first();
+        $all_debt = $user->transactions()->where('payment_status', 'unpaid')->select(\DB::raw('SUM(amount_due - amount_paid) as amount_due'))->first();
 
-        $all_overdue = $user->transactions()->where('payment_status', 'unpaid')->where('due_date', '<=', $today)->select(\DB::raw('SUM(amount_due) as amount_due'))->first();
+        $all_overdue = $user->transactions()->where('payment_status', 'unpaid')->where('due_date', '<=', $today)->select(\DB::raw('SUM(amount_due - amount_paid) as amount_due'))->first();
 
         $overdue = 0;
         $debt = 0;
+        $sales = 0;
         if ($all_overdue) {
             $overdue = ($all_overdue->amount_due) ? $all_overdue->amount_due : 0;
         }
         if ($all_debt) {
             $debt = ($all_debt->amount_due) ? $all_debt->amount_due : 0;
+        }
+        if ($all_sales) {
+            $sales = ($all_sales->amount_due) ? $all_sales->amount_due : 0;
         }
 
         $today_orders = $user->transactions()->with('customer', 'details')->where('created_at', '>=', $today)->orderBy('id', 'DESC')->get();

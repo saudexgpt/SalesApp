@@ -35,6 +35,17 @@ const inventoryRoutes = {
     },
     {
       hidden: false,
+      component: () => import('@/views/apps/inventories/AddWarehouseSupplies'),
+      path: '/inventory/warehouse',
+      name: 'AddSupplies',
+      slug: 'add-supplied',
+      i18n: 'Warehouse Supplies',
+      meta: {
+        roles: ['sales_rep'],
+      },
+    },
+    {
+      hidden: false,
       component: () => import('@/views/apps/inventories/AddInventory'),
       path: '/inventory/add',
       name: 'AddInventory',

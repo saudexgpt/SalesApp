@@ -35,6 +35,15 @@
           <collection-report :visited-customers-list="customersCollectionList" :my-customers="my_customers" />
         </div>
       </tab-content>
+      <tab-content title="Product Returned Report" class="mb-5" icon="el-icon-sell">
+        <div v-if="show_reported_message">
+          <reported-message />
+        </div>
+        <div v-else>
+          <!-- tab 2 content -->
+          <returns-report :customers-returns-list="customersReturnsList" :my-customers="my_customers" :products="products" />
+        </div>
+      </tab-content>
 
       <!-- tab 3 content -->
       <tab-content title="Hospital Visit Report" class="mb-5" icon="el-icon-office-building">
@@ -42,7 +51,7 @@
           <reported-message />
         </div>
         <div v-else>
-          <hospital-visit-report :visited-customers-list="visitedHospitalsList" :my-customers="my_customers" :products="products" />
+          <hospital-visit-report :visited-customers-list="visitedHospitalsList" :my-customers="my_hospital_customers" :products="products" />
         </div>
       </tab-content>
       <tab-content title="General Report" class="mb-5" icon="el-icon-guide">
@@ -100,7 +109,7 @@
       </tab-content>
       <el-button slot="prev" type="danger">Back</el-button>
       <el-button slot="next" type="primary">Next</el-button>
-      <el-button slot="finish" type="success">Submit</el-button>
+      <el-button slot="finish" :disabled="show_reported_message" type="success">Submit</el-button>
     </form-wizard>
   </el-card>
 </template>
@@ -111,6 +120,7 @@ import 'vue-form-wizard/dist/vue-form-wizard.min.css';
 import ReportedMessage from './partials/ReportedMessage';
 import CollectionReport from './partials/CollectionReport';
 import SalesReport from './partials/SalesReport';
+import ReturnsReport from './partials/ReturnsReport';
 import HospitalVisitReport from './partials/HospitalVisitReport';
 import Resource from '@/api/resource';
 export default {
@@ -120,6 +130,7 @@ export default {
     ReportedMessage,
     CollectionReport,
     SalesReport,
+    ReturnsReport,
     HospitalVisitReport,
   },
   data() {
@@ -134,6 +145,8 @@ export default {
       customersCollectionList: [],
       customersSalesList: [],
       visitedHospitalsList: [],
+      customersReturnsList: [],
+      my_hospital_customers: [],
       my_customers: [],
       products: [],
       form: {
@@ -168,6 +181,7 @@ export default {
       app.customersCollectionList = [];
       app.customersSalesList = [];
       app.visitedHospitalsList = [];
+      app.customersReturnsList = [];
       app.show_reported_message = false;
       app.loadForm = true;
       getCustomers.list(param).then((response) => {
@@ -180,9 +194,17 @@ export default {
             element.customer.payment_mode = 'later';
             app.customersCollectionList.push(element.customer);
             app.customersSalesList.push(element.customer);
+            app.customersReturnsList.push(element.customer);
             // Hospital has customer_type_id to be 1
             if (element.customer.customer_type_id === 1) {
               app.visitedHospitalsList.push(element.customer);
+            }
+          });
+          const my_customers = response.my_customers;
+          my_customers.forEach(element => {
+            // Hospital has customer_type_id to be 1
+            if (element.customer_type_id === 1) {
+              app.my_hospital_customers.push(element);
             }
           });
           app.my_customers = response.my_customers;
@@ -202,22 +224,23 @@ export default {
           message: 'Sending...',
         });
         const param = app.form;
-        const unsaved_orders = { unsaved_orders: app.customersSalesList };
+        const unsaved_orders = { unsaved_orders: app.customersSalesList, date: param.date };
         const submitSales = new Resource('sales/store');
-        submitSales.store(unsaved_orders).then((response) => {
-          console.log(response);
+        submitSales.store(unsaved_orders).then(() => {
+          // console.log(response);
         });
 
         param.customers_report = app.customersCollectionList;
         param.hospital_report = app.visitedHospitalsList;
+        param.returns_report = app.customersReturnsList;
         const submitReport = new Resource('daily-report/store');
-        submitReport.store(param).then((response) => {
+        submitReport.store(param).then(() => {
           this.$message({
             type: 'success',
             message: 'Report Submitted',
           });
-
-          console.log(response);
+          this.$router.replace({ path: '/daily-reports' });
+          // console.log(response);
         });
       }).catch(() => {});
     },

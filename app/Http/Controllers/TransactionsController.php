@@ -29,14 +29,45 @@ class TransactionsController extends Controller
         }, 'payments.transaction.staff', 'payments.confirmer', 'details'])/*->where('delivery_status', 'pending')*/->orderBy('id', 'DESC')->get();
         return response()->json(compact('orders'), 200);
     }
+    public function fetchDebts(Request $request)
+    {
+        $user = $this->getUser();
+        $date_from = Carbon::now()->startOfMonth();
+        $date_to = Carbon::now()->endOfMonth();
+        $panel = 'month';
+        $currency = $this->currency();
+        if (isset($request->from, $request->to, $request->panel)) {
+            $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
+            $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
+            $panel = $request->panel;
+        }
+        $delivery_status = $request->delivery_status;
+        $debts = $user->transactions()->with(['customer', 'payments' => function ($q) {
+            $q->orderBy('id', 'DESC');
+        }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->whereRaw('amount_due - amount_paid > 0')->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->orderBy('id', 'DESC')->paginate(10);
+        $date_from = date('d-m-Y', strtotime($date_from));
+        $date_to = date('d-m-Y', strtotime($date_to));
+        return response()->json(compact('debts', 'currency', 'date_from', 'date_to'), 200);
+    }
     public function fetchSales(Request $request)
     {
         $user = $this->getUser();
+        $date_from = Carbon::now()->startOfMonth();
+        $date_to = Carbon::now()->endOfMonth();
+        $panel = 'month';
+        $currency = $this->currency();
+        if (isset($request->from, $request->to, $request->panel)) {
+            $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
+            $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
+            $panel = $request->panel;
+        }
         $delivery_status = $request->delivery_status;
         $sales = $user->transactions()->with(['customer', 'payments' => function ($q) {
             $q->orderBy('id', 'DESC');
-        }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where(['payment_status' => 'paid', 'delivery_status' => $delivery_status])->orderBy('id', 'DESC')->paginate(10);
-        return response()->json(compact('sales'), 200);
+        }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->orderBy('id', 'DESC')->paginate(10);
+        $date_from = date('d-m-Y', strtotime($date_from));
+        $date_to = date('d-m-Y', strtotime($date_to));
+        return response()->json(compact('sales', 'currency', 'date_from', 'date_to'), 200);
     }
 
     /**
@@ -73,7 +104,10 @@ class TransactionsController extends Controller
                 $invoice->field_staff    = $user->id;
                 $invoice->payment_status = ($unsaved_order->payment_mode == 'now') ? 'paid' : 'unpaid';
                 $invoice->amount_due     = $unsaved_order->amount;
+                $invoice->main_amount     = $unsaved_order->main_amount;
+
                 $invoice->due_date       = ($unsaved_order->payment_mode == 'later') ? date('Y-m-d', strtotime($date)) : date('Y-m-d', strtotime('now'));
+                $invoice->entry_date = ($request->date) ? date('Y-m-d', strtotime($request->date)) : null;
                 if ($invoice->save()) {
 
                     $invoice->invoice_no = $this->getInvoiceNo($prefix, $invoice->id);
@@ -125,6 +159,8 @@ class TransactionsController extends Controller
             //     $invoice_item->quantity_supplied = $item->quantity_supplied;
             // }
             $invoice_item->packaging = $item->type;
+            $invoice_item->main_rate = $item->main_rate;
+            $invoice_item->main_amount = $item->main_amount;
             $invoice_item->rate = $item->rate;
             $invoice_item->amount = $item->amount;
             $invoice_item->save();
@@ -169,13 +205,14 @@ class TransactionsController extends Controller
 
     private function makePayments($transaction)
     {
-        $user = $this->getUser()->id;
+        $user = $this->getUser();
+        $date = ($transaction->entry_date != null) ? date('Y-m-d H:i:s', strtotime($transaction->entry_date))  : date('Y-m-d H:i:s', strtotime('now'));;
         // $batches = $item->batches;
         $payment = new Payment();
         $payment->transaction_id = $transaction->id;
         $payment->customer_id = $transaction->customer_id;
         $payment->amount = $transaction->amount_due;
-        $payment->payment_date = date('Y-m-d H:i:s', strtotime('now'));
+        $payment->payment_date = $date;
         $payment->received_by = $user->id;
         if ($payment->save()) {
             $transaction->amount_paid = $transaction->amount_due;
@@ -185,11 +222,12 @@ class TransactionsController extends Controller
 
     private function payAmount($transaction, $amount)
     {
-        $user = $this->getUser()->id;
+        $user = $this->getUser();
         $customer_id = $transaction->customer_id;
         $customer_transactions = Transaction::where('customer_id', $customer_id)->whereRaw('amount_due - amount_paid > 0')->orderBy('id')->get();
         foreach ($customer_transactions as $customer_transaction) {
             $debt = $customer_transaction->amount_due - $customer_transaction->amount_paid;
+            $date = ($customer_transaction->entry_date != null) ? date('Y-m-d H:i:s', strtotime($customer_transaction->entry_date))  : date('Y-m-d H:i:s', strtotime('now'));
             if ($debt <= $amount) {
 
                 $customer_transaction->amount_paid += $debt;
@@ -200,7 +238,7 @@ class TransactionsController extends Controller
                 $payment->transaction_id = $customer_transaction->id;
                 $payment->customer_id = $customer_transaction->customer_id;
                 $payment->amount = $debt;
-                $payment->payment_date = date('Y-m-d H:i:s', strtotime('now'));
+                $payment->payment_date = $date;
                 $payment->received_by = $user->id;
                 $payment->save();
 
@@ -213,7 +251,7 @@ class TransactionsController extends Controller
                 $payment->transaction_id = $customer_transaction->id;
                 $payment->customer_id = $customer_transaction->customer_id;
                 $payment->amount = $amount;
-                $payment->payment_date = date('Y-m-d H:i:s', strtotime('now'));
+                $payment->payment_date = $date;
                 $payment->received_by = $user->id;
                 $payment->save();
                 $amount = 0;
@@ -225,7 +263,7 @@ class TransactionsController extends Controller
             // $payment->transaction_id = $customer_transaction->id;
             $payment->customer_id = $customer_id;
             $payment->amount = $amount;
-            $payment->payment_date = date('Y-m-d H:i:s', strtotime('now'));
+            $payment->payment_date = $date;
             $payment->received_by = $user->id;
             $payment->save();
         }

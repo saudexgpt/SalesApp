@@ -8,437 +8,217 @@
 ========================================================================================== -->
 
 <template>
-  <div id="dashboard-analytics">
-    <div class="vx-row"/>
-    <div class="vx-row">
-
-      <!-- CARD 1: CONGRATS -->
-      <div class="vx-col w-full lg:w-3/5 mb-base">
-        <div class="vx-row">
-          <div class="vx-col w-full mb-base">
-            <vx-card slot="no-body" class="text-center bg-dark-gradient greet-user">
-              <img src="@assets/images/elements/decore-left.png" class="decore-left" alt="Decore Left" width="200" >
-              <img src="@assets/images/elements/decore-right.png" class="decore-right" alt="Decore Right" width="175">
-              <feather-icon icon="AwardIcon" class="p-6 mb-8 bg-primary inline-flex rounded-full text-white shadow" svg-classes="h-8 w-8"/>
-              <h3 class="mb-6 text-white">Welcome {{ user }},</h3>
-              <p class="xl:w-3/4 lg:w-4/5 md:w-2/3 w-4/5 mx-auto text-white"> <strong>Membership Id (HWB0001008) Stage: 0</strong></p>
-            </vx-card>
+  <div v-loading="loading" id="dashboard-analytics">
+    <data-analysis :dashboard-data="dashboardData" />
+    <el-card>
+      <div class="vx-row">
+        <div class="vx-col lg:w-3/4 w-full">
+          <div class="flex staffs-end px-3">
+            <feather-icon svg-classes="w-6 h-6" icon="ShoppingBagIcon" class="mr-2" />
+            <strong class="font-medium text-lg">Debts Report {{ sub_title }}</strong>
+          </div>
+          <vs-divider />
+        </div>
+        <div class="vx-col lg:w-1/4 w-full">
+          <div class="flex staffs-end px-3">
+            <span class="pull-right">
+              <!-- <div class="block">
+              <span class="demonstration">Pick Month</span>
+              <el-date-picker
+                v-model="form.month"
+                type="month"
+                placeholder="Pick a month"/>
+            </div> -->
+              <el-popover placement="right" trigger="click">
+                <date-range-picker
+                  :from="$route.query.from"
+                  :to="$route.query.to"
+                  :panel="panel"
+                  :panels="panels"
+                  :submit-title="submitTitle"
+                  :future="future"
+                  @update="setDateRange"
+                />
+                <el-button id="pick_date" slot="reference" type="primary">
+                  <i class="el-icon-date" /> Pick Date Range
+                </el-button>
+              </el-popover>
+            </span>
           </div>
         </div>
-        <div class="vx-row">
-          <!-- CARD 6: Product Orders -->
-          <div class="vx-col w-full lg:w-3/5 mb-base">
-            <vx-card title="Product Orders">
-              <!-- CARD ACTION -->
-              <template slot="actions">
-                <change-time-duration-dropdown />
-              </template>
-
-              <!-- Chart -->
-              <div slot="no-body">
-                <vue-apex-charts :options="analyticsData.productOrdersRadialBar.chartOptions" :series="productsOrder.series" type="radialBar" height="420" />
-              </div>
-
-              <ul>
-                <li v-for="orderData in productsOrder.analyticsData" :key="orderData.orderType" class="flex mb-3 justify-between">
-                  <span class="flex items-center">
-                    <span :class="`border-${orderData.color}`" class="inline-block h-4 w-4 rounded-full mr-2 bg-white border-3 border-solid"/>
-                    <span class="font-semibold">{{ orderData.orderType }}</span>
-                  </span>
-                  <span>{{ orderData.counts }}</span>
-                </li>
-              </ul>
-            </vx-card>
-          </div>
-
-          <!-- CARD 7: Sales Stats -->
-          <div class="vx-col w-full lg:w-2/5 mb-base">
-            <vx-card title="Sales Stats" subtitle="Last 6 Months">
-              <template slot="actions">
-                <feather-icon icon="MoreVerticalIcon" svg-classes="w-6 h-6 text-grey"/>
-              </template>
-              <div class="flex">
-                <span class="flex items-center"><div class="h-3 w-3 rounded-full mr-1 bg-primary"/><span>Sales</span></span>
-                <span class="flex items-center ml-4"><div class="h-3 w-3 rounded-full mr-1 bg-success"/><span>Visits</span></span>
-              </div>
-              <div slot="no-body-bottom">
-                <vue-apex-charts :options="analyticsData.statisticsRadar.chartOptions" :series="salesRadar.series" type="radar" height="385" />
-              </div>
-            </vx-card>
-          </div>
+        <div v-loading="load_table" class="w-full">
+          <v-client-table
+            v-model="debts"
+            :columns="columns"
+            :options="options"
+          >
+            <template slot="amount_due" slot-scope="{row}">
+              <div class="alert alert-info">{{ currency + row.amount_due.toLocaleString() }}</div>
+            </template>
+            <template slot="amount_paid" slot-scope="{row}">
+              <div class="alert alert-success">{{ currency + row.amount_paid.toLocaleString() }}</div>
+            </template>
+            <template slot="balance" slot-scope="{row}">
+              <div class="alert alert-danger">{{ currency + (row.amount_due - row.amount_paid).toLocaleString() }}</div>
+            </template>
+            <template slot="due_date" slot-scope="{row}">
+              <div>{{ moment(row.due_date).format('ll') }}</div>
+            </template>
+            <template slot="entry_date" slot-scope="{row}">
+              <div>{{ moment(row.entry_date).format('ll') }}</div>
+            </template>
+            <template slot="created_at" slot-scope="{row}">
+              <div>{{ moment(row.created_at).format('ll') }}</div>
+            </template>
+          </v-client-table>
+          <el-row :gutter="20">
+            <pagination
+              v-show="total > 0"
+              :total="total"
+              :page.sync="query.page"
+              :limit.sync="query.limit"
+              @pagination="fetchDebts"
+            />
+          </el-row>
         </div>
       </div>
-      <div class="vx-col w-full lg:w-2/5 mb-base">
-        <div class="vx-row">
-          <div class="vx-col w-full md:w-1/2 mb-base">
-            <statistics-card-line :chart-data="subscribersGained.series" icon="DollarSignIcon" statistic="92.6k" statistic-title="Wallet" type="area" color="success" />
-          </div>
-
-          <!-- CARD 3: ORDER RECIEVED -->
-          <div class="vx-col w-full md:w-1/2 mb-base">
-            <statistics-card-line :chart-data="ordersRecevied.series" icon="ShoppingCartIcon" statistic="97.5K" statistic-title="Orders" color="dark" type="area"/>
-          </div>
-          <div class="vx-col w-full md:w-1/2 mb-base">
-            <statistics-card-line :chart-data="ordersRecevied.series" icon="UsersIcon" statistic="97.5K" statistic-title="Downlines" color="warning" type="area"/>
-          </div>
-          <div class="vx-col w-full md:w-1/2 mb-base">
-            <statistics-card-line :chart-data="ordersRecevied.series" icon="Share2Icon" statistic="97.5K" statistic-title="Referrals" color="danger" type="area"/>
-          </div>
-          <div class="vx-col w-full mb-base">
-            <statistics-card-line :chart-data="ordersRecevied.series" icon="RepeatIcon" statistic="97.5K" statistic-title="Transactions" color="info" type="area"/>
-          </div>
-        </div>
-      </div>
-
-      <!-- CARD 2: SUBSCRIBERS GAINED -->
-
-    </div>
-
-    <!-- <div class="vx-row">
-      <div class="vx-col w-full">
-        <vx-card title="Dispatched Orders">
-          <div slot="no-body" class="mt-4">
-            <vs-table :data="dispatchedOrders" class="table-dark-inverted">
-              <template slot="thead">
-                <vs-th>ORDER NO.</vs-th>
-                <vs-th>STATUS</vs-th>
-                <vs-th>OPERATORS</vs-th>
-                <vs-th>LOCATION</vs-th>
-                <vs-th>DISTANCE</vs-th>
-                <vs-th>START DATE</vs-th>
-                <vs-th>EST DELIVERY DATE</vs-th>
-              </template>
-
-              <template slot-scope="{data}">
-                <vs-tr v-for="(tr, indextr) in data" :key="indextr">
-                  <vs-td :data="data[indextr].orderNo">
-                    <span>#{{ data[indextr].orderNo }}</span>
-                  </vs-td>
-                  <vs-td :data="data[indextr].status">
-                    <span class="flex items-center px-2 py-1 rounded"><div :class="'bg-' + data[indextr].statusColor" class="h-3 w-3 rounded-full mr-2"/>{{ data[indextr].status }}</span>
-                  </vs-td>
-                  <vs-td :data="data[indextr].orderNo">
-                    <ul class="users-liked user-list">
-                      <li v-for="(user, userIndex) in data[indextr].usersLiked" :key="userIndex">
-                        <vx-tooltip :text="user.name" position="bottom">
-                          <vs-avatar :src="user.img" size="30px" class="border-2 border-white border-solid -m-1"/>
-                        </vx-tooltip>
-                      </li>
-                    </ul>
-                  </vs-td>
-                  <vs-td :data="data[indextr].orderNo">
-                    <span>{{ data[indextr].location }}</span>
-                  </vs-td>
-                  <vs-td :data="data[indextr].orderNo">
-                    <span>{{ data[indextr].distance }}</span>
-                    <vs-progress :percent="data[indextr].distPercent" :color="data[indextr].statusColor"/>
-                  </vs-td>
-                  <vs-td :data="data[indextr].orderNo">
-                    <span>{{ data[indextr].startDate }}</span>
-                  </vs-td>
-                  <vs-td :data="data[indextr].orderNo">
-                    <span>{{ data[indextr].estDelDate }}</span>
-                  </vs-td>
-                </vs-tr>
-              </template>
-            </vs-table>
-          </div>
-
-        </vx-card>
-      </div>
-    </div> -->
-
+    </el-card>
   </div>
 </template>
 
 <script>
-import VueApexCharts from 'vue-apexcharts';
+import moment from 'moment';
+import Pagination from '@/components/Pagination';
 import StatisticsCardLine from '@/components/statistics-cards/StatisticsCardLine.vue';
-import analyticsData from '@/views/ui-elements/card/analyticsData.js';
-import ChangeTimeDurationDropdown from '@/components/ChangeTimeDurationDropdown.vue';
-import VxTimeline from '@/components/timeline/VxTimeline';
-// import Resource from '@/api/resource';
+import DataAnalysis from './partials/DataAnalysis';
+import Resource from '@/api/resource';
 export default {
   components: {
-    VueApexCharts,
+    DataAnalysis,
+    // VueApexCharts,
     StatisticsCardLine,
-    ChangeTimeDurationDropdown,
-    VxTimeline,
+    Pagination,
   },
   data() {
     return {
-      subscribersGained: {
-        analyticsData: [
-          {
-            device: 'Dekstop',
-            icon: 'MonitorIcon',
-            color: 'primary',
-            sessionsPercentage: 58.6,
-            comparedResultPercentage: 2,
-          },
-          {
-            device: 'Mobile',
-            icon: 'SmartphoneIcon',
-            color: 'warning',
-            sessionsPercentage: 34.9,
-            comparedResultPercentage: 8,
-          },
-          {
-            device: 'Tablet',
-            icon: 'TabletIcon',
-            color: 'danger',
-            sessionsPercentage: 6.5,
-            comparedResultPercentage: -5,
-          },
-        ],
-        series: [58.6, 34.9, 6.5],
-      },
-      productsOrder: {
-        analyticsData: [
-          {
-            'orderType': 'Finished',
-            'counts': 23043,
-            'color': 'primary',
-          },
-          {
-            'orderType': 'Pending',
-            'counts': 14658,
-            'color': 'warning',
-          },
-          {
-            'orderType': 'Rejected ',
-            'counts': 4758,
-            'color': 'danger',
-          },
-        ],
-        series: [70, 52, 26],
-      },
-      customers: {
-        analyticsData: [
-          {
-            'customerType': 'New',
-            'counts': 890,
-            'color': 'primary',
-          },
-          {
-            'customerType': 'Returning',
-            'counts': 258,
-            'color': 'warning',
-          },
-          {
-            'customerType': 'Referrals ',
-            'counts': 149,
-            'color': 'danger',
-          },
-        ],
-        series: [690, 258, 149],
-      },
-      salesRadar: {
-        series: [
-          {
-            name: 'Visits',
-            data: [90, 50, 86, 40, 100, 20],
-          },
-          {
-            name: 'Sales',
-            data: [70, 75, 70, 76, 20, 85],
-          },
-        ],
-      },
-      supportTracker: {
-        analyticsData: {
-          openTickets: 163,
-          meta: {
-            'New Tickets': 29,
-            'Open Tickets': 63,
-            'Response Time': '1d',
-          },
-        },
-        series: [83],
-      },
-      revenueComparisonLine: {
-        analyticsData: {
-          thisMonth: 86589,
-          lastMonth: 73683,
-        },
-        series: [
-          {
-            name: 'This Month',
-            data: [45000, 47000, 44800, 47500, 45500, 48000, 46500, 48600],
-          },
-          {
-            name: 'Last Month',
-            data: [46000, 48000, 45500, 46600, 44500, 46500, 45000, 47000],
-          },
-        ],
-      },
-      goalOverviewRadialBar: {
-        analyticsData: {
-          completed: 786617,
-          inProgress: 13561,
-        },
-        series: [83],
-      },
-      salesBarSession: {
-        series: [
-          {
-            name: 'Sessions',
-            data: [75, 125, 225, 175, 125, 75, 25],
-          },
-        ],
-        analyticsData: {
-          session: 2700,
-          comparison: {
-            str: 'Last 7 Days',
-            result: +5.2,
-          },
-        },
-      },
-      todoToday: {
-        date: 'Sat, 16 Feb',
-        numCompletedTasks: 2,
-        totalTasks: 10,
-        tasksToday: [
-          {
-            id: 3,
-            task: 'Refactor button component',
-            date: '16 Feb 2019',
-          },
-          {
-            id: 70,
-            task: 'Submit report to admin',
-            date: '16 Feb 2019',
-          },
-          {
-            id: 8,
-            task: 'Prepare presentation',
-            date: '16 Feb 2019',
-          },
-          {
-            id: 1,
-            task: 'Calculate monthly income',
-            date: '16 Feb 2019',
-          },
-        ],
-      },
-      salesLine: {
-        series: [
-          {
-            name: 'Sales',
-            data: [140, 180, 150, 205, 160, 295, 125, 255, 205, 305, 240, 295],
-          },
-        ],
-      },
-      funding: {
-        currBalance: 22597,
-        depostis: 20065,
-        comparison: {
-          resultPerc: 5.2,
-          pastData: 956,
-        },
-        meta: {
-          earned: {
-            val: 56156,
-            progress: 50,
-          },
-          duration: {
-            val: '2 Year',
-            progress: 50,
-          },
-        },
-      },
-      browserAnalytics: [
-        {
-          id: 1,
-          name: 'Google Chrome',
-          ratio: 73,
-          time: 'Mon Dec 10 2018 07:46:05 GMT+0000 (GMT)',
-          comparedResult: '800',
-        },
-        {
-          id: 3,
-          name: 'Opera',
-          ratio: 8,
-          time: 'Mon Dec 10 2018 07:46:05 GMT+0000 (GMT)',
-          comparedResult: '-200',
-        },
-        {
-          id: 2,
-          name: 'Firefox',
-          ratio: 19,
-          time: 'Mon Dec 10 2018 07:46:05 GMT+0000 (GMT)',
-          comparedResult: '100',
-        },
-        {
-          id: 4,
-          name: 'Internet Explorer',
-          ratio: 27,
-          time: 'Mon Dec 10 2018 07:46:05 GMT+0000 (GMT)',
-          comparedResult: '-450',
-        },
-      ],
-      clientRetention: {
-        series: [
-          {
-            name: 'New Clients',
-            data: [175, 125, 225, 175, 160, 189, 206, 134, 159, 216, 148, 123],
-          },
-          {
-            name: 'Retained Clients',
-            data: [-144, -155, -141, -167, -122, -143, -158, -107, -126, -131, -140, -137],
-          },
-        ],
-      },
-      checkpointReward: {},
-      ordersRecevied: {},
-
-      timelineData: [
-        {
-          color: 'primary',
-          icon: 'PlusIcon',
-          title: 'Client Meeting',
-          desc: 'Bonbon macaroon jelly beans gummi bears jelly lollipop apple',
-          time: '25 mins Ago',
-        },
-        {
-          color: 'warning',
-          icon: 'MailIcon',
-          title: 'Email Newsletter',
-          desc: 'Cupcake gummi bears soufflé caramels candy',
-          time: '15 Days Ago',
-        },
-        {
-          color: 'danger',
-          icon: 'UsersIcon',
-          title: 'Plan Webinar',
-          desc: 'Candy ice cream cake. Halvah gummi bears',
-          time: '20 days ago',
-        },
-        {
-          color: 'success',
-          icon: 'LayoutIcon',
-          title: 'Launch Website',
-          desc: 'Candy ice cream cake. Halvah gummi bears Cupcake gummi bears soufflé caramels candy.',
-          time: '25 days ago',
-        },
-        {
-          color: 'primary',
-          icon: 'TvIcon',
-          title: 'Marketing',
-          desc: 'Candy ice cream cake. Halvah gummi bears Cupcake gummi bears.',
-          time: '28 days ago',
-        },
-      ],
       user: '',
-      analyticsData,
       dispatchedOrders: [],
+      dashboardData: null,
+      loading: false,
+      debts: [],
+      columns: [
+        'customer.business_name',
+        'invoice_no',
+        'amount_due',
+        'amount_paid',
+        'balance',
+        'due_date',
+        'entry_date',
+        'created_at',
+      ],
+
+      options: {
+        headings: {
+          'customer.business_name': 'Customer',
+          due_date: 'Payment Due Date',
+          entry_date: 'Sales Date',
+        },
+        pagination: {
+          dropdown: true,
+          chunk: 10,
+        },
+        perPage: 10,
+        filterByColumn: true,
+        sortable: ['customer.business_name', 'due_date', 'entry_date', 'created_at'],
+        filterable: ['customer.business_name', 'due_date', 'entry_date', 'created_at'],
+      },
+      form: {
+        from: '',
+        to: '',
+        panel: '',
+        status: 'pending',
+        page: 1,
+        limit: 10,
+        keyword: '',
+      },
+      sub_title: '',
+      submitTitle: 'Fetch Report',
+      panel: 'month',
+      future: false,
+      panels: ['range', 'week', 'month', 'quarter', 'year'],
+      show_calendar: false,
+      total: 0,
+      load_table: false,
+      query: {
+        page: 1,
+        limit: 10,
+        keyword: '',
+        role: '',
+      },
+      currency: '',
     };
   },
   created() {
     this.user = this.$store.getters.name;
+    this.fetchDashboard();
+    this.fetchDebts();
   },
   methods: {
-
+    moment,
+    fetchDashboard(){
+      const app = this;
+      // this.$store.dispatch('dashboard/fetchDashboardData', 'debts-rep')
+      // const fetchResource = new Resource('dashboard/debts-rep'); // enter the fetch customer url
+      app.loading = true;
+      const fetchResource = new Resource('dashboard/sales-rep');
+      fetchResource.list().then(response => {
+        app.dashboardData = response;
+        // app.$store.dispatch('orders/setTodayOrders', response.today_orders);
+        // app.$store.dispatch('visits/setTodayVisits', response.today_visits);
+        // app.$store.dispatch('schedules/setTodaySchedules', response.today_schedule);
+        app.loading = false;
+        // loader.hide();
+      });
+    },
+    format(date) {
+      var month = date.toLocaleString('en-US', { month: 'short' });
+      return month + ' ' + date.getDate() + ', ' + date.getFullYear();
+    },
+    setDateRange(values) {
+      const app = this;
+      document.getElementById('pick_date').click();
+      app.show_calendar = false;
+      let panel = app.panel;
+      let from = app.week_start;
+      let to = app.week_end;
+      if (values !== '') {
+        to = this.format(new Date(values.to));
+        from = this.format(new Date(values.from));
+        panel = values.panel;
+      }
+      app.form.from = from;
+      app.form.to = to;
+      app.form.panel = panel;
+      app.fetchDebts();
+    },
+    fetchDebts(){
+      const app = this;
+      const { limit, page } = app.query;
+      app.options.perPage = limit;
+      app.load_table = true;
+      const param = app.form;
+      const fetchResource = new Resource('sales/fetch-debts');
+      fetchResource.list(param).then(response => {
+        app.debts = response.debts.data;
+        app.debts.forEach((element, index) => {
+          element['index'] = (page - 1) * limit + index + 1;
+        });
+        app.total = response.debts.total;
+        app.currency = response.currency;
+        app.sub_title = ' from ' + response.date_from + ' to ' + response.date_to;
+        app.load_table = false;
+      });
+    },
   },
 };
 </script>

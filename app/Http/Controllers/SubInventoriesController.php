@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SubInventory;
 use App\Models\VanInventory;
+use App\Models\WarehouseStock;
 use Illuminate\Http\Request;
 
 class SubInventoriesController extends Controller
@@ -116,6 +117,31 @@ class SubInventoriesController extends Controller
         return 'success';
     }
 
+    public function acceptWarehouseProducts(Request $request, WarehouseStock $warehouse_stock)
+    {
+        $user = $this->getUser();
+        $sub_inventory = new SubInventory();
+        $sub_inventory->staff_id = $user->id;
+        $sub_inventory->item_id = $warehouse_stock->item_id;
+        $sub_inventory->quantity_stocked = $request->quantity;
+        $sub_inventory->balance = $request->quantity;
+        $sub_inventory->stocked_by = $user->name;
+        if ($sub_inventory->save()) {
+            $warehouse_stock->quantity_approved += $sub_inventory->quantity_stocked;
+            $warehouse_stock->save();
+        }
+
+
+        return $this->showWarehouseStock();
+    }
+
+    public function showWarehouseStock()
+    {
+        $user_id = $this->getUser()->id;
+        $warehouse_stocks = WarehouseStock::with('item')->where('user_id', $user_id)->whereRaw('(quantity_supplied - quantity_approved) > 0')->get();
+        return response()->json(compact('warehouse_stocks'), 200);
+    }
+
     /**
      * Display the specified resource.
      *
@@ -125,17 +151,39 @@ class SubInventoriesController extends Controller
     public function stockVan(Request $request, SubInventory $subInventory)
     {
         $user = $this->getUser();
+        $quantity = $request->quantity;
+        $item_id = $subInventory->item_id;
+
         $van_inventory = new VanInventory();
         $van_inventory->staff_id = $user->id;
         $van_inventory->sub_inventory_id = $subInventory->id;
-        $van_inventory->item_id = $subInventory->item_id;
-        $van_inventory->quantity_stocked = $request->quantity;
-        $van_inventory->balance = $request->quantity;
+        $van_inventory->item_id = $item_id;
+        $van_inventory->quantity_stocked = $quantity;
+        $van_inventory->balance = $quantity;
         $van_inventory->save();
 
-        $subInventory->moved_to_van += $request->quantity;
-        $subInventory->balance -= $request->quantity;
-        $subInventory->save();
+        $sub_inventories = SubInventory::where(['item_id' => $item_id, 'staff_id' => $user->id])->whereRaw('balance > 0')->get();
+        foreach ($sub_inventories as $sub_inventory) {
+            if ($quantity > 0) {
+
+                $balance = $sub_inventory->balance;
+                if ($quantity <= $balance) {
+
+
+                    $sub_inventory->moved_to_van += $quantity;
+                    $sub_inventory->balance -= $quantity;
+                    $quantity = 0;
+                    $sub_inventory->save();
+                    break;
+                } else {
+                    $sub_inventory->moved_to_van += $balance;
+                    $sub_inventory->balance -= $balance;
+                    $quantity -= $balance;
+                    $sub_inventory->save();
+                }
+            }
+        }
+
 
         $inventories = SubInventory::with('item')
             ->groupBy('item_id')
