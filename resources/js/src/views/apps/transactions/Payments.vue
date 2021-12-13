@@ -3,7 +3,18 @@
   <div v-loading="load">
     <div slot="header" class="clearfix">
       <feather-icon svg-classes="w-6 h-6" icon="ShoppingBagIcon" class="mr-2" />
-      <strong class="font-medium text-lg">Payments {{ sub_title }}</strong>
+      <strong class="font-medium text-lg">Collections {{ sub_title }}</strong>
+      <span style="float: right">
+        <el-button
+          :loading="downloadLoading"
+          round
+          style="margin:0 0 20px 20px;"
+          type="success"
+          icon="el-icon-download"
+          size="small"
+          @click="handleDownload"
+        >Export Excel</el-button>
+      </span>
     </div>
     <el-row :gutter="10">
       <el-col :lg="12" :md="12" :sm="12" :xs="24">
@@ -65,7 +76,7 @@
         <div
           slot="action"
           slot-scope="props"
-        ><el-button v-if="props.row.confirmer === null && checkPermission(['confirm-payments'])"round type="success" size="small" @click="confirmPayment(props.index, props.row)">Confirm</el-button></div>
+        ><el-button v-if="props.row.confirmer === null && checkPermission(['confirm-payments'])" round type="success" size="small" @click="confirmPayment(props.index, props.row)">Confirm</el-button></div>
 
       </v-client-table>
     </el-row>
@@ -97,7 +108,6 @@ export default {
     return {
       payments: [],
       payments_columns: [
-        'action',
         'customer.business_name',
         'confirmer.name',
         'amount',
@@ -105,6 +115,7 @@ export default {
         'payment_type',
         'updated_at',
         'customer.assigned_officer.name',
+        'action',
       ],
 
       payments_options: {
@@ -151,6 +162,7 @@ export default {
       future: false,
       panels: ['range', 'week', 'month', 'quarter', 'year'],
       show_calendar: false,
+      downloadLoading: false,
     };
   },
   created() {
@@ -214,6 +226,55 @@ export default {
             app.load = false;
           });
       }).catch(() => {});
+    },
+    handleDownload() {
+      this.downloadLoading = true;
+      import('@/vendor/Export2Excel').then(excel => {
+        const multiHeader = [['Collections ' + this.sub_title, '', '', '', '', '', '', '']];
+        const tHeader = [
+          'CUSTOMER',
+          'CONFIRMED BY',
+          'AMOUNT',
+          'PAYMENT DATE',
+          'PAYMENT TYPE',
+          'CONFIRMED AT',
+          'RELATING OFFICER',
+        ];
+        const filterVal = this.payments_columns;
+        const list = this.payments;
+        const data = this.formatJson(filterVal, list);
+        excel.export_json_to_excel({
+          multiHeader,
+          header: tHeader,
+          data,
+          filename: 'Collections',
+          autoWidth: true,
+          bookType: 'csv',
+        });
+        this.downloadLoading = false;
+      });
+    },
+    formatJson(filterVal, jsonData) {
+      return jsonData.map(v =>
+        filterVal.map(j => {
+          if (j === 'payment_date') {
+            return (v[j]) ? moment(v[j]).format('lll') : '';
+          }
+          if (j === 'updated_at') {
+            return (v[j]) ? moment(v[j]).format('lll') : '';
+          }
+          if (j === 'customer.business_name') {
+            return v['customer']['business_name'];
+          }
+          if (j === 'confirmer.name') {
+            return (v['confirmer']) ? v['confirmer']['name'] : '';
+          }
+          if (j === 'customer.assigned_officer.name') {
+            return (v['customer']) ? v['customer']['assigned_officer']['name'] : '';
+          }
+          return v[j];
+        }),
+      );
     },
   },
 };

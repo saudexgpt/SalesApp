@@ -4,6 +4,17 @@
     <div slot="header" class="clearfix">
       <feather-icon svg-classes="w-6 h-6" icon="ShoppingBagIcon" class="mr-2" />
       <strong class="font-medium text-lg">Debts {{ sub_title }}</strong>
+      <span style="float: right">
+        <el-button
+          :loading="downloadLoading"
+          round
+          style="margin:0 0 20px 20px;"
+          type="success"
+          icon="el-icon-download"
+          size="small"
+          @click="handleDownload"
+        >Export Excel</el-button>
+      </span>
     </div>
     <el-row :gutter="10">
       <el-col :lg="12" :md="12" :sm="12" :xs="24">
@@ -168,6 +179,7 @@ export default {
       future: false,
       panels: ['range', 'week', 'month', 'quarter', 'year'],
       show_calendar: false,
+      downloadLoading: false,
     };
   },
   created() {
@@ -213,6 +225,44 @@ export default {
           });
           this.total = response.debts.total;
         });
+    },
+    handleDownload() {
+      this.downloadLoading = true;
+      import('@/vendor/Export2Excel').then(excel => {
+        const multiHeader = [['Product Sales ' + this.sub_title, '', '', '', '', '']];
+        const tHeader = [
+          'CUSTOMER',
+          'AMOUNT',
+          'AMOUNT PAID',
+          'BALANCE',
+          'RELATING OFFICER',
+        ];
+        const filterVal = this.debts_columns;
+        const list = this.debts;
+        const data = this.formatJson(filterVal, list);
+        excel.export_json_to_excel({
+          multiHeader,
+          header: tHeader,
+          data,
+          filename: 'Debts',
+          autoWidth: true,
+          bookType: 'csv',
+        });
+        this.downloadLoading = false;
+      });
+    },
+    formatJson(filterVal, jsonData) {
+      return jsonData.map(v =>
+        filterVal.map(j => {
+          if (j === 'customer.business_name') {
+            return v['customer']['business_name'];
+          }
+          if (j === 'customer.assigned_officer.name') {
+            return (v['customer']) ? v['customer']['assigned_officer']['name'] : '';
+          }
+          return v[j];
+        }),
+      );
     },
   },
 };
