@@ -262,11 +262,16 @@ class CustomersController extends Controller
     public function addCustomerContact(Request $request)
     {
         $customer_id = $request->customer_id;
+        $customer = Customer::find($customer_id);
         $contacts = json_decode(json_encode($request->customer_contacts));
         if (count($contacts) > 0) {
+
+            // delete old
+            $customer->customerContacts->delete();
             $this->saveCustomerContact($customer_id, $contacts);
         }
-        return 'success';
+        $contacts = CustomerContact::where('customer_id', $customer_id)->get();
+        return $contacts;
     }
     public function getLatLongLocation(Request $request)
     {

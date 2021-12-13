@@ -101,6 +101,43 @@ class TransactionsController extends Controller
         $date_to = getDateFormatWords($date_to);
         return response()->json(compact('sales', 'currency', 'date_from', 'date_to'), 200);
     }
+    public function fetchProductSales(Request $request)
+    {
+        $user = $this->getUser();
+        $date_from = Carbon::now()->startOfQuarter();
+        $date_to = Carbon::now()->endOfQuarter();
+        $panel = 'quarter';
+        $currency = $this->currency();
+        if (isset($request->from, $request->to, $request->panel)) {
+            $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
+            $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
+            $panel = $request->panel;
+        }
+        $condition = [];
+        if (isset($request->customer_id) && $request->customer_id != 'all') {
+            $condition = ['customer_id' => $request->customer_id];
+        }
+        $delivery_status = $request->delivery_status;
+        if ($user->hasRole('sales_rep')) {
+
+            // $sales = $user->transactions()->with(['customer.assignedOfficer', 'payments' => function ($q) {
+            //     $q->orderBy('id', 'DESC');
+            // }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(10);
+
+            $sales = TransactionDetail::with('transaction.customer')->join('transactions', 'transactions.id', 'transaction_details.transaction_id')
+                ->join('users', 'transactions.field_staff', 'users.id')->where('transaction_details.field_staff', $user->id)->where('transaction_details.created_at', '<=',  $date_to)->where('transaction_details.created_at', '>=',  $date_from)->where($condition)->orderBy('transaction_details.id', 'DESC')->paginate(10);
+        } else {
+            $sales = TransactionDetail::with('transaction.customer')->join('transactions', 'transactions.id', 'transaction_details.transaction_id')
+                ->join('users', 'transactions.field_staff', 'users.id')->where('transaction_details.created_at', '<=',  $date_to)->where('transaction_details.created_at', '>=',  $date_from)->where($condition)->orderBy('transaction_details.id', 'DESC')->paginate(10);
+            // $sales = Transaction::with(['customer.assignedOfficer', 'payments' => function ($q) {
+            //     $q->orderBy('id', 'DESC');
+            // }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(10);
+        }
+
+        $date_from = getDateFormatWords($date_from);
+        $date_to = getDateFormatWords($date_to);
+        return response()->json(compact('sales', 'currency', 'date_from', 'date_to'), 200);
+    }
 
     /**
      * Show the form for creating a new resource.

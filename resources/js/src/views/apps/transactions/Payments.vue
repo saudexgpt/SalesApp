@@ -102,7 +102,7 @@ export default {
         'confirmer.name',
         'amount',
         'payment_date',
-        // 'created_at',
+        'payment_type',
         'updated_at',
         'customer.assigned_officer.name',
       ],

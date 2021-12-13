@@ -114,6 +114,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix' => 'sales'], function () {
         Route::get('orders', [TransactionsController::class, 'orders']);
         Route::get('fetch', [TransactionsController::class, 'fetchSales']);
+        Route::get('fetch-product-sales', [TransactionsController::class, 'fetchProductSales']);
+
         Route::get('fetch-debts', [TransactionsController::class, 'fetchDebts']);
 
 

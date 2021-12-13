@@ -181,6 +181,9 @@
             <div class="flex items-end px-3">
               <feather-icon svg-classes="w-6 h-6" icon="UsersIcon" class="mr-2" />
               <span class="font-medium text-lg leading-none">Contacts Information</span>
+              <span class="pull-right">
+                <el-button v-if="checkPermission(['create-customers'])" round size="small" type="warning" icon="el-icon-plus" @click="dialogVisible = true">Add</el-button>
+              </span>
             </div>
             <vs-divider />
             <div class="block overflow-x-auto">
@@ -340,18 +343,26 @@
         <br>
       </vx-card>
     </div>
+    <el-dialog
+      v-if="customer"
+      :visible.sync="dialogVisible"
+      :title="'Add Contacts for ' + customer.business_name"
+      width="90%">
+      <add-customer-contacts :customer-contacts="customer.customer_contacts" :customer="customer" @save="updateContact" />
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import moment from 'moment';
 import checkPermission from '@/utils/permission';
+import AddCustomerContacts from './AddCustomerContacts';
 import 'swiper/dist/css/swiper.min.css';
 import { swiper, swiperSlide } from 'vue-awesome-swiper';
 import Resource from '@/api/resource';
 const customerDetailsResource = new Resource('customers/details');
 export default {
-  components: { swiper, swiperSlide },
+  components: { swiper, swiperSlide, AddCustomerContacts },
   data() {
     return {
       showFullPhoto: false,
@@ -402,6 +413,7 @@ export default {
       },
       schedules: [],
       loader: false,
+      dialogVisible: false,
 
     };
   },
@@ -432,6 +444,11 @@ export default {
             app.loader = false;
           });
       }).catch(() => {});
+    },
+    updateContact(contacts) {
+      const app = this;
+      app.customer.customer_contacts = contacts;
+      app.dialogVisible = false;
     },
     fetchDetails() {
       const id = this.$route.params && this.$route.params.id;

@@ -41,46 +41,39 @@
     </el-row>
     <el-row :gutter="10">
       <v-client-table v-model="sales" :columns="sales_columns" :options="sales_options">
-        <div slot="child_row" slot-scope="props" style="background: #000">
-          <table class="table table-bordered">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Quantity</th>
-                <th>Rate</th>
-                <th>Amount</th>
-              <!-- <th>Paid</th>
-                    <th>Balance</th>
-                    <th>Payment Due Date</th> -->
-              </tr>
-            </thead>
-            <tbody>
-
-              <tr v-for="(detail, index) in props.row.details" :key="index">
-
-                <td>{{ detail.product }}</td>
-                <td>{{ detail.quantity }}</td>
-                <td>{{ detail.rate }}</td>
-                <td>{{ currency + Number(detail.amount).toLocaleString() }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
         <div
-          slot="amount_due"
+          slot="quantity"
           slot-scope="props"
-          class="alert alert-info"
-        >{{ currency + Number(props.row.amount_due).toLocaleString() }}</div>
+        >{{ props.row.quantity + ' ' + props.row.packaging }}</div>
         <div
-          slot="amount_paid"
+          slot="amount"
           slot-scope="props"
           class="alert alert-success"
-        >{{ currency + Number(props.row.amount_paid).toLocaleString() }}</div>
+        >{{ currency + Number(props.row.amount).toLocaleString() }}</div>
+        <div
+          slot="rate"
+          slot-scope="props"
+          class="alert alert-success"
+        >{{ currency + Number(props.row.rate).toLocaleString() }}</div>
+        <div
+          slot="main_rate"
+          slot-scope="props"
+          class="alert alert-info"
+        >{{ currency + Number(props.row.main_rate).toLocaleString() }}</div>
+        <div
+          slot="main_amount"
+          slot-scope="props"
+          class="alert alert-info"
+        >{{ currency + Number(props.row.main_amount).toLocaleString() }}</div>
         <div
           slot="balance"
           slot-scope="props"
           class="alert alert-danger"
         >{{ currency + Number(props.row.amount_due - props.row.amount_paid).toLocaleString() }}</div>
+        <div
+          slot="expiry_date"
+          slot-scope="props"
+        >{{ moment(props.row.expiry_date).format('ll') }}</div>
         <div
           slot="created_at"
           slot-scope="props"
@@ -114,24 +107,32 @@ export default {
     return {
       sales: [],
       sales_columns: [
-        'customer.business_name',
-        // 'invoice_no',
-        'amount_due',
-        'amount_paid',
-        'balance',
-        'delivery_status',
-        'customer.assigned_officer.name',
+        'transaction.customer.business_name',
+        'transaction.invoice_no',
+        'product',
+        'quantity',
+        'main_rate',
+        'main_amount',
+        'rate',
+        'amount',
+        'batch_no',
+        'expiry_date',
+        'name', // field staff
         'created_at',
       ],
 
       sales_options: {
         headings: {
-          'customer.business_name': 'Customer',
-          // invoice_no: 'Invoice No.',
+          'transaction.customer.business_name': 'Customer',
+          'transaction.invoice_no': 'Invoice No.',
           amount_due: 'Amount',
           amount_paid: 'Amount Paid',
           delivery_status: 'Delivery Status',
-          'customer.assigned_officer.name': 'Relating Officer',
+          'name': 'Field Staff',
+          'rate': 'Sell Rate',
+          'amount': 'Sell Amount',
+          'main_amount': 'Original Amount',
+          'main_rate': 'Original Rate',
         },
         pagination: {
           dropdown: true,
@@ -143,8 +144,8 @@ export default {
         //   filter: 'Search:',
         // },
         // editableColumns:['name', 'category.name', 'sku'],
-        sortable: ['created_at'],
-        filterable: ['customer.business_name'],
+        sortable: ['transaction.invoice_no', 'created_at', 'name,'],
+        filterable: ['transaction.invoice_no', 'transaction.customer.business_name', 'created_at', 'name'],
       },
       load: false,
       total: 0,
@@ -202,7 +203,7 @@ export default {
       const app = this;
       const { limit, page } = app.query;
       app.sales_options.perPage = limit;
-      const salesResource = new Resource('sales/fetch');
+      const salesResource = new Resource('sales/fetch-product-sales');
       const param = app.form;
       app.load = true;
       salesResource.list(param)

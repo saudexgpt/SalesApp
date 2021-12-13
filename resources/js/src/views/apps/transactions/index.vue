@@ -1,9 +1,9 @@
 <template>
   <el-tabs type="border-card">
-    <el-tab-pane label="Sales">
+    <el-tab-pane label="Product Sales">
       <sales :customers="customers" />
     </el-tab-pane>
-    <el-tab-pane label="Payments">
+    <el-tab-pane label="Collections">
       <payments :customers="customers" />
     </el-tab-pane>
     <el-tab-pane label="Debt">
