@@ -87,6 +87,9 @@ class PaymentsController extends Controller
         $user = $this->getUser();
         $payment->confirmed_by = $user->id;
         $payment->save();
+        $title = "Payment Confirmed";
+        $description = $user->name . " successfully confirmed NGN$payment->amount paid by" . $payment->customer->business_name;
+        $this->logUserActivity($title, $description, $user);
         return $this->show($payment);
     }
 

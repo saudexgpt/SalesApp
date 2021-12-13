@@ -169,6 +169,7 @@ class TransactionsController extends Controller
                 $invoice_items = json_decode(json_encode($unsaved_order->invoice_items));
 
                 $invoice = new Transaction();
+                $customer = Customer::find($unsaved_order->customer_id);
                 $invoice->customer_id    = $unsaved_order->customer_id;
                 $invoice->field_staff    = $user->id;
                 $invoice->payment_status = ($unsaved_order->payment_mode == 'now') ? 'paid' : 'unpaid';
@@ -196,6 +197,10 @@ class TransactionsController extends Controller
                 if (isset($unsaved_order->amount_collected) && $unsaved_order->amount_collected > 0) {
                     $this->payAmount($invoice, $unsaved_order->amount_collected);
                 }
+
+                $title = "New Sales made";
+                $description = $user->name . " successfully made sales to $customer->business_name";
+                $this->logUserActivity($title, $description, $user);
 
 
                 $order_list[] = $this->show($invoice);
@@ -280,12 +285,17 @@ class TransactionsController extends Controller
         $payment = new Payment();
         $payment->transaction_id = $transaction->id;
         $payment->customer_id = $transaction->customer_id;
+        $customer = Customer::find($payment->customer_id);
         $payment->amount = $transaction->amount_due;
         $payment->payment_date = $date;
         $payment->received_by = $user->id;
         if ($payment->save()) {
             $transaction->amount_paid = $transaction->amount_due;
             $transaction->save();
+
+            $title = "Payment Received";
+            $description = $user->name . " successfully received NGN$transaction->amount_due from $customer->business_name";
+            $this->logUserActivity($title, $description, $user);
         }
     }
 
@@ -293,6 +303,7 @@ class TransactionsController extends Controller
     {
         $user = $this->getUser();
         $customer_id = $transaction->customer_id;
+        $customer = Customer::find($customer_id);
         $customer_transactions = Transaction::where('customer_id', $customer_id)->whereRaw('amount_due - amount_paid > 0')->orderBy('id')->get();
         foreach ($customer_transactions as $customer_transaction) {
             $debt = $customer_transaction->amount_due - $customer_transaction->amount_paid;
@@ -336,6 +347,9 @@ class TransactionsController extends Controller
             $payment->received_by = $user->id;
             $payment->save();
         }
+        $title = "Payment Received";
+        $description = $user->name . " successfully received NGN$amount from $customer->business_name";
+        $this->logUserActivity($title, $description, $user);
     }
 
     /**
@@ -368,11 +382,16 @@ class TransactionsController extends Controller
     }
     private function performProductSupply(TransactionDetail $transaction_detail, $quantity_for_supply, $item_id)
     {
+        $user = $this->getUser();
         $stock_balance = $this->checkForStockBalance($item_id);
         if ($quantity_for_supply > $stock_balance) {
             return response()->json(['message' => 'Insufficient Stock'], 422);
         }
         $quantity = $transaction_detail->quantity;
+        $packaging = $transaction_detail->packaging;
+        $product = $transaction_detail->product;
+        $customer = $transaction_detail->transaction->customer;
+
         $total_quantity_supplied = $quantity_for_supply + $transaction_detail->quantity_supplied;
         if ($total_quantity_supplied <= $quantity) {
             $transaction_detail->quantity_supplied = $total_quantity_supplied;
@@ -384,6 +403,10 @@ class TransactionsController extends Controller
 
             $transaction_detail->save();
             $this->deductFromVanInventory($item_id, $quantity_for_supply);
+
+            $title = "Product Supplied";
+            $description = $user->name . " supplied $quantity $packaging of $product to $customer->business_name";
+            $this->logUserActivity($title, $description, $user);
         }
         $transaction = $transaction_detail->transaction()->with('details')->first();
         $is_partial = 0;

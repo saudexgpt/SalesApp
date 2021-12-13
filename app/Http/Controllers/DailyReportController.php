@@ -114,6 +114,10 @@ class DailyReportController extends Controller
                     $returns_report = json_decode(json_encode($request->returns_report));
                     $this->saveReturnsReport($returns_report);
                 }
+
+                $title = "Daily Report Successfully Submitted";
+                $description = ucwords($user->name) . "'s daily report has been submitted successfully for $date";
+                $this->logUserActivity($title, $description, $user);
             }
         }
     }

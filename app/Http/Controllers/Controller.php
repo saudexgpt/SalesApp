@@ -72,7 +72,7 @@ class Controller extends BaseController
             'params' => compact('all_roles', 'default_roles')
         ]);
     }
-    public function logUserActivity($title, $description, $roles = [])
+    public function logUserActivity($title, $description, $user = null)
     {
         // $user = $this->getUser();
         // if ($role) {
@@ -84,12 +84,13 @@ class Controller extends BaseController
             $query->where('name', '=', 'super')->orWhere('name', '=', 'admin'); // this is the role id inside of this callback
         })->get();
 
-        if (in_array('sales_rep', $roles)) {
-            $sales_rep = User::whereHas('roles', function ($query) {
-                $query->where('name', '=', 'sales_rep'); // this is the role id inside of this callback
-            })->get();
-            $users = $users->merge($sales_rep);
+        if ($user != null) {
+            $users = $users->push($user);
         }
+        // $others = User::whereHas('roles', function ($query) use ($roles) {
+        //     $query->whereIn('name', $roles); // this is the role id inside of this callback
+        // })->get();
+        // $users = $users->merge($others);
         // var_dump($users);
         $notification = new AuditTrail($title, $description);
         return Notification::send($users->unique(), $notification);

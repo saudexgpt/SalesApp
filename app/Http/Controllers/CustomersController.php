@@ -236,6 +236,10 @@ class CustomersController extends Controller
                         }
 
                         $customer_list[] = $this->show($customer);
+
+                        $title = "New Customer Added";
+                        $description = "New customer, $customer->business_name, was added by " . $user->id;
+                        $this->logUserActivity($title, $description, $user);
                     }
                     // Generate notification before returning ///////////////////////
                     // Write notification code here////////////////////////////
@@ -261,6 +265,7 @@ class CustomersController extends Controller
     }
     public function addCustomerContact(Request $request)
     {
+        $user = $this->getUser();
         $customer_id = $request->customer_id;
         $customer = Customer::find($customer_id);
         $contacts = json_decode(json_encode($request->customer_contacts));
@@ -269,6 +274,10 @@ class CustomersController extends Controller
             // delete old
             $customer->customerContacts->delete();
             $this->saveCustomerContact($customer_id, $contacts);
+
+            $title = "Customer Contacts Added";
+            $description = "Contacts added for $customer->business_name";
+            $this->logUserActivity($title, $description, $user);
         }
         $contacts = CustomerContact::where('customer_id', $customer_id)->get();
         return $contacts;
@@ -382,6 +391,9 @@ class CustomersController extends Controller
         $customer_verification->customer_id = $customer->id;
         $customer_verification->date = $today;
         $customer_verification->save();
+        $title = "Customer Verified Successfully";
+        $description = $user->name . " successfully verified $customer->business_name on $today";
+        $this->logUserActivity($title, $description, $user);
         return $this->customerDetails($customer);
     }
 

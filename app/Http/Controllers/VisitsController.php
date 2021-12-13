@@ -50,18 +50,23 @@ class VisitsController extends Controller
             $visit->visit_date = $date;
             $visit->save();
         }
-        $this->saveVisitDetails($request, $visit->id);
+        $this->saveVisitDetails($request, $visit);
         return $this->show($visit);
     }
-    private function saveVisitDetails($request, $visit_id)
+    private function saveVisitDetails($request, $visit)
     {
+        $user = $this->getUser();
         $visit_detail = new VisitDetail();
-        $visit_detail->visit_id = $visit_id;
+        $visit_detail->visit_id = $visit->id;
         $visit_detail->customer_contact_id = $request->contact_id;
         $visit_detail->visit_type = $request->visit_type;
         $visit_detail->purpose = $request->purpose;
         $visit_detail->description = $request->description;
         $visit_detail->save();
+
+        $title = "New customer visit made";
+        $description = $user->name . " made a new visit to $visit->customer->business_name";
+        $this->logUserActivity($title, $description, $user);
     }
 
     /**

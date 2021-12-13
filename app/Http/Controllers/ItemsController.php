@@ -94,12 +94,13 @@ class ItemsController extends Controller
     private function storeWarehouseStock($user_id, $items)
     {
         //
-        // $user = $this->getUser();
+        $user = $this->getUser();
         foreach ($items as $warehouse_item) {
             $id = $warehouse_item->id;
             $waybill_item_id = $warehouse_item->waybill_item_id;
             $item_stock_sub_batch_id = $warehouse_item->item_stock_sub_batch_id;
             $stock = WarehouseStock::where(['dispatched_product_id' => $id, 'waybill_item_id' => $waybill_item_id, 'item_stock_sub_batch_id' => $item_stock_sub_batch_id])->first();
+            $item = Item::find($warehouse_item->item_id);
             if (!$stock) {
                 $stock = new WarehouseStock();
                 $stock->dispatched_product_id = $id;
@@ -113,6 +114,10 @@ class ItemsController extends Controller
                 $stock->batch_no = $warehouse_item->batch_no;
                 $stock->sub_batch_no = $warehouse_item->sub_batch_no;
                 $stock->save();
+
+                $title = "Warehouse products supplied";
+                $description = "$stock->quantity_supplied $item->package_type with Batch No.  $stock->batch_no was sent from warehouse";
+                $this->logUserActivity($title, $description, $user);
             }
         }
     }
