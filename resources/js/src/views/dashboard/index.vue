@@ -8,11 +8,11 @@
 import { mapGetters } from 'vuex';
 import superAdminDashboard from './super';
 import adminDashboard from './admin';
-import editorDashboard from './editor';
+import salesRepDashboard from './sales-rep';
 
 export default {
   name: 'Dashboard',
-  components: { superAdminDashboard, adminDashboard, editorDashboard },
+  components: { superAdminDashboard, adminDashboard, salesRepDashboard },
   data() {
     return {
       currentRole: '',
@@ -26,10 +26,10 @@ export default {
   created() {
     if (this.roles.includes('super')) {
       this.currentRole = 'superAdminDashboard';
-    } else if (this.roles.includes('admin')) {
+    } else if (this.roles.includes('admin') || this.roles.includes('auditor')) {
       this.currentRole = 'adminDashboard';
-    } else {
-      this.currentRole = 'editorDashboard';
+    } else if (this.roles.includes('sales_rep')){
+      this.currentRole = 'salesRepDashboard';
     }
   },
 };

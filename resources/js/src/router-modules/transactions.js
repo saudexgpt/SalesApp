@@ -7,43 +7,43 @@ const transactionsRoutes = {
   i18n: 'Transactions',
   redirect: '/transactions/sales',
   meta: {
-    roles: ['super', 'admin'],
+    // roles: ['super', 'admin'],
   },
   children: [
     // //////////////////transactions///////////////////////////
     {
       hidden: false,
-      component: () => import('@/views/pages/ComingSoon.vue'),
-      path: '/transactions/orders',
-      name: 'Orders',
-      slug: 'orders',
-      i18n: 'Orders',
+      component: () => import('@/views/apps/transactions/index'),
+      path: '/transactions/index',
+      name: 'AllTransactions',
+      slug: 'All Transactions',
+      i18n: 'View Transactions',
       meta: {
         // permissions: [],
       },
     },
-    {
-      hidden: false,
-      component: () => import('@/views/apps/user/index.vue'),
-      path: '/transactions/sales',
-      name: 'Sales',
-      slug: 'sales',
-      i18n: 'Sales',
-      meta: {
-        // permissions: [],
-      },
-    },
-    {
-      hidden: false,
-      component: () => import('@/views/pages/ComingSoon.vue'),
-      path: '/transactions/payments',
-      name: 'Payments',
-      slug: 'payments',
-      i18n: 'Payments',
-      meta: {
-        // permissions: [],
-      },
-    },
+    // {
+    //   hidden: false,
+    //   component: () => import('@/views/apps/transactions/Sales'),
+    //   path: '/transactions/sales',
+    //   name: 'Sales',
+    //   slug: 'sales',
+    //   i18n: 'Sales',
+    //   meta: {
+    //     // permissions: [],
+    //   },
+    // },
+    // {
+    //   hidden: false,
+    //   component: () => import('@/views/apps/transactions/Payments'),
+    //   path: '/transactions/payments',
+    //   name: 'Payments',
+    //   slug: 'payments',
+    //   i18n: 'Payments',
+    //   meta: {
+    //     // permissions: [],
+    //   },
+    // },
   ],
 
 };

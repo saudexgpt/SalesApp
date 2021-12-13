@@ -8,6 +8,16 @@
         </div>
         <vs-divider />
       </div>
+      <div class="vx-col lg:w-3/4 w-full">
+        <el-button
+          round
+          class="filter-item"
+          type="success"
+          icon="el-icon-home"
+          @click="stockProductsFromWarehouse"
+        >Get Warehouse Supplies
+        </el-button>
+      </div>
     </div>
     <v-client-table
       v-model="warehouse_stocks"
@@ -80,7 +90,7 @@ export default {
     };
   },
   created() {
-    this.stockProductsFromWarehouse();
+    this.showWarehouseStocks();
   },
   methods: {
     moment,
@@ -92,19 +102,20 @@ export default {
       stockResource.store()
         .then(response => {
           app.showWarehouseStocks();
+          this.$message({
+            type: 'success',
+            message: 'Warehouse Stocks Loaded Successfully',
+          });
         });
     },
     showWarehouseStocks() {
       const app = this;
+      app.load = true;
       const stockResource = new Resource('inventory/warehouse-stock');
       stockResource.list()
         .then(response => {
           app.load = false;
           app.warehouse_stocks = response.warehouse_stocks;
-          this.$message({
-            type: 'success',
-            message: 'Warehouse Stocks Loaded Successfully',
-          });
         });
     },
 

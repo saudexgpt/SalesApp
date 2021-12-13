@@ -19,7 +19,7 @@ const inventoryRoutes = {
       i18n: 'View Inventory',
       component: () => import('@/views/apps/inventories'),
       meta: {
-        roles: ['admin', 'super'],
+        roles: ['admin', 'super', 'auditor'],
       },
     },
     {

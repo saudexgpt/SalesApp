@@ -1,314 +1,228 @@
 <!-- =========================================================================================
-    File Name: DashboardEcommerce.vue
-    Description: Dashboard - Ecommerce
-    ----------------------------------------------------------------------------------------
-    Item Name: Vuexy - Vuejs, HTML & Laravel Admin Dashboard Template
-      Author: Pixinvent
-    Author URL: http://www.themeforest.net/user/pixinvent
+  File Name: DashboardAnalytics.vue
+  Description: Dashboard Analytics
+  ----------------------------------------------------------------------------------------
+  Item Name: Vuexy - Vuejs, HTML & Laravel Admin Dashboard Template
+  Author: Pixinvent
+  Author URL: http://www.themeforest.net/user/pixinvent
 ========================================================================================== -->
 
 <template>
-  <div>
-    <div class="vx-row">
-
-      <div class="vx-col w-full sm:w-1/2 md:w-1/2 lg:w-1/4 xl:w-1/4 mb-base">
-        <statistics-card-line
-          v-if="revenueGenerated.analyticsData"
-          :statistic="revenueGenerated.analyticsData.revenue | k_formatter"
-          :chart-data="revenueGenerated.series"
-          icon="DollarSignIcon"
-          statistic-title="Wallet"
-          color="success"
-          type="area" />
-      </div>
-      <div class="vx-col w-full sm:w-1/2 md:w-1/2 lg:w-1/4 xl:w-1/4 mb-base">
-        <statistics-card-line
-          v-if="subscribersGained.analyticsData"
-          :statistic="subscribersGained.analyticsData.subscribers | k_formatter"
-          :chart-data="subscribersGained.series"
-          icon="ShoppingCartIcon"
-          statistic-title="Orders"
-          color="dark"
-          type="area" />
-      </div>
-
-      <div class="vx-col w-full sm:w-1/2 md:w-1/2 lg:w-1/4 xl:w-1/4 mb-base">
-        <statistics-card-line
-          v-if="quarterlySales.analyticsData"
-          :statistic="quarterlySales.analyticsData.sales"
-          :chart-data="quarterlySales.series"
-          icon="UsersIcon"
-          statistic-title="Downlines"
-          color="danger"
-          type="area" />
-      </div>
-      <div class="vx-col w-full sm:w-1/2 md:w-1/2 lg:w-1/4 xl:w-1/4 mb-base">
-        <statistics-card-line
-          v-if="ordersRecevied.analyticsData"
-          :statistic="ordersRecevied.analyticsData.orders | k_formatter"
-          :chart-data="ordersRecevied.series"
-          icon="Share2Icon"
-          statistic-title="Referrals"
-          color="warning"
-          type="area" />
-      </div>
-    </div>
-
-    <div class="vx-row">
-      <!-- CARD 9: DISPATCHED ORDERS -->
-      <div class="vx-col w-full">
-        <vx-card title="Dispatched Orders">
-          <div slot="no-body" class="mt-4">
-            <vs-table :data="dispatchedOrders" class="table-dark-inverted">
-              <template slot="thead">
-                <vs-th>ORDER NO.</vs-th>
-                <vs-th>STATUS</vs-th>
-                <!-- <vs-th>OPERATORS</vs-th> -->
-                <vs-th>LOCATION</vs-th>
-                <vs-th>DISTANCE</vs-th>
-                <vs-th>START DATE</vs-th>
-                <vs-th>EST DELIVERY DATE</vs-th>
-              </template>
-
-              <template slot-scope="{data}">
-                <vs-tr v-for="(tr, indextr) in data" :key="indextr">
-                  <vs-td :data="data[indextr].orderNo">
-                    <span>#{{ data[indextr].orderNo }}</span>
-                  </vs-td>
-                  <vs-td :data="data[indextr].status">
-                    <span class="flex items-center px-2 py-1 rounded"><div :class="'bg-' + data[indextr].statusColor" class="h-3 w-3 rounded-full mr-2"/>{{ data[indextr].status }}</span>
-                  </vs-td>
-                  <!-- <vs-td :data="data[indextr].orderNo">
-                    <ul class="users-liked user-list">
-                      <li v-for="(user, userIndex) in data[indextr].usersLiked" :key="userIndex">
-                        <vx-tooltip :text="user.name" position="bottom">
-                          <vs-avatar :src="user.img" size="30px" class="border-2 border-white border-solid -m-1"/>
-                        </vx-tooltip>
-                      </li>
-                    </ul>
-                  </vs-td> -->
-                  <vs-td :data="data[indextr].orderNo">
-                    <span>{{ data[indextr].location }}</span>
-                  </vs-td>
-                  <vs-td :data="data[indextr].orderNo">
-                    <span>{{ data[indextr].distance }}</span>
-                    <vs-progress :percent="data[indextr].distPercent" :color="data[indextr].statusColor"/>
-                  </vs-td>
-                  <vs-td :data="data[indextr].orderNo">
-                    <span>{{ data[indextr].startDate }}</span>
-                  </vs-td>
-                  <vs-td :data="data[indextr].orderNo">
-                    <span>{{ data[indextr].estDelDate }}</span>
-                  </vs-td>
-                </vs-tr>
-              </template>
-            </vs-table>
+  <div v-loading="loading" id="dashboard-analytics">
+    <data-analysis :dashboard-data="dashboardData" />
+    <!-- <div class="vx-row">
+        <div class="vx-col lg:w-3/4 w-full">
+          <div class="flex staffs-end px-3">
+            <feather-icon svg-classes="w-6 h-6" icon="ShoppingBagIcon" class="mr-2" />
+            <strong class="font-medium text-lg">Debts Report {{ sub_title }}</strong>
           </div>
-
-        </vx-card>
+          <vs-divider />
+        </div>
+        <div v-loading="load_table" class="w-full">
+          <v-client-table
+            v-model="debts"
+            :columns="columns"
+            :options="options"
+          >
+            <template slot="amount_due" slot-scope="{row}">
+              <div class="alert alert-info">{{ currency + row.amount_due.toLocaleString() }}</div>
+            </template>
+            <template slot="amount_paid" slot-scope="{row}">
+              <div class="alert alert-success">{{ currency + row.amount_paid.toLocaleString() }}</div>
+            </template>
+            <template slot="balance" slot-scope="{row}">
+              <div class="alert alert-danger">{{ currency + (row.amount_due - row.amount_paid).toLocaleString() }}</div>
+            </template>
+            <template slot="due_date" slot-scope="{row}">
+              <div>{{ moment(row.due_date).format('ll') }}</div>
+            </template>
+            <template slot="entry_date" slot-scope="{row}">
+              <div>{{ moment(row.entry_date).format('ll') }}</div>
+            </template>
+            <template slot="created_at" slot-scope="{row}">
+              <div>{{ moment(row.created_at).format('ll') }}</div>
+            </template>
+          </v-client-table>
+          <el-row :gutter="20">
+            <pagination
+              v-show="total > 0"
+              :total="total"
+              :page.sync="query.page"
+              :limit.sync="query.limit"
+              @pagination="fetchDebts"
+            />
+          </el-row>
+        </div>
+      </div> -->
+    <div class="vx-row">
+      <div class="vx-col w-full">
+        <transaction-chart />
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import VuePerfectScrollbar from 'vue-perfect-scrollbar';
-import VueApexCharts from 'vue-apexcharts';
+import moment from 'moment';
+import Pagination from '@/components/Pagination';
 import StatisticsCardLine from '@/components/statistics-cards/StatisticsCardLine.vue';
-// import analyticsData from '@/views/ui-elements/card/analyticsData.js';
-import ChangeTimeDurationDropdown from '@/components/ChangeTimeDurationDropdown.vue';
-
-export default{
+import DataAnalysis from './partials/DataAnalysis';
+import TransactionChart from './partials/TransactionChart';
+import Resource from '@/api/resource';
+export default {
   components: {
-    VueApexCharts,
+    DataAnalysis,
+    TransactionChart,
     StatisticsCardLine,
-    VuePerfectScrollbar,
-    ChangeTimeDurationDropdown,
+    Pagination,
   },
   data() {
     return {
-      subscribersGained: {
-        series: [
-          {
-            name: 'Subscribers',
-            data: [28, 40, 36, 52, 38, 60, 55],
-          },
-        ],
-        analyticsData: {
-          subscribers: 92600,
-        },
-      },
-      revenueGenerated: {
-        series: [
-          {
-            name: 'Revenue',
-            data: [350, 275, 400, 300, 350, 300, 450],
-          },
-        ],
-        analyticsData: {
-          revenue: 97500,
-        },
-      },
-      quarterlySales: {
-        series: [
-          {
-            name: 'Sales',
-            data: [10, 15, 7, 12, 3, 16],
-          },
-        ],
-        analyticsData: {
-          sales: '14',
-        },
-      },
-      ordersRecevied: {
-        series: [
-          {
-            name: 'Orders',
-            data: [10, 15, 8, 15, 7, 12, 8],
-          },
-        ],
-        analyticsData: {
-          orders: 97500,
-        },
-      },
+      user: '',
+      dispatchedOrders: [],
+      dashboardData: null,
+      loading: false,
+      debts: [],
+      columns: [
+        'customer.business_name',
+        'invoice_no',
+        'amount_due',
+        'amount_paid',
+        'balance',
+        'due_date',
+        'entry_date',
+        'created_at',
+      ],
 
-    //   dispatchedOrders: [
-    //     {
-    //       orderNo: 879985,
-    //       status: 'Moving',
-    //       statusColor: 'success',
-    //       operator: 'Cinar Knowles',
-    //       operatorImg: require('@/assets/images/portrait/small/avatar-s-2.jpg'),
-    //       usersLiked: [
-    //         {
-    //           name: 'Vennie Mostowy',
-    //           img: require('@/assets/images/portrait/small/avatar-s-5.jpg'),
-    //         },
-    //         {
-    //           name: 'Elicia Rieske',
-    //           img: require('@/assets/images/portrait/small/avatar-s-7.jpg'),
-    //         },
-    //         {
-    //           name: 'Julee Rossignol',
-    //           img: require('@/assets/images/portrait/small/avatar-s-10.jpg'),
-    //         },
-    //         {
-    //           name: 'Darcey Nooner',
-    //           img: require('@/assets/images/portrait/small/avatar-s-8.jpg'),
-    //         },
-    //       ],
-    //       location: 'Anniston, Alabama',
-    //       distance: '130 km',
-    //       distPercent: 80,
-    //       startDate: '26/07/2018',
-    //       estDelDate: '28/07/2018',
-    //     },
-    //     {
-    //       orderNo: 156897,
-    //       status: 'Pending',
-    //       statusColor: 'warning',
-    //       operator: 'Britany Ryder',
-    //       operatorImg: require('@/assets/images/portrait/small/avatar-s-4.jpg'),
-    //       usersLiked: [
-    //         {
-    //           name: 'Trina Lynes',
-    //           img: require('@/assets/images/portrait/small/avatar-s-1.jpg'),
-    //         },
-    //         {
-    //           name: 'Lilian Nenez',
-    //           img: require('@/assets/images/portrait/small/avatar-s-2.jpg'),
-    //         },
-    //         {
-    //           name: 'Alberto Glotzbach',
-    //           img: require('@/assets/images/portrait/small/avatar-s-3.jpg'),
-    //         },
-    //       ],
-    //       location: 'Cordova, Alaska',
-    //       distance: '234 km',
-    //       distPercent: 60,
-    //       startDate: '26/07/2018',
-    //       estDelDate: '28/07/2018',
-    //     },
-    //     {
-    //       orderNo: 568975,
-    //       status: 'Moving',
-    //       statusColor: 'success',
-    //       operator: 'Kishan Ashton',
-    //       operatorImg: require('@/assets/images/portrait/small/avatar-s-1.jpg'),
-    //       usersLiked: [
-    //         {
-    //           name: 'Lai Lewandowski',
-    //           img: require('@/assets/images/portrait/small/avatar-s-6.jpg'),
-    //         },
-    //         {
-    //           name: 'Elicia Rieske',
-    //           img: require('@/assets/images/portrait/small/avatar-s-7.jpg'),
-    //         },
-    //         {
-    //           name: 'Darcey Nooner',
-    //           img: require('@/assets/images/portrait/small/avatar-s-8.jpg'),
-    //         },
-    //         {
-    //           name: 'Julee Rossignol',
-    //           img: require('@/assets/images/portrait/small/avatar-s-10.jpg'),
-    //         },
-    //         {
-    //           name: 'Jeffrey Gerondale',
-    //           img: require('@/assets/images/portrait/small/avatar-s-9.jpg'),
-    //         },
-    //       ],
-    //       location: 'Florence, Alabama',
-    //       distance: '168 km',
-    //       distPercent: 70,
-    //       startDate: '26/07/2018',
-    //       estDelDate: '28/07/2018',
-    //     },
-    //     {
-    //       orderNo: 245689,
-    //       status: 'Canceled',
-    //       statusColor: 'danger',
-    //       operator: 'Anabella Elliott',
-    //       operatorImg: require('@/assets/images/portrait/small/avatar-s-6.jpg'),
-    //       usersLiked: [
-    //         {
-    //           name: 'Vennie Mostowy',
-    //           img: require('@/assets/images/portrait/small/avatar-s-5.jpg'),
-    //         },
-    //         {
-    //           name: 'Elicia Rieske',
-    //           img: require('@/assets/images/portrait/small/avatar-s-7.jpg'),
-    //         },
-    //       ],
-    //       location: 'Clifton, Arizona',
-    //       distance: '125 km',
-    //       distPercent: 95,
-    //       startDate: '26/07/2018',
-    //       estDelDate: '28/07/2018',
-    //     },
-    //   ],
+      options: {
+        headings: {
+          'customer.business_name': 'Customer',
+          due_date: 'Payment Due Date',
+          entry_date: 'Sales Date',
+        },
+        pagination: {
+          dropdown: true,
+          chunk: 10,
+        },
+        perPage: 10,
+        filterByColumn: true,
+        sortable: ['customer.business_name', 'due_date', 'entry_date', 'created_at'],
+        filterable: ['customer.business_name', 'due_date', 'entry_date', 'created_at'],
+      },
+      form: {
+        from: '',
+        to: '',
+        panel: '',
+        status: 'pending',
+        page: 1,
+        limit: 10,
+        keyword: '',
+      },
+      sub_title: '',
+      submitTitle: 'Fetch Report',
+      panel: 'month',
+      future: false,
+      panels: ['range', 'week', 'month', 'quarter', 'year'],
+      show_calendar: false,
+      total: 0,
+      load_table: false,
+      query: {
+        page: 1,
+        limit: 10,
+        keyword: '',
+        role: '',
+      },
+      currency: '',
     };
   },
-  computed: {
-    scrollbarTag() {
-      return this.$store.getters.scrollbarTag;
-    },
-  },
-  mounted() {
-    // const scroll_el = this.$refs.chatLogPS.$el || this.$refs.chatLogPS;
-    // scroll_el.scrollTop = this.$refs.chatLog.scrollHeight;
-  },
   created() {
-
+    this.user = this.$store.getters.name;
+    this.fetchDashboard();
+    this.fetchDebts();
+  },
+  methods: {
+    moment,
+    fetchDashboard(){
+      const app = this;
+      // this.$store.dispatch('dashboard/fetchDashboardData', 'debts-rep')
+      // const fetchResource = new Resource('dashboard/debts-rep'); // enter the fetch customer url
+      app.loading = true;
+      const fetchResource = new Resource('dashboard');
+      fetchResource.list().then(response => {
+        app.dashboardData = response;
+        // app.$store.dispatch('orders/setTodayOrders', response.today_orders);
+        // app.$store.dispatch('visits/setTodayVisits', response.today_visits);
+        // app.$store.dispatch('schedules/setTodaySchedules', response.today_schedule);
+        app.loading = false;
+        // loader.hide();
+      });
+    },
+    format(date) {
+      var month = date.toLocaleString('en-US', { month: 'short' });
+      return month + ' ' + date.getDate() + ', ' + date.getFullYear();
+    },
+    setDateRange(values) {
+      const app = this;
+      document.getElementById('pick_date').click();
+      app.show_calendar = false;
+      let panel = app.panel;
+      let from = app.week_start;
+      let to = app.week_end;
+      if (values !== '') {
+        to = this.format(new Date(values.to));
+        from = this.format(new Date(values.from));
+        panel = values.panel;
+      }
+      app.form.from = from;
+      app.form.to = to;
+      app.form.panel = panel;
+      app.fetchDebts();
+    },
+    fetchDebts(){
+      const app = this;
+      const { limit, page } = app.query;
+      app.options.perPage = limit;
+      app.load_table = true;
+      const param = app.form;
+      const fetchResource = new Resource('sales/fetch-debts');
+      fetchResource.list(param).then(response => {
+        app.debts = response.debts.data;
+        app.debts.forEach((element, index) => {
+          element['index'] = (page - 1) * limit + index + 1;
+        });
+        app.total = response.debts.total;
+        app.currency = response.currency;
+        app.sub_title = ' from ' + response.date_from + ' to ' + response.date_to;
+        app.load_table = false;
+      });
+    },
   },
 };
 </script>
 
 <style lang="scss">
-.chat-card-log {
-    height: 400px;
+/*! rtl:begin:ignore */
+#dashboard-analytics {
+  .greet-user{
+    position: relative;
 
-    .chat-sent-msg {
-        background-color: #f2f4f7 !important;
+    .decore-left{
+      position: absolute;
+      left:0;
+      top: 0;
     }
+    .decore-right{
+      position: absolute;
+      right:0;
+      top: 0;
+    }
+  }
+
+  @media(max-width: 576px) {
+    .decore-left, .decore-right{
+      width: 140px;
+    }
+  }
 }
+/*! rtl:end:ignore */
 </style>

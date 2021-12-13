@@ -57,12 +57,12 @@ const customersRoutes = {
     },
 
     {
-        hidden: true,
-        path: '/report/customer-statement/:id(\\d+)',
-        name: 'CustomerStatement',
-        slug: 'CustomerStatement',
-        component: () => import('@/views/apps/customers/CustomerStatements'),
-      },
+      hidden: true,
+      path: '/report/customer-statement/:id(\\d+)',
+      name: 'CustomerStatement',
+      slug: 'CustomerStatement',
+      component: () => import('@/views/apps/customers/CustomerStatements'),
+    },
   ],
 };
 

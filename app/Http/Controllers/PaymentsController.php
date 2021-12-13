@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class PaymentsController extends Controller
 {
@@ -12,9 +13,33 @@ class PaymentsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $user = $this->getUser();
+        $date_from = Carbon::now()->startOfQuarter();
+        $date_to = Carbon::now()->endOfQuarter();
+        $panel = 'quarter';
+        $currency = $this->currency();
+        if (isset($request->from, $request->to, $request->panel)) {
+            $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
+            $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
+            $panel = $request->panel;
+        }
+        $condition = [];
+        if (isset($request->customer_id) && $request->customer_id != 'all') {
+            $condition = ['customer_id' => $request->customer_id];
+        }
+        $delivery_status = $request->delivery_status;
+        if ($user->hasRole('sales_rep')) {
+
+            $payments = $user->customerPayments()->with(['customer.assignedOfficer', 'confirmer'])->where('payment_date', '<=',  $date_to)->where('payment_date', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(10);
+        } else {
+            $payments = Payment::with(['customer.assignedOfficer', 'confirmer'])->where('payment_date', '<=',  $date_to)->where('payment_date', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(10);
+        }
+
+        $date_from = getDateFormatWords($date_from);
+        $date_to = getDateFormatWords($date_to);
+        return response()->json(compact('payments', 'currency', 'date_from', 'date_to'), 200);
     }
 
     /**
@@ -46,18 +71,8 @@ class PaymentsController extends Controller
      */
     public function show(Payment $payment)
     {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Payment  $payment
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Payment $payment)
-    {
-        //
+        $payment = Payment::with(['customer', 'confirmer'])->find($payment->id);
+        return response()->json(compact('payment'), 200);
     }
 
     /**
@@ -67,9 +82,12 @@ class PaymentsController extends Controller
      * @param  \App\Models\Payment  $payment
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Payment $payment)
+    public function confirm(Request $request, Payment $payment)
     {
-        //
+        $user = $this->getUser();
+        $payment->confirmed_by = $user->id;
+        $payment->save();
+        return $this->show($payment);
     }
 
     /**

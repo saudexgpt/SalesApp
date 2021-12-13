@@ -30,7 +30,7 @@ const reportsRoutes = {
       slug: 'new-report',
       i18n: 'New Report',
       meta: {
-        // permissions: ['create-users', 'read-users', 'update-users', 'delete-users'],
+        roles: ['sales_rep'],
       },
     },
     {

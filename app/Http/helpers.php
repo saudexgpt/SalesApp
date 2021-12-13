@@ -32,3 +32,8 @@ function workingDaysStr($day = null)
     }
     return $arr;
 }
+
+function getDateFormatWords($dateTime)
+{
+    return date('M d, Y', strtotime($dateTime));
+}

@@ -51,11 +51,13 @@ class DailyReportController extends Controller
 
         $with_array = ['hospitalReports', 'reporter', 'customerReports'];
 
-        if ($user->hasRole('admin')) {
-            $daily_reports = DailyReport::with($with_array)->where('date', '>=', $date_from)->where('date', '<=', $date_to)->orderBy('id', 'DESC')->get();
-        } else {
+        if ($user->hasRole('sales_rep')) {
+
 
             $daily_reports = DailyReport::with($with_array)->where('report_by', $user->id)->where('date', '>=', $date_from)->where('date', '<=', $date_to)->orderBy('id', 'DESC')->get();
+        } else {
+            $condition = ($request->user_id) ? ['report_by' => $request->user_id] : [];
+            $daily_reports = DailyReport::with($with_array)->where($condition)->where('date', '>=', $date_from)->where('date', '<=', $date_to)->orderBy('id', 'DESC')->get();
         }
         return response()->json(compact('daily_reports'), 200);
     }

@@ -12,13 +12,17 @@
         <div class="vx-col lg:w-1/4 w-full">
           <div class="flex staffs-end px-3">
             <span class="pull-right">
-              <!-- <div class="block">
-              <span class="demonstration">Pick Month</span>
-              <el-date-picker
-                v-model="form.month"
-                type="month"
-                placeholder="Pick a month"/>
-            </div> -->
+              <div v-if="!checkRole(['sales_rep'])" class="block">
+                <span class="demonstration">Select Rep</span>
+                <el-select v-model="form.user_id" placeholder="Select Reps" @input="fetchDailyReports()">
+                  <el-option
+                    v-for="(rep, index) in sales_reps"
+                    :key="index"
+                    :label="rep.name"
+                    :value="rep.id"
+                  />
+                </el-select>
+              </div>
               <el-popover placement="right" trigger="click">
                 <date-range-picker
                   :from="$route.query.from"
@@ -81,6 +85,7 @@ import Pagination from '@/components/Pagination'; // Secondary package based on 
 import Resource from '@/api/resource';
 import permission from '@/directive/permission'; // Permission directive
 import checkPermission from '@/utils/permission'; // Permission checking
+import checkRole from '@/utils/role'; // Permission checking
 const dailyReportResource = new Resource('daily-report/my-reports');
 export default {
   name: 'Customers',
@@ -103,7 +108,9 @@ export default {
         page: 1,
         limit: 10,
         keyword: '',
+        user_id: '',
       },
+      sales_reps: [],
       columns: [
         'action',
         'reporter.name',
@@ -140,11 +147,26 @@ export default {
     };
   },
   created() {
+    this.fetchSalesRep();
     this.fetchDailyReports();
   },
   methods: {
     moment,
     checkPermission,
+    checkRole,
+    fetchSalesRep() {
+      const app = this;
+      const salesRepResource = new Resource('users/fetch-sales-reps');
+      salesRepResource
+        .list()
+        .then((response) => {
+          app.sales_reps = response.sales_reps;
+        })
+        .catch((error) => {
+          console.log(error);
+          this.load_table = false;
+        });
+    },
     format(date) {
       var month = date.toLocaleString('en-US', { month: 'short' });
       return month + ' ' + date.getDate() + ', ' + date.getFullYear();

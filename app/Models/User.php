@@ -61,6 +61,17 @@ class User extends Authenticatable
     {
         return $this->hasMany(Transaction::class, 'field_staff', 'id');
     }
+    public function customerPayments()
+    {
+        return $this->hasManyThrough(
+            Payment::class,
+            Customer::class,
+            'relating_officer', // Foreign key on the customers table...
+            'customer_id', // Foreign key on the payments table...
+            'id', // Local key on the users table...
+            'id' // Local key on the customer table...
+        );
+    }
     public function visits()
     {
         return $this->hasMany(Visit::class, 'visitor', 'id');

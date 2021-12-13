@@ -31,6 +31,8 @@ class CustomersController extends Controller
     }
     public function index(Request $request)
     {
+
+        $user = $this->getUser();
         $searchParams = $request->all();
         $userQuery = Customer::query();
         $limit = Arr::get($searchParams, 'limit', static::ITEM_PER_PAGE);
@@ -43,15 +45,27 @@ class CustomersController extends Controller
             });
         }
         $today  = date('Y-m-d', strtotime('now'));
+        // $condition = [];
+        // if (isset($request->customer_type_id)) {
+
+        //     $customer_type_id = $request->customer_type_id;
+        //     if ($customer_type_id != 'all') {
+        //         $condition = ['customer_type_id' => $customer_type_id];
+        //     }
+        // }
         $condition = [];
         if (isset($request->customer_type_id)) {
 
             $customer_type_id = $request->customer_type_id;
             if ($customer_type_id != 'all') {
-                $condition = ['customer_type_id' => $customer_type_id];
+                $condition = array_merge($condition, ['customer_type_id' => $customer_type_id]);
             }
         }
+        if ($user->hasRole('sales_rep')) {
+            $condition = array_merge($condition, ['relating_officer' => $user->id]);
+            // $condition = ['relating_officer' => $user->id];
 
+        }
         $customers = $userQuery->with([
             'customerType', /*'tier', 'subRegion', 'region',*/ 'registrar', 'assignedOfficer',
 
@@ -75,9 +89,16 @@ class CustomersController extends Controller
         return response()->json([], 204);
     }
 
-    public function all(Request $request)
+    public function all()
     {
-        $customers = Customer::get();
+        $user = $this->getUser();
+        $condition = [];
+        if ($user->hasRole('sales_rep')) {
+            $condition = array_merge($condition, ['relating_officer' => $user->id]);
+            // $condition = ['relating_officer' => $user->id];
+
+        }
+        $customers = Customer::where($condition)->get();
         return response()->json(compact('customers'), 200);
     }
 

@@ -32,41 +32,73 @@ class TransactionsController extends Controller
     public function fetchDebts(Request $request)
     {
         $user = $this->getUser();
-        $date_from = Carbon::now()->startOfMonth();
-        $date_to = Carbon::now()->endOfMonth();
-        $panel = 'month';
+        $date_from = Carbon::now()->startOfQuarter();
+        $date_to = Carbon::now()->endOfQuarter();
+        $panel = 'quarter';
         $currency = $this->currency();
         if (isset($request->from, $request->to, $request->panel)) {
             $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
             $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
             $panel = $request->panel;
         }
+        $condition = [];
+        if (isset($request->customer_id) && $request->customer_id != 'all') {
+            $condition = ['customer_id' => $request->customer_id];
+        }
         $delivery_status = $request->delivery_status;
-        $debts = $user->transactions()->with(['customer', 'payments' => function ($q) {
-            $q->orderBy('id', 'DESC');
-        }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->whereRaw('amount_due - amount_paid > 0')->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->orderBy('id', 'DESC')->paginate(10);
-        $date_from = date('d-m-Y', strtotime($date_from));
-        $date_to = date('d-m-Y', strtotime($date_to));
+
+        if ($user->hasRole('sales_rep')) {
+
+            $debts = $user->transactions()->groupBy('customer_id')->with(['customer.assignedOfficer', 'payments' => function ($q) {
+                $q->orderBy('id', 'DESC');
+            }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->whereRaw('amount_due - amount_paid > 0')->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->select('*', \DB::raw('SUM(amount_due) as total_amount_due'), \DB::raw('SUM(amount_paid) as total_amount_paid'))->paginate(10);
+
+            // $debts = $user->transactions()->with(['customer', 'payments' => function ($q) {
+            //     $q->orderBy('id', 'DESC');
+            // }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->whereRaw('amount_due - amount_paid > 0')->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(10);
+        } else {
+            $debts = Transaction::groupBy('customer_id')->with(['customer.assignedOfficer', 'payments' => function ($q) {
+                $q->orderBy('id', 'DESC');
+            }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->whereRaw('amount_due - amount_paid > 0')->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->select('*', \DB::raw('SUM(amount_due) as total_amount_due'), \DB::raw('SUM(amount_paid) as total_amount_paid'))->paginate(10);
+            // $debts = Transaction::with(['customer', 'payments' => function ($q) {
+            //     $q->orderBy('id', 'DESC');
+            // }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->whereRaw('amount_due - amount_paid > 0')->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(10);
+        }
+
+        $date_from = getDateFormatWords($date_from);
+        $date_to = getDateFormatWords($date_to);
         return response()->json(compact('debts', 'currency', 'date_from', 'date_to'), 200);
     }
     public function fetchSales(Request $request)
     {
         $user = $this->getUser();
-        $date_from = Carbon::now()->startOfMonth();
-        $date_to = Carbon::now()->endOfMonth();
-        $panel = 'month';
+        $date_from = Carbon::now()->startOfQuarter();
+        $date_to = Carbon::now()->endOfQuarter();
+        $panel = 'quarter';
         $currency = $this->currency();
         if (isset($request->from, $request->to, $request->panel)) {
             $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
             $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
             $panel = $request->panel;
         }
+        $condition = [];
+        if (isset($request->customer_id) && $request->customer_id != 'all') {
+            $condition = ['customer_id' => $request->customer_id];
+        }
         $delivery_status = $request->delivery_status;
-        $sales = $user->transactions()->with(['customer', 'payments' => function ($q) {
-            $q->orderBy('id', 'DESC');
-        }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->orderBy('id', 'DESC')->paginate(10);
-        $date_from = date('d-m-Y', strtotime($date_from));
-        $date_to = date('d-m-Y', strtotime($date_to));
+        if ($user->hasRole('sales_rep')) {
+
+            $sales = $user->transactions()->with(['customer.assignedOfficer', 'payments' => function ($q) {
+                $q->orderBy('id', 'DESC');
+            }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(10);
+        } else {
+            $sales = Transaction::with(['customer.assignedOfficer', 'payments' => function ($q) {
+                $q->orderBy('id', 'DESC');
+            }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(10);
+        }
+
+        $date_from = getDateFormatWords($date_from);
+        $date_to = getDateFormatWords($date_to);
         return response()->json(compact('sales', 'currency', 'date_from', 'date_to'), 200);
     }
 

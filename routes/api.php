@@ -15,6 +15,7 @@ use App\Http\Controllers\UsersController;
 use App\Http\Controllers\VisitsController;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\DailyReportController;
+use App\Http\Controllers\PaymentsController;
 use App\Http\Controllers\SubInventoriesController;
 
 /*
@@ -37,7 +38,7 @@ Route::group(['prefix' => 'auth'], function () {
     Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('logout', [AuthController::class, 'logout']);
 
-        Route::get('user', [AuthController::class, 'user'])->middleware('permission:read-users');
+        Route::get('user', [AuthController::class, 'user']); //->middleware('permission:read-users');
     });
 });
 
@@ -73,7 +74,9 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('fetch', [CustomerTypesController::class, 'fetch']);
     });
     Route::group(['prefix' => 'dashboard'], function () {
+        Route::get('/', [DashboardController::class, 'dashboard']);
         Route::get('sales-rep', [DashboardController::class, 'saleRepDashboard']);
+        Route::get('transaction-stats', [DashboardController::class, 'transactionStat']);
     });
     Route::group(['prefix' => 'daily-report'], function () {
         Route::get('index', [DailyReportController::class, 'index']);
@@ -95,6 +98,10 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('stock-product-from-warehouse', [ItemsController::class, 'stockProductsFromWarehouse']);
         Route::put('accept-warehouse-products/{warehouse_stock}', [SubInventoriesController::class, 'acceptWarehouseProducts']);
         Route::get('/warehouse-stock', [SubInventoriesController::class, 'showWarehouseStock']);
+    });
+    Route::group(['prefix' => 'payments'], function () {
+        Route::get('/', [PaymentsController::class, 'index']);
+        Route::put('/confirm/{payment}', [PaymentsController::class, 'confirm']);
     });
     Route::group(['prefix' => 'products'], function () {
         Route::get('/', [ItemsController::class, 'index']);
