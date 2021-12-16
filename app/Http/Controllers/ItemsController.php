@@ -117,7 +117,7 @@ class ItemsController extends Controller
                 $stock->save();
 
                 $title = "Warehouse products supplied";
-                $description = "$stock->quantity_supplied $item->package_type with Batch No.  $stock->batch_no was sent from warehouse";
+                $description = "$stock->quantity_supplied $item->package_type  of $item->name with Batch No.  $stock->batch_no was sent from warehouse";
                 $this->logUserActivity($title, $description, $user);
             }
         }

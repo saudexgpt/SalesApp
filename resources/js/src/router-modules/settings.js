@@ -22,20 +22,20 @@ const settingsRoutes = {
         permissions: ['create-users', 'read-users', 'update-users', 'delete-users'],
       },
     },
+    // {
+    //   hidden: false,
+    //   component: () => import('@/views/pages/ComingSoon.vue'),
+    //   path: '/settings/general-settings',
+    //   name: 'GeneralSettings',
+    //   slug: 'general-settings',
+    //   i18n: 'GeneralSettings',
+    //   meta: {
+    //     roles: ['admin'],
+    //   },
+    // },
     {
       hidden: false,
-      component: () => import('@/views/pages/ComingSoon.vue'),
-      path: '/settings/general-settings',
-      name: 'GeneralSettings',
-      slug: 'general-settings',
-      i18n: 'GeneralSettings',
-      meta: {
-        roles: ['admin'],
-      },
-    },
-    {
-      hidden: false,
-      component: () => import('@/views/pages/ComingSoon.vue'),
+      // component: () => import('@/views/pages/ComingSoon.vue'),
       path: '/access-control',
       name: 'Permissions',
       slug: 'external',
