@@ -12,4 +12,8 @@ class HospitalReport extends Model
     {
         return $this->belongsTo(Customer::class);
     }
+    public function dailyReport()
+    {
+        return $this->belongsTo(DailyReport::class);
+    }
 }

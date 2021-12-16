@@ -113,6 +113,7 @@ class ItemsController extends Controller
                 // $stock->sku = $sku;
                 $stock->batch_no = $warehouse_item->batch_no;
                 $stock->sub_batch_no = $warehouse_item->sub_batch_no;
+                $stock->expiry_date = $warehouse_item->expiry_date;
                 $stock->save();
 
                 $title = "Warehouse products supplied";

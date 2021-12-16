@@ -18,14 +18,14 @@
         <!-- SM - OPEN SIDEBAR BUTTON -->
         <feather-icon class="sm:inline-flex xl:hidden cursor-pointer p-2" icon="MenuIcon" @click.stop="showSidebar" />
 
-        <search-bar />
+        <!-- <search-bar /> -->
         <!-- <bookmarks :navbarColor="navbarColor" v-if="windowWidth >= 992" /> -->
 
         <vs-spacer />
 
         <!-- <i18n /> -->
 
-        <cart-drop-down />
+        <!-- <cart-drop-down /> -->
 
         <notification-drop-down />
 

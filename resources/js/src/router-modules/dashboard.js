@@ -14,6 +14,13 @@ const adminRoutes = {
       path: '/dashboard',
       component: () => import('@/views/dashboard'),
     },
+    {
+
+      hidden: true,
+      path: '/notifications',
+      name: 'notifications',
+      component: () => import('@/views/apps/Notifications.vue'),
+    },
   ],
 };
 

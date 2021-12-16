@@ -112,7 +112,7 @@ class DailyReportController extends Controller
 
                 if (isset($request->returns_report) && $request->returns_report != '') {
                     $returns_report = json_decode(json_encode($request->returns_report));
-                    $this->saveReturnsReport($returns_report);
+                    $this->saveReturnsReport($returns_report, $date);
                 }
 
                 $title = "Daily Report Successfully Submitted";
@@ -152,7 +152,7 @@ class DailyReportController extends Controller
             }
         }
     }
-    private function saveReturnsReport($returns_report)
+    private function saveReturnsReport($returns_report, $date)
     {
         $user = $this->getUser();
         foreach ($returns_report as $return_report) {
@@ -165,7 +165,10 @@ class DailyReportController extends Controller
                 $return->expiry_date = date('Y-m-d', strtotime($detail->expiry_date));
                 $return->stocked_by = $user->id;
                 $return->quantity = $detail->quantity_returned;
+                $return->rate = $detail->rate;
+                $return->amount = $detail->amount;
                 $return->reason = $detail->reason;
+                $return->date = $date;
                 $return->save();
             }
         }

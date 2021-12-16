@@ -17,8 +17,19 @@ class UsersController extends Controller
     public function userNotifications()
     {
         $user = $this->getUser();
-        $notifications = $user->unreadNotifications()->orderBy('created_at', 'DESC')->get();
-        return response()->json(compact('notifications'), 200);
+        $notifications = $user->notifications()->orderBy('created_at', 'DESC')->take(20)->get();
+        $unread_notifications = $user->unreadNotifications()->count();
+        // if ($notifications->isEmpty()) {
+        //     $notifications = $user->notifications()->orderBy('created_at', 'DESC')->take(20)->get();
+        //     // $notifications =
+        // }
+        return response()->json(compact('notifications', 'unread_notifications'), 200);
+    }
+    public function markNotificationAsRead()
+    {
+        $user = $this->getUser();
+        $user->unreadNotifications->markAsRead();
+        return $this->userNotifications();
     }
     /**
      * Display a listing of the resource.

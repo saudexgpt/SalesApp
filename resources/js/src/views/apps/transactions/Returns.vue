@@ -1,9 +1,9 @@
 <template>
 
-  <div>
+  <div v-loading="load">
     <div slot="header" class="clearfix">
       <feather-icon svg-classes="w-6 h-6" icon="ShoppingBagIcon" class="mr-2" />
-      <strong class="font-medium text-lg">Debts {{ sub_title }}</strong>
+      <strong class="font-medium text-lg">Returned Products {{ sub_title }}</strong>
       <span style="float: right">
         <el-button
           :loading="downloadLoading"
@@ -19,7 +19,7 @@
     <el-row :gutter="10">
       <el-col :lg="12" :md="12" :sm="12" :xs="24">
         <label for="">Select Customer</label>
-        <el-select v-model="form.customer_id" style="width: 100%" @input="fetchDebts">
+        <el-select v-model="form.customer_id" style="width: 100%" @input="fetchSales">
           <el-option
             label="All"
             value="all" />
@@ -51,44 +51,25 @@
       </el-col>
     </el-row>
     <el-row :gutter="10">
-      <v-client-table v-model="debts" :columns="debts_columns" :options="debts_options">
-        <!-- <div slot="child_row" slot-scope="props" style="background: #000">
-          <table class="table table-bordered">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Quantity</th>
-                <th>Rate</th>
-                <th>Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-
-              <tr v-for="(detail, index) in props.row.details" :key="index">
-
-                <td>{{ detail.product }}</td>
-                <td>{{ detail.quantity }}</td>
-                <td>{{ detail.rate }}</td>
-                <td>{{ currency + Number(detail.amount).toLocaleString() }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div> -->
+      <v-client-table v-model="returns" :columns="returns_columns" :options="returns_options">
         <div
-          slot="total_amount_due"
+          slot="quantity"
           slot-scope="props"
-          class="alert alert-info"
-        >{{ currency + Number(props.row.total_amount_due).toLocaleString() }}</div>
+        >{{ props.row.quantity + ' ' + props.row.item.package_type }}</div>
         <div
-          slot="total_amount_paid"
+          slot="amount"
           slot-scope="props"
           class="alert alert-success"
-        >{{ currency + Number(props.row.total_amount_paid).toLocaleString() }}</div>
+        >{{ currency + Number(props.row.amount).toLocaleString() }}</div>
         <div
-          slot="balance"
+          slot="rate"
           slot-scope="props"
-          class="alert alert-danger"
-        >{{ currency + Number(props.row.total_amount_due - props.row.total_amount_paid).toLocaleString() }}</div>
+          class="alert alert-success"
+        >{{ currency + Number(props.row.rate).toLocaleString() }}</div>
+        <div
+          slot="expiry_date"
+          slot-scope="props"
+        >{{ moment(props.row.expiry_date).format('ll') }}</div>
         <div
           slot="created_at"
           slot-scope="props"
@@ -101,7 +82,7 @@
         :total="total"
         :page.sync="form.page"
         :limit.sync="form.limit"
-        @pagination="fetchDebts"
+        @pagination="fetchSales"
       />
     </el-row>
   </div>
@@ -120,40 +101,40 @@ export default {
   },
   data() {
     return {
-      debts: [],
-      debts_columns: [
+      returns: [],
+      returns_columns: [
         'customer.business_name',
-        // 'invoice_no',
-        'total_amount_due',
-        'total_amount_paid',
-        'balance',
-        'customer.assigned_officer.name',
-
-        // 'delivery_status',
-        // 'created_at',
+        'item.name',
+        'quantity',
+        'rate',
+        'amount',
+        'batch_no',
+        'expiry_date',
+        'reason',
+        'rep.name', // field staff
+        'created_at',
       ],
 
-      debts_options: {
+      returns_options: {
         headings: {
           'customer.business_name': 'Customer',
-          // invoice_no: 'Invoice No.',
-          amount_due: 'Amount',
-          amount_paid: 'Amount Paid',
-          delivery_status: 'Delivery Status',
-          'customer.assigned_officer.name': 'Relating Officer',
+          'item.name': 'Product',
+          'rep.name': 'Field Staff',
+          'created_at': 'Created at',
+          batch_no: 'Batch',
         },
         pagination: {
           dropdown: true,
           chunk: 10,
         },
-        perPage: 10,
+        perPage: 25,
         filterByColumn: true,
         // texts: {
         //   filter: 'Search:',
         // },
         // editableColumns:['name', 'category.name', 'sku'],
-        sortable: ['created_at'],
-        filterable: ['customer.business_name'],
+        sortable: ['item.name', 'customer.business_name', 'expiry_date', 'created_at', 'rep.name,'],
+        filterable: ['item.name', 'customer.business_name', 'expiry_date', 'created_at', 'rep.name'],
       },
       load: false,
       total: 0,
@@ -164,7 +145,7 @@ export default {
         panel: '',
         status: 'pending',
         page: 1,
-        limit: 10,
+        limit: 25,
         customer_id: 'all',
       },
       sub_title: '',
@@ -177,7 +158,7 @@ export default {
     };
   },
   created() {
-    this.fetchDebts();
+    this.fetchSales();
   },
   methods: {
     moment,
@@ -200,45 +181,51 @@ export default {
       app.form.from = from;
       app.form.to = to;
       app.form.panel = panel;
-      app.fetchDebts();
+      app.fetchSales();
     },
-    fetchDebts() {
+    fetchSales() {
       const app = this;
       const { limit, page } = app.form;
-      app.debts_options.perPage = limit;
-      const debtsResource = new Resource('sales/fetch-debts');
+      app.returns_options.perPage = limit;
+      const returnsResource = new Resource('reports/fetch-returned-products');
       const param = app.form;
       app.load = true;
-      debtsResource.list(param)
+      returnsResource.list(param)
         .then(response => {
-          app.debts = response.debts.data;
+          app.returns = response.returns.data;
           app.currency = response.currency;
           app.sub_title = ' from ' + response.date_from + ' to ' + response.date_to;
-          this.debts.forEach((element, index) => {
+          app.returns.forEach((element, index) => {
             element['index'] = (page - 1) * limit + index + 1;
           });
-          this.total = response.debts.total;
+          this.total = response.returns.total;
+          app.load = false;
         });
     },
     handleDownload() {
       this.downloadLoading = true;
       import('@/vendor/Export2Excel').then(excel => {
-        const multiHeader = [['Product Sales ' + this.sub_title, '', '', '', '', '']];
+        const multiHeader = [['Product Returned ' + this.sub_title, '', '', '', '', '', '', '', '', '']];
         const tHeader = [
           'CUSTOMER',
+          'PRODUCT',
+          'QUANTITY',
+          'RATE',
           'AMOUNT',
-          'AMOUNT PAID',
-          'BALANCE',
-          'RELATING OFFICER',
+          'BATCH NO.',
+          'EXPIRY DATE',
+          'REASON',
+          'FIELD STAFF',
+          'CREATED AT',
         ];
-        const filterVal = this.debts_columns;
-        const list = this.debts;
+        const filterVal = this.returns_columns;
+        const list = this.returns;
         const data = this.formatJson(filterVal, list);
         excel.export_json_to_excel({
           multiHeader,
           header: tHeader,
           data,
-          filename: 'Debts',
+          filename: 'Returned Products',
           autoWidth: true,
           bookType: 'csv',
         });
@@ -248,11 +235,20 @@ export default {
     formatJson(filterVal, jsonData) {
       return jsonData.map(v =>
         filterVal.map(j => {
+          if (j === 'expiry_date') {
+            return (v[j]) ? moment(v[j]).format('lll') : '';
+          }
+          if (j === 'created_at') {
+            return (v[j]) ? moment(v[j]).format('lll') : '';
+          }
           if (j === 'customer.business_name') {
             return v['customer']['business_name'];
           }
-          if (j === 'customer.assigned_officer.name') {
-            return (v['customer']) ? v['customer']['assigned_officer']['name'] : '';
+          if (j === 'rep.name') {
+            return v['rep']['name'];
+          }
+          if (j === 'quantity') {
+            return v['quantity'] + ' ' + v['item']['package_type'];
           }
           return v[j];
         }),

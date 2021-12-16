@@ -15,4 +15,8 @@ class ReturnedProduct extends Model
     {
         return $this->belongsTo(User::class, 'stocked_by', 'id');
     }
+    public function item()
+    {
+        return $this->belongsTo(Item::class);
+    }
 }

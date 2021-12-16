@@ -125,6 +125,8 @@ class SubInventoriesController extends Controller
         $sub_inventory->item_id = $warehouse_stock->item_id;
         $sub_inventory->quantity_stocked = $request->quantity;
         $sub_inventory->balance = $request->quantity;
+        $sub_inventory->batch_no = $warehouse_stock->batch_no;
+        $sub_inventory->expiry_date = $warehouse_stock->expiry_date;
         $sub_inventory->stocked_by = $user->name;
         if ($sub_inventory->save()) {
             $warehouse_stock->quantity_approved += $sub_inventory->quantity_stocked;
@@ -160,6 +162,8 @@ class SubInventoriesController extends Controller
         $van_inventory->item_id = $item_id;
         $van_inventory->quantity_stocked = $quantity;
         $van_inventory->balance = $quantity;
+        $van_inventory->batch_no = $subInventory->batch_no;
+        $van_inventory->expiry_date = $subInventory->expiry_date;
         $van_inventory->save();
 
         $sub_inventories = SubInventory::where(['item_id' => $item_id, 'staff_id' => $user->id])->whereRaw('balance > 0')->get();

@@ -64,7 +64,7 @@
           <tr>
             <th/>
             <th>Product</th>
-            <th>Package Type</th>
+            <!-- <th>Package Type</th> -->
             <th>Quantity Sold</th>
             <th>Rate (NGN)</th>
             <th>Total (NGN)</th>
@@ -91,13 +91,13 @@
                   :key="item_index"
                   :value="item_index"
                   :label="product.item.name + ' (Bal: ' + product.total_balance + ')'"
+                  :disabled="product.total_balance < 1"
                 >
                   <span style="float: left">{{ product.item.name }}</span>
                   <span style="float: right; color: #8492a6; font-size: 13px">{{ ' (Bal: ' + product.total_balance + ')' }}</span>
                 </el-option>
               </el-select>
             </td>
-            <td>{{ sale.type }}</td>
             <td>
               <el-input
                 v-model="sale.quantity"
@@ -107,7 +107,9 @@
                 min="1"
                 @input="calculateTotal(index);"
                 @blur="deductProduct(index);"
-              />
+              >
+                <template slot="append">{{ sale.type }}</template>
+              </el-input>
             </td>
             <td>
               <el-input

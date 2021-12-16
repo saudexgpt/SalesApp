@@ -9,6 +9,13 @@
 
 <template>
   <div id="app" :class="vueAppClasses">
+
+    <audio id="myAudio">
+      <source src="/alert.mp3" type="audio/mpeg">
+    </audio>
+    <div style="display: none">
+      <button id="play_audio" @click="playAudio()">Play Audio</button>
+    </div>
     <router-view @setAppClasses="setAppClasses" />
   </div>
 </template>
@@ -16,7 +23,6 @@
 <script>
 import themeConfig from '@/../themeConfig.js';
 // import jwt         from '@/http/requests/auth/jwt/index.js'
-
 export default {
   data() {
     return {

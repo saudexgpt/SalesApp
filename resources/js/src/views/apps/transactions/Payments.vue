@@ -84,8 +84,8 @@
       <pagination
         v-show="total > 0"
         :total="total"
-        :page.sync="query.page"
-        :limit.sync="query.limit"
+        :page.sync="form.page"
+        :limit.sync="form.limit"
         @pagination="fetchPayments"
       />
     </el-row>
@@ -140,12 +140,6 @@ export default {
       },
       load: false,
       total: 0,
-      query: {
-        page: 1,
-        limit: 10,
-        keyword: '',
-        role: '',
-      },
       currency: '',
       form: {
         from: '',
@@ -194,7 +188,7 @@ export default {
     },
     fetchPayments() {
       const app = this;
-      const { limit, page } = app.query;
+      const { limit, page } = app.form;
       app.payments_options.perPage = limit;
       const paymentsResource = new Resource('payments');
       const param = app.form;

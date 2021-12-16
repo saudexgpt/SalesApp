@@ -123,6 +123,9 @@ class AuthController extends Controller
         $tokenResult = $user->createToken('Personal Access Token');
         $token = $tokenResult->plainTextToken;
 
+        $title = "Login Activity";
+        $description = $user->name . " successfully logged into the system at " . date('Y-m-d H:i:s', strtotime('now'));
+        $this->logUserActivity($title, $description);
         // return response()->json([
         //     'user_data' => $user_resource
         // ])->header('Authorization', $token);
@@ -146,8 +149,11 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
+        $user = $request->user();
+        $title = "Logout Activity";
+        $description = $user->name . " successfully logged out of system at " . date('Y-m-d H:i:s', strtotime('now'));
+        $this->logUserActivity($title, $description);
         $request->user()->tokens()->delete();
-
         return response()->json([
             'message' => 'Successfully logged out'
         ]);

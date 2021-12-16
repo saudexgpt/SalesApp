@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\HospitalReport;
 use App\Models\Visit;
 use App\Models\VisitDetail;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class VisitsController extends Controller
 {
@@ -13,12 +15,52 @@ class VisitsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = $this->getUser();
-        // undelivered transactions are considered orders
         $visits = $user->visits()->with('customer', 'visitedBy', 'details')->orderBy('id', 'DESC')->get();
         return response()->json(compact('visits'), 200);
+    }
+
+    public function fetchHospitalVisits(Request $request)
+    {
+        $user = $this->getUser();
+        $date_from = Carbon::now()->startOfQuarter();
+        $date_to = Carbon::now()->endOfQuarter();
+        $panel = 'quarter';
+        $currency = $this->currency();
+        if (isset($request->from, $request->to, $request->panel)) {
+            $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
+            $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
+            $panel = $request->panel;
+        }
+        $condition = [];
+        if (isset($request->customer_id) && $request->customer_id != 'all') {
+            $condition = ['customer_id' => $request->customer_id];
+        }
+
+        if ($user->hasRole('sales_rep')) {
+
+            $hospital_reports = HospitalReport::with('customer', 'dailyReport.reporter')
+                ->join('daily_reports', 'daily_reports.id', 'hospital_reports.daily_report_id')
+                ->where('daily_reports.report_by',  $user->id)
+                ->where('hospital_reports.created_at', '<=',  $date_to)
+                ->where('hospital_reports.created_at', '>=',  $date_from)
+                ->where($condition)
+                ->paginate(10);
+        } else {
+            $hospital_reports = HospitalReport::with('customer', 'dailyReport.reporter')
+                ->join('daily_reports', 'daily_reports.id', 'hospital_reports.daily_report_id')
+                ->where('daily_reports.report_by',  $user->id)
+                ->where('hospital_reports.created_at', '<=',  $date_to)
+                ->where('hospital_reports.created_at', '>=',  $date_from)
+                ->where($condition)
+                ->paginate(10);
+        }
+
+        $date_from = getDateFormatWords($date_from);
+        $date_to = getDateFormatWords($date_to);
+        return response()->json(compact('hospital_reports', 'currency', 'date_from', 'date_to'), 200);
     }
 
     /**
@@ -26,9 +68,44 @@ class VisitsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function fetchGeneralVisits(Request $request)
     {
-        //
+        $user = $this->getUser();
+        $date_from = Carbon::now()->startOfQuarter();
+        $date_to = Carbon::now()->endOfQuarter();
+        $panel = 'quarter';
+        $currency = $this->currency();
+        if (isset($request->from, $request->to, $request->panel)) {
+            $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
+            $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
+            $panel = $request->panel;
+        }
+        $condition = [];
+        if (isset($request->customer_id) && $request->customer_id != 'all') {
+            $condition = ['customer_id' => $request->customer_id];
+        }
+
+        if ($user->hasRole('sales_rep')) {
+
+            $visit_details = VisitDetail::with('visit.visitedBy', 'visit.customer', 'contact')
+                ->join('visits', 'visits.id', 'visit_details.visit_id')
+                ->where('visits.visitor',  $user->id)
+                ->where('visit_details.created_at', '<=',  $date_to)
+                ->where('visit_details.created_at', '>=',  $date_from)
+                ->where($condition)
+                ->paginate(10);
+        } else {
+            $visit_details = VisitDetail::with('visit.visitedBy', 'visit.customer', 'contact')
+                ->join('visits', 'visits.id', 'visit_details.visit_id')
+                ->where('visit_details.created_at', '<=',  $date_to)
+                ->where('visit_details.created_at', '>=',  $date_from)
+                ->where($condition)
+                ->paginate(10);
+        }
+
+        $date_from = getDateFormatWords($date_from);
+        $date_to = getDateFormatWords($date_to);
+        return response()->json(compact('visit_details', 'currency', 'date_from', 'date_to'), 200);
     }
 
     /**

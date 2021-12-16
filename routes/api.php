@@ -17,7 +17,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\PaymentsController;
 use App\Http\Controllers\SubInventoriesController;
-
+use App\Http\Controllers\ReturnsController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -48,7 +48,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('get-lat-long-location', [CustomersController::class, 'getLatLongLocation']);
     Route::get('fetch-necessary-params', [Controller::class, 'fetchNecessayParams']);
     Route::get('user-notifications', [UsersController::class, 'userNotifications']);
-
+    Route::get('notification/mark-as-read', [UsersController::class, 'markNotificationAsRead']);
     Route::group(['prefix' => 'customers'], function () {
         Route::get('/sample', [CustomersController::class, 'sampleCustomers'])->middleware('permission:read-customers');
         Route::get('/', [CustomersController::class, 'index'])->middleware('permission:read-customers');
@@ -150,9 +150,13 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix' => 'visits'], function () {
         Route::get('fetch', [VisitsController::class, 'index']);
         Route::post('store', [VisitsController::class, 'store']);
+        Route::get('fetch-hospital-visits', [VisitsController::class, 'fetchHospitalVisits']);
+        Route::get('fetch-general-visits', [VisitsController::class, 'fetchGeneralVisits']);
     });
 
     Route::group(['prefix' => 'reports'], function () {
         Route::get('customer-statement', [TransactionsController::class, 'customerStatement']);
+
+        Route::get('fetch-returned-products', [ReturnsController::class, 'fetchReturnedProducts']);
     });
 });

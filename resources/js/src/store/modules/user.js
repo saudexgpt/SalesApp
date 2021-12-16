@@ -11,6 +11,8 @@ const state = {
   introduction: '',
   roles: [],
   permissions: [],
+  notifications: [],
+  unreadNotificationCount: null,
 };
 
 const mutations = {
@@ -35,9 +37,21 @@ const mutations = {
   SET_PERMISSIONS: (state, permissions) => {
     state.permissions = permissions;
   },
+  SET_NOTIFICATIONS: (state, notifications) => {
+    state.notifications = notifications;
+  },
+  SET_UNREADNOTIFICATION_COUNT: (state, count) => {
+    state.unreadNotificationCount = count;
+  },
 };
 
 const actions = {
+  setNotifications({ commit }, notifications) {
+    commit('SET_NOTIFICATIONS', notifications);
+  },
+  setUnreadNotificationCount({ commit }, count) {
+    commit('SET_UNREADNOTIFICATION_COUNT', count);
+  },
   // user login
   register({ commit }, userInfo) {
     // const { name, email, password, c_password } = userInfo;

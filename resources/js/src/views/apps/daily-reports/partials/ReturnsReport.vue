@@ -64,8 +64,10 @@
           <tr>
             <th/>
             <th>Product</th>
-            <th>Package Type</th>
+            <!-- <th>Package Type</th> -->
             <th>Quantity Return</th>
+            <th>Rate</th>
+            <th>Batch No.</th>
             <th>Expiry Date</th>
             <th>Reason</th>
           </tr>
@@ -94,7 +96,7 @@
                 />
               </el-select>
             </td>
-            <td>{{ each_return.package_type }}</td>
+            <!-- <td>{{ each_return.package_type }}</td> -->
             <td>
               <el-input
                 v-model="each_return.quantity_returned"
@@ -102,6 +104,27 @@
                 outline
                 placeholder="Quantity Returned"
                 min="1"
+                @input="calculateTotal(index);"
+              >
+                <template slot="append">{{ each_return.package_type }}</template>
+              </el-input>
+            </td>
+            <td>
+              <el-input
+                v-model="each_return.rate"
+                type="number"
+                outline
+                @input="calculateTotal(index)"
+              />
+              <br>
+              <small>{{ 'Amount: ₦' + each_return.amount.toLocaleString() }}</small>
+            </td>
+            <td>
+              <el-input
+                v-model="each_return.batch_no"
+                type="text"
+                style="width: 100%;"
+                outline
               />
             </td>
             <td>
@@ -184,7 +207,9 @@ export default {
       const product_index = app.returned_items[index].product_index;
       const item = app.products[product_index].item;
       app.returned_items[index].product_id = item.id;
+      app.returned_items[index].rate = item.price.sale_price;
       app.returned_items[index].package_type = item.package_type;
+      app.calculateTotal(index);
     },
     setCustomerReturns(index, customer) {
       this.selected_index = index;
@@ -211,7 +236,9 @@ export default {
         (detail) =>
           detail.product_id === '' ||
           detail.quantity_returned === '' ||
+          detail.rate === '' ||
           detail.expiry_date === '' ||
+          detail.batch_no === '' ||
           detail.reason === ''
       );
 
@@ -225,9 +252,12 @@ export default {
         this.returned_items.push({
           product_index: null,
           product_id: '',
-          quantity_returned: 0,
+          quantity_returned: 1,
+          rate: 0,
+          amount: 0,
           reason: '',
           expiry_date: '',
+          batch_no: '',
         });
       }
     },
@@ -258,6 +288,40 @@ export default {
           app.customersReturnsList.splice(count, 1);
         }
       }
+    },
+    calculateTotal(index) {
+      const app = this;
+      // Get total amount for this item without tax
+      if (index !== null) {
+        const quantity = app.returned_items[index].quantity_returned;
+        const unit_rate = app.returned_items[index].rate;
+        // const main_unit_rate = app.returned_items[index].main_rate;
+        app.returned_items[index].amount = parseFloat(
+          quantity * unit_rate,
+        ).toFixed(2);
+        // app.returned_items[index].main_amount = parseFloat(
+        //   quantity * main_unit_rate,
+        // ).toFixed(2);// + parseFloat(tax);
+        // app.returned_items[index].quantity_supplied = quantity;
+      }
+
+      // we now calculate the running total of items invoiceed for with tax //////////
+      // let total_tax = 0;
+    //   let subtotal = 0;
+    //   for (let count = 0; count < app.returned_items.length; count++) {
+    //     // const tax_rate = app.returned_items[count].tax;
+    //     // const quantity = app.returned_items[count].quantity;
+    //     // const unit_rate = app.returned_items[count].rate;
+    //     // total_tax += parseFloat(tax_rate * quantity * unit_rate);
+    //     subtotal += parseFloat(app.returned_items[count].amount);
+    //   }
+    //   // app.form.tax = total_tax.toFixed(2);
+    //   app.form.subtotal = subtotal.toFixed(2);
+    //   app.form.discount = parseFloat(
+    //     (app.discount_rate / 100) * subtotal,
+    //   ).toFixed(2);
+    //   // subtract discount
+    //   app.form.amount = parseFloat(subtotal - app.form.discount).toFixed(2);
     },
   },
 };

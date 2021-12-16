@@ -1,9 +1,9 @@
 <template>
 
-  <div>
+  <div v-loading="load">
     <div slot="header" class="clearfix">
-      <feather-icon svg-classes="w-6 h-6" icon="ShoppingBagIcon" class="mr-2" />
-      <strong class="font-medium text-lg">Debts {{ sub_title }}</strong>
+      <feather-icon svg-classes="w-6 h-6" icon="HomeIcon" class="mr-2" />
+      <strong class="font-medium text-lg">Hospital Visits Report {{ sub_title }}</strong>
       <span style="float: right">
         <el-button
           :loading="downloadLoading"
@@ -19,7 +19,7 @@
     <el-row :gutter="10">
       <el-col :lg="12" :md="12" :sm="12" :xs="24">
         <label for="">Select Customer</label>
-        <el-select v-model="form.customer_id" style="width: 100%" @input="fetchDebts">
+        <el-select v-model="form.customer_id" style="width: 100%" @input="fetchReports">
           <el-option
             label="All"
             value="all" />
@@ -51,44 +51,7 @@
       </el-col>
     </el-row>
     <el-row :gutter="10">
-      <v-client-table v-model="debts" :columns="debts_columns" :options="debts_options">
-        <!-- <div slot="child_row" slot-scope="props" style="background: #000">
-          <table class="table table-bordered">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Quantity</th>
-                <th>Rate</th>
-                <th>Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-
-              <tr v-for="(detail, index) in props.row.details" :key="index">
-
-                <td>{{ detail.product }}</td>
-                <td>{{ detail.quantity }}</td>
-                <td>{{ detail.rate }}</td>
-                <td>{{ currency + Number(detail.amount).toLocaleString() }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div> -->
-        <div
-          slot="total_amount_due"
-          slot-scope="props"
-          class="alert alert-info"
-        >{{ currency + Number(props.row.total_amount_due).toLocaleString() }}</div>
-        <div
-          slot="total_amount_paid"
-          slot-scope="props"
-          class="alert alert-success"
-        >{{ currency + Number(props.row.total_amount_paid).toLocaleString() }}</div>
-        <div
-          slot="balance"
-          slot-scope="props"
-          class="alert alert-danger"
-        >{{ currency + Number(props.row.total_amount_due - props.row.total_amount_paid).toLocaleString() }}</div>
+      <v-client-table v-model="hospital_reports" :columns="hospital_reports_columns" :options="hospital_reports_options">
         <div
           slot="created_at"
           slot-scope="props"
@@ -101,7 +64,7 @@
         :total="total"
         :page.sync="form.page"
         :limit.sync="form.limit"
-        @pagination="fetchDebts"
+        @pagination="fetchReports"
       />
     </el-row>
   </div>
@@ -110,6 +73,7 @@
 import moment from 'moment';
 import Pagination from '@/components/Pagination';
 import Resource from '@/api/resource';
+import checkPermission from '@/utils/permission'; // Permission checking
 export default {
   components: { Pagination },
   props: {
@@ -120,27 +84,21 @@ export default {
   },
   data() {
     return {
-      debts: [],
-      debts_columns: [
+      hospital_reports: [],
+      hospital_reports_columns: [
         'customer.business_name',
-        // 'invoice_no',
-        'total_amount_due',
-        'total_amount_paid',
-        'balance',
-        'customer.assigned_officer.name',
-
-        // 'delivery_status',
-        // 'created_at',
+        'marketed_products',
+        'follow_up_schedule',
+        'personnel_contacted',
+        'market_feedback',
+        'daily_report.reporter.name',
+        'created_at',
       ],
 
-      debts_options: {
+      hospital_reports_options: {
         headings: {
           'customer.business_name': 'Customer',
-          // invoice_no: 'Invoice No.',
-          amount_due: 'Amount',
-          amount_paid: 'Amount Paid',
-          delivery_status: 'Delivery Status',
-          'customer.assigned_officer.name': 'Relating Officer',
+          'daily_report.reporter.name': 'Relating Officer',
         },
         pagination: {
           dropdown: true,
@@ -177,10 +135,11 @@ export default {
     };
   },
   created() {
-    this.fetchDebts();
+    this.fetchReports();
   },
   methods: {
     moment,
+    checkPermission,
     format(date) {
       var month = date.toLocaleString('en-US', { month: 'short' });
       return month + ' ' + date.getDate() + ', ' + date.getFullYear();
@@ -200,45 +159,46 @@ export default {
       app.form.from = from;
       app.form.to = to;
       app.form.panel = panel;
-      app.fetchDebts();
+      app.fetchReports();
     },
-    fetchDebts() {
+    fetchReports() {
       const app = this;
       const { limit, page } = app.form;
-      app.debts_options.perPage = limit;
-      const debtsResource = new Resource('sales/fetch-debts');
+      app.hospital_reports_options.perPage = limit;
+      const hospital_reportsResource = new Resource('visits/fetch-hospital-visits');
       const param = app.form;
-      app.load = true;
-      debtsResource.list(param)
+      hospital_reportsResource.list(param)
         .then(response => {
-          app.debts = response.debts.data;
+          app.hospital_reports = response.hospital_reports.data;
           app.currency = response.currency;
           app.sub_title = ' from ' + response.date_from + ' to ' + response.date_to;
-          this.debts.forEach((element, index) => {
+          this.hospital_reports.forEach((element, index) => {
             element['index'] = (page - 1) * limit + index + 1;
           });
-          this.total = response.debts.total;
+          this.total = response.hospital_reports.total;
         });
     },
     handleDownload() {
       this.downloadLoading = true;
       import('@/vendor/Export2Excel').then(excel => {
-        const multiHeader = [['Product Sales ' + this.sub_title, '', '', '', '', '']];
+        const multiHeader = [['Collections ' + this.sub_title, '', '', '', '', '', '', '']];
         const tHeader = [
           'CUSTOMER',
-          'AMOUNT',
-          'AMOUNT PAID',
-          'BALANCE',
+          'MARKETED PRODUCTS',
+          'FOLLOW-UP SCHEDULE',
+          'PERSONNEL CONTACTED',
+          'FEEDBACK',
           'RELATING OFFICER',
+          'CREATED AT',
         ];
-        const filterVal = this.debts_columns;
-        const list = this.debts;
+        const filterVal = this.hospital_reports_columns;
+        const list = this.hospital_reports;
         const data = this.formatJson(filterVal, list);
         excel.export_json_to_excel({
           multiHeader,
           header: tHeader,
           data,
-          filename: 'Debts',
+          filename: 'Hospital Visit Report',
           autoWidth: true,
           bookType: 'csv',
         });
@@ -248,11 +208,14 @@ export default {
     formatJson(filterVal, jsonData) {
       return jsonData.map(v =>
         filterVal.map(j => {
+          if (j === 'created_at') {
+            return (v[j]) ? moment(v[j]).format('lll') : '';
+          }
           if (j === 'customer.business_name') {
             return v['customer']['business_name'];
           }
-          if (j === 'customer.assigned_officer.name') {
-            return (v['customer']) ? v['customer']['assigned_officer']['name'] : '';
+          if (j === 'daily_report.reporter.name') {
+            return v['daily_report']['reporter']['name'];
           }
           return v[j];
         }),
