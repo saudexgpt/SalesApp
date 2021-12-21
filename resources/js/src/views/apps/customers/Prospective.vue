@@ -5,7 +5,7 @@
         <div class="vx-col lg:w-3/4 w-full">
           <div class="flex items-end px-3">
             <feather-icon svg-classes="w-6 h-6" icon="UsersIcon" class="mr-2" />
-            <span class="font-medium text-lg">List of Customers</span>
+            <span class="font-medium text-lg">List of Prospective Customers</span>
           </div>
           <vs-divider />
         </div>
@@ -74,26 +74,9 @@
             >
               <el-button
                 round
-                type="success"
-                size="small"
-                icon="el-icon-view"
-              />
-            </router-link>
-          </el-tooltip>
-          <el-tooltip
-            class="item"
-            effect="dark"
-            content="View Customer Statement"
-            placement="top-start"
-          >
-            <router-link
-              :to="'/report/customer-statement/' + scope.row.id"
-            >
-              <el-button
-                round
                 type="warning"
                 size="small"
-                icon="el-icon-document"
+                icon="el-icon-view"
               />
             </router-link>
           </el-tooltip>
@@ -114,6 +97,21 @@
                 icon="el-icon-edit"
               />
             </router-link>
+          </el-tooltip>
+          <el-tooltip
+            class="item"
+            effect="dark"
+            content="Confirm Customer"
+            placement="top-start"
+          >
+            <el-button
+              v-permission="['confirm-customers']"
+              round
+              type="success"
+              size="small"
+              icon="el-icon-check"
+              @click="confirmCustomer(scope.index, scope.row.id, scope.row.business_name)"
+            />
           </el-tooltip>
         </template>
       </v-client-table>
@@ -181,7 +179,7 @@ import Pagination from '@/components/Pagination'; // Secondary package based on 
 import Resource from '@/api/resource';
 import permission from '@/directive/permission'; // Permission directive
 import checkPermission from '@/utils/permission'; // Permission checking
-const customersResource = new Resource('customers');
+const customersResource = new Resource('customers/prospective');
 export default {
   name: 'Customers',
   components: { Pagination },
@@ -272,12 +270,21 @@ export default {
       app.selected_customer = selectedCustomer;
       app.page = 'details';
     },
-    handleCreate() {
-      this.resetNewUser();
-      this.dialogFormVisible = true;
-      this.$nextTick(() => {
-        this.$validator.reset();
-      });
+    confirmCustomer(index, id, business_name) {
+      const app = this;
+      const confirmResource = new Resource('customers/confirm');
+      app.$confirm('Are you sure you want to confirm ' + business_name + '?', 'Warning', {
+        confirmButtonText: 'Yes',
+        cancelButtonText: 'Cancel',
+        type: 'warning',
+      }).then(() => {
+        app.load_table = true;
+        confirmResource.update(id)
+          .then(() => {
+            app.list.splice(index - 1, 1);
+            app.load_table = false;
+          });
+      }).catch(() => {});
     },
     handleFilter() {
       this.query.page = 1;

@@ -1,6 +1,13 @@
 <template>
   <!-- NOTIFICATIONS -->
   <vs-dropdown vs-custom-content vs-trigger-click class="cursor-pointer">
+
+    <audio id="myAudio">
+      <source src="/alert.mp3" type="audio/mpeg">
+    </audio>
+    <div style="display: none">
+      <button id="play_audio" @click="playAudio()">Play Audio</button>
+    </div>
     <feather-icon :badge="unreadNotificationCount" icon="BellIcon" class="cursor-pointer mt-1 sm:mr-6 mr-2" />
 
     <vs-dropdown-menu class="notification-dropdown dropdown-custom vx-navbar-dropdown">
@@ -11,13 +18,6 @@
 
       <component ref="mainSidebarPs" :is="scrollbarTag" :key="$vs.rtl" :settings="settings" class="scroll-area--nofications-dropdown p-0 mb-10">
         <ul class="bordered-items">
-
-          <audio id="myAudio">
-            <source src="/alert.mp3" type="audio/mpeg">
-          </audio>
-          <div style="display: none">
-            <button id="play_audio" @click="playAudio()">Play Audio</button>
-          </div>
           <li v-for="ntf in notifications" :key="ntf.index" class="flex justify-between px-4 py-4 notification cursor-pointer">
             <div class="flex items-start">
               <feather-icon :svg-classes="['text-success', 'stroke-current mr-1 h-6 w-6']" icon="InfoIcon"/>
@@ -102,6 +102,7 @@ export default {
       return window.Echo.private('App.Models.User.' + currentUserId)
         .notification((notification) => {
           // this.playAudio();
+          // console.log(this.$refs.play_audio);
           document.getElementById('play_audio').click();
           this.pushNotification(notification);
           this.$notify({
@@ -133,7 +134,7 @@ export default {
         description: notification.description,
       };
       notification.data = data;
-      this.$store.getters.notifications.unshift(notification);
+      this.$store.dispatch('user/addNewNotifications', notification);
     },
     playAudio() {
       var audio = document.getElementById('myAudio');

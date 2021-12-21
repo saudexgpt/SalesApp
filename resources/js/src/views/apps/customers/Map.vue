@@ -104,7 +104,7 @@ export default {
     showDetails(customer){
       this.$vs.dialog({
         color: 'primary',
-        title: customer.business_name,
+        title: customer.business_name + ' (' + customer.status + ')',
         // eslint-disable-next-line quotes
         text: "Address: " + customer.address + "\nArea: " + customer.area,
         acceptText: 'Ok',

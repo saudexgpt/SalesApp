@@ -66,7 +66,54 @@ class CustomersController extends Controller
             // $condition = ['relating_officer' => $user->id];
 
         }
-        $customers = $userQuery->with([
+        $customers = $userQuery->Confirmed()->with([
+            'customerType', /*'tier', 'subRegion', 'region',*/ 'registrar', 'assignedOfficer',
+
+            'visits' => function ($q) {
+                $q->orderBy('id', 'DESC')->paginate(10);
+            },
+
+        ])->where($condition)->orderBy('id', 'DESC')->paginate($limit);
+        return response()->json(compact('customers'), 200);
+    }
+
+    public function prospectiveCustomers(Request $request)
+    {
+        $user = $this->getUser();
+        $searchParams = $request->all();
+        $userQuery = Customer::query();
+        $limit = Arr::get($searchParams, 'limit', static::ITEM_PER_PAGE);
+        $keyword = Arr::get($searchParams, 'keyword', '');
+        if (!empty($keyword)) {
+            $userQuery->where(function ($q) use ($keyword) {
+                $q->where('business_name', 'LIKE', '%' . $keyword . '%');
+                $q->orWhere('email', 'LIKE', '%' . $keyword . '%');
+                $q->orWhere('address', 'LIKE', '%' . $keyword . '%');
+            });
+        }
+        $today  = date('Y-m-d', strtotime('now'));
+        // $condition = [];
+        // if (isset($request->customer_type_id)) {
+
+        //     $customer_type_id = $request->customer_type_id;
+        //     if ($customer_type_id != 'all') {
+        //         $condition = ['customer_type_id' => $customer_type_id];
+        //     }
+        // }
+        $condition = [];
+        if (isset($request->customer_type_id)) {
+
+            $customer_type_id = $request->customer_type_id;
+            if ($customer_type_id != 'all') {
+                $condition = array_merge($condition, ['customer_type_id' => $customer_type_id]);
+            }
+        }
+        if ($user->hasRole('sales_rep')) {
+            $condition = array_merge($condition, ['relating_officer' => $user->id]);
+            // $condition = ['relating_officer' => $user->id];
+
+        }
+        $customers = $userQuery->Prospective()->with([
             'customerType', /*'tier', 'subRegion', 'region',*/ 'registrar', 'assignedOfficer',
 
             'visits' => function ($q) {
@@ -439,9 +486,18 @@ class CustomersController extends Controller
      * @param  \App\Models\Customer  $customer
      * @return \Illuminate\Http\Response
      */
-    public function edit(Customer $customer)
+    public function confirmCustomer(Request $request, Customer $customer)
     {
-        //
+        $user = $this->getUser();
+        $today  = date('Y-m-d', strtotime('now'));
+        $customer->status = 'Confirmed';
+        $customer->save();
+
+        $title = "Customer Confirmation Successful";
+        $description = $user->name . " successfully confirmed $customer->business_name on $today";
+        $this->logUserActivity($title, $description, $user);
+
+        // return $this->prospectiveCustomers($request);
     }
 
     /**

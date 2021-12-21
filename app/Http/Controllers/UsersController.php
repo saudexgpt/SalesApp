@@ -169,7 +169,8 @@ class UsersController extends Controller
 
         $currentUser = Auth::user();
         if (
-            !$currentUser->isSuperAdmin()
+            (!$currentUser->isSuperAdmin() || !$currentUser->isAdmin())
+
             && $currentUser->id !== $user->id
             && !$currentUser->hasPermission('update-users')
         ) {

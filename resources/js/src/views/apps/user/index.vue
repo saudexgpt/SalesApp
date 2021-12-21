@@ -72,7 +72,7 @@
           >
             <router-link
               v-if="!scope.row.roles.includes('admin')"
-              :to="'/administrator/users/edit/' + scope.row.id"
+              :to="'/settings/users/edit/' + scope.row.id"
             >
               <el-button
                 v-permission="['update-users']"

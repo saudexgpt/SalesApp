@@ -43,9 +43,15 @@ const mutations = {
   SET_UNREADNOTIFICATION_COUNT: (state, count) => {
     state.unreadNotificationCount = count;
   },
+  ADD_NEW_NOTIFICATION: (state, notification) => {
+    state.notifications.unshift(notification);
+  },
 };
 
 const actions = {
+  addNewNotifications({ commit }, notification) {
+    commit('ADD_NEW_NOTIFICATION', notification);
+  },
   setNotifications({ commit }, notifications) {
     commit('SET_NOTIFICATIONS', notifications);
   },

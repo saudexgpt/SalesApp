@@ -82,4 +82,13 @@ class Customer extends Model
     {
         return $this->hasMany(CustomerCall::class, 'customer_id', 'id');
     }
+
+    public function scopeConfirmed($query)
+    {
+        return $query->whereStatus('Confirmed');
+    }
+    public function scopeProspective($query)
+    {
+        return $query->whereStatus('Prospective');
+    }
 }

@@ -14,8 +14,16 @@ const customersRoutes = {
       path: '/customers/index',
       name: 'ViewCustomer',
       slug: 'view-customer',
-      i18n: 'View Customer',
+      i18n: 'Confirmed Customers',
       component: () => import('@/views/apps/customers/index.vue'),
+    },
+    {
+      hidden: false,
+      path: '/customers/prospective',
+      name: 'ProspectiveCustomer',
+      slug: 'prospective-customer',
+      i18n: 'Prospective Customers',
+      component: () => import('@/views/apps/customers/Prospective'),
     },
     // {
     //   hidden: false,

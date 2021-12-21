@@ -22,6 +22,21 @@ const settingsRoutes = {
         permissions: ['create-users', 'read-users', 'update-users', 'delete-users'],
       },
     },
+    {
+      path: 'users/edit/:id(\\d+)',
+      component: () => import('@/views/apps/user/UserProfile'),
+      name: 'UserProfile',
+      // meta: { title: 'userProfile', noCache: true, permissions: ['manage user'] },
+      meta: { title: 'userProfile', noCache: true, roles: ['admin'] },
+      hidden: true,
+    },
+    {
+      path: '/profile/edit',
+      hidden: true,
+      component: () =>
+        import ('@/views/apps/user/SelfProfile'),
+      name: 'SelfProfile',
+    },
     // {
     //   hidden: false,
     //   component: () => import('@/views/pages/ComingSoon.vue'),

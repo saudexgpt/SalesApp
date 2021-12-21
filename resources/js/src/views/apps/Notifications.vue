@@ -48,9 +48,3 @@ export default {
   },
 };
 </script>
-<style rel="stylesheet/scss" lang="scss">
-  table th {
-      font-size: 1.9rem !important;
-      font-weight: 400;
-  }
-</style>

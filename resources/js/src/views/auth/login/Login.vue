@@ -134,8 +134,8 @@ export default {
             time: 5000,
           });
           // we load the browser this once
-          // window.location = '/dashboard';
-          this.$router.replace({ path: '/dashboard' }).catch(() => {});
+          window.location = '/dashboard';
+          // this.$router.replace({ path: '/dashboard' }).catch(() => {});
           this.$vs.loading.close();
         })
         .catch((error) => {
