@@ -187,8 +187,6 @@ class SubInventoriesController extends Controller
                 }
             }
         }
-
-
         $inventories = SubInventory::with('item')
             ->groupBy('item_id')
             ->where('staff_id', $user->id)
