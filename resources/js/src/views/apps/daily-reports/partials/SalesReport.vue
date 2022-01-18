@@ -238,6 +238,8 @@ export default {
           delivery_mode: 'now',
           quantity_supplied: 0,
           amount: 0,
+          batch_no: 0,
+          expiry_date: 0,
         });
       }
     },
@@ -278,13 +280,16 @@ export default {
     fetchItemDetails(index) {
       const app = this;
       const item_index = app.invoice_items[index].item_index;
-      const item = app.products[item_index].item;
+      const van_inventory = app.products[item_index];
+      const item = van_inventory.item;
       app.invoice_items[index].main_rate = item.price.sale_price;
       app.invoice_items[index].rate = item.price.sale_price;
       app.invoice_items[index].item_id = item.id;
       app.invoice_items[index].type = item.package_type;
       app.invoice_items[index].quantity_per_carton = item.quantity_per_carton;
       app.invoice_items[index].no_of_cartons = 0;
+      app.invoice_items[index].batch_no = van_inventory.batch_no;
+      app.invoice_items[index].expiry_date = van_inventory.expiry_date;
       app.calculateTotal(index);
     },
     // showItemsInStock(index) {

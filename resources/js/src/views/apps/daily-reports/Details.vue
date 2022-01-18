@@ -184,6 +184,44 @@
         </div>
       </div>
       <div class="vx-row">
+        <div class="vx-col w-full">
+          <vx-card class="mb-base">
+            <div class="flex items-end px-3">
+              <i class="el-icon-sell" size="large" />
+              <span class="font-medium text-lg leading-none">Returned Product Report</span>
+            </div>
+            <vs-divider />
+            <div class="block overflow-x-auto">
+              <v-client-table v-model="returns" :columns="returns_columns" :options="returns_options">
+                <div
+                  slot="quantity"
+                  slot-scope="props"
+                >{{ props.row.quantity + ' ' + props.row.item.package_type }}</div>
+                <div
+                  slot="amount"
+                  slot-scope="props"
+                  class="alert alert-success"
+                >{{ currency + Number(props.row.amount).toLocaleString() }}</div>
+                <div
+                  slot="rate"
+                  slot-scope="props"
+                  class="alert alert-success"
+                >{{ currency + Number(props.row.rate).toLocaleString() }}</div>
+                <div
+                  slot="expiry_date"
+                  slot-scope="props"
+                >{{ moment(props.row.expiry_date).format('ll') }}</div>
+                <div
+                  slot="created_at"
+                  slot-scope="props"
+                >{{ moment(props.row.created_at).format('lll') }}</div>
+              </v-client-table>
+
+            </div>
+          </vx-card>
+        </div>
+      </div>
+      <div class="vx-row">
         <div v-if="report_details.hospital_reports.length > 0" class="vx-col w-full">
           <vx-card class="mb-base">
             <div class="flex items-end px-3">
@@ -283,6 +321,7 @@ export default {
       report_details: null,
       sales: [],
       payments: [],
+      returns: [],
       sales_columns: [
         'customer.business_name',
         // 'invoice_no',
@@ -313,6 +352,40 @@ export default {
         // editableColumns:['name', 'category.name', 'sku'],
         sortable: ['created_at'],
         filterable: ['customer.business_name'],
+      },
+      returns_columns: [
+        'customer.business_name',
+        'item.name',
+        'quantity',
+        'rate',
+        'amount',
+        'batch_no',
+        'expiry_date',
+        'reason',
+        'rep.name', // field staff
+        'created_at',
+      ],
+
+      returns_options: {
+        headings: {
+          'customer.business_name': 'Customer',
+          'item.name': 'Product',
+          'rep.name': 'Field Staff',
+          'created_at': 'Created at',
+          batch_no: 'Batch',
+        },
+        pagination: {
+          dropdown: true,
+          chunk: 10,
+        },
+        perPage: 25,
+        filterByColumn: true,
+        // texts: {
+        //   filter: 'Search:',
+        // },
+        // editableColumns:['name', 'category.name', 'sku'],
+        sortable: ['item.name', 'customer.business_name', 'expiry_date', 'created_at', 'rep.name,'],
+        filterable: ['item.name', 'customer.business_name', 'expiry_date', 'created_at', 'rep.name'],
       },
       swiperOption: {
         slidesPerView: 1.1,
@@ -348,6 +421,7 @@ export default {
           this.sales = response.sales_details;
           this.report_details = response.report_details;
           this.payments = response.payments;
+          this.returns = response.returns;
           this.loader = false;
         })
         .catch((error) => {

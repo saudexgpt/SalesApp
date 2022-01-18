@@ -5,7 +5,7 @@
       <vs-tab label="Main Inventory">
         <div class="tab-text">
           <br>
-          <main-inventory :inventories="inventories" />
+          <main-inventory :inventories="inventories" @update="updateStock" />
         </div>
       </vs-tab>
       <vs-tab label="Van Inventory">
@@ -52,6 +52,10 @@ export default {
           console.log(error);
           this.load_table = false;
         });
+    },
+    updateStock(updatedStock) {
+      this.inventories = updatedStock.inventories;
+      this.sub_inventories = updatedStock.sub_inventories;
     },
   },
 };

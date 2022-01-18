@@ -113,35 +113,38 @@ export default {
     moment,
     checkRole,
     stockVan(index, row) {
+      const balance = parseInt(row.total_balance);
       this.$prompt('Please input quantity to stock', 'Enter Quantity', {
         confirmButtonText: 'OK',
         cancelButtonText: 'Cancel',
         inputType: 'number',
-        inputValue: row.total_balance,
-        inputValidator: function(value) {
-          return row.total_balance >= value;
-        },
-        inputErrorMessage: 'Overflow Value',
+        inputValue: balance,
+        // inputValidator: function(value) {
+        //   return balance >= value;
+        // },
+        // inputErrorMessage: 'Overflow Value',
       }).then(({ value }) => {
-        if (row.total_balance >= value) {
+        const quantity = parseInt(value);
+        if (balance >= value) {
           const stockVanResource = new Resource('inventory/stock-van');
-          const param = { quantity: value };
+          const param = { quantity: quantity };
           stockVanResource.update(row.id, param)
             .then(response => {
-              this.inventories = response;
+              // this.inventories = response;
+              this.$emit('update', response);
               this.$message({
                 type: 'success',
                 message: 'Van Stocked Successfully',
               });
             });
         } else {
-          this.$alert('Quantity should not be more than ' + row.total_balance);
+          this.$alert('Quantity should not be more than ' + balance);
         }
       }).catch(() => {
-        this.$message({
-          type: 'info',
-          message: 'Van Stocking canceled',
-        });
+        // this.$message({
+        //   type: 'info',
+        //   message: 'Van Stocking canceled',
+        // });
       });
     },
     handleDownload(){

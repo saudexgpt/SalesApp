@@ -11,8 +11,8 @@
       <tbody>
         <tr v-for="(customer, index) in visitedCustomersList" :key="index">
           <td>
-            <el-tooltip :content="'Add Sales Report for ' + customer.business_name" class="item" effect="dark" placement="top-start">
-              <el-button circle type="primary" icon="el-icon-goods" @click="setVisitDetails(index, customer)" />
+            <el-tooltip :content="'Add visit Report for ' + customer.business_name" class="item" effect="dark" placement="top-start">
+              <el-button circle type="primary" icon="el-icon-plus" @click="setVisitDetails(index, customer)" />
             </el-tooltip>
           </td>
           <td>

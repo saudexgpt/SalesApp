@@ -69,15 +69,18 @@ class DailyReportController extends Controller
         $report_details = DailyReport::with($with_array)->find($report_id);
         $sales_details = [];
         $payments = [];
+        $report_date = date('Y-m-d', strtotime($report_details->date));
         if ($report_details) {
 
             $sales_details = Transaction::with(['customer', 'payments' => function ($q) {
                 $q->orderBy('id', 'DESC');
-            }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('field_staff', $user_id)->where('entry_date', 'LIKE', '%' . $report_details->date . '%')->orderBy('id', 'DESC')->get();
+            }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('field_staff', $user_id)->where('entry_date', 'LIKE', '%' . $report_date . '%')->orderBy('id', 'DESC')->get();
 
-            $payments = Payment::with('customer')->groupBy('customer_id')->where('payment_date', 'LIKE', '%' . $report_details->date . '%')->where('received_by', $user_id)->select('*', \DB::raw('SUM(amount) as total'))->get();
+            $payments = Payment::with('customer')->groupBy('customer_id')->where('payment_date', 'LIKE', '%' . $report_date . '%')->where('received_by', $user_id)->select('*', \DB::raw('SUM(amount) as total'))->get();
+
+            $returns = ReturnedProduct::with('customer', 'rep', 'item')->where('date', 'LIKE', '%' . $report_date . '%')->where('stocked_by', $user_id)->get();
         }
-        return response()->json(compact('sales_details', 'report_details', 'payments'), 200);
+        return response()->json(compact('sales_details', 'report_details', 'payments', 'returns'), 200);
     }
 
     public function store(Request $request)
@@ -136,19 +139,21 @@ class DailyReportController extends Controller
     private function saveHospitalReport($daily_report_id, $hospitals_report)
     {
         foreach ($hospitals_report as $hospital_report) {
-            $details = json_decode(json_encode($hospital_report->hospital_visit_details));
-            foreach ($details as $detail) {
+            if (isset($hospital_report->hospital_visit_details) && $hospital_report->hospital_visit_details !== '') {
+                $details = json_decode(json_encode($hospital_report->hospital_visit_details));
+                foreach ($details as $detail) {
 
-                $hosp_report = new HospitalReport();
-                $hosp_report->daily_report_id = $daily_report_id;
-                $hosp_report->customer_id = $hospital_report->customer_id;
-                $hosp_report->follow_up_schedule = $detail->hospital_follow_up_schedule;
-                $hosp_report->marketed_products = implode(',', $detail->marketed_products_to_hospitals);
-                $hosp_report->personnel_contacted = $detail->hospital_contacts;
-                $hosp_report->market_feedback = $detail->hospital_feedback;
-                $hosp_report->save();
+                    $hosp_report = new HospitalReport();
+                    $hosp_report->daily_report_id = $daily_report_id;
+                    $hosp_report->customer_id = $hospital_report->customer_id;
+                    $hosp_report->follow_up_schedule = $detail->hospital_follow_up_schedule;
+                    $hosp_report->marketed_products = implode(',', $detail->marketed_products_to_hospitals);
+                    $hosp_report->personnel_contacted = $detail->hospital_contacts;
+                    $hosp_report->market_feedback = $detail->hospital_feedback;
+                    $hosp_report->save();
 
-                $this->saveSchedule($hosp_report->customer_id, $hosp_report->follow_up_schedule);
+                    $this->saveSchedule($hosp_report->customer_id, $hosp_report->follow_up_schedule);
+                }
             }
         }
     }
@@ -156,20 +161,23 @@ class DailyReportController extends Controller
     {
         $user = $this->getUser();
         foreach ($returns_report as $return_report) {
-            $details = json_decode(json_encode($return_report->returns));
-            foreach ($details as $detail) {
+            if (isset($return_report->returns) && $return_report->returns !== '') {
 
-                $return = new ReturnedProduct();
-                $return->customer_id = $return_report->customer_id;
-                $return->item_id = $detail->product_id;
-                $return->expiry_date = date('Y-m-d', strtotime($detail->expiry_date));
-                $return->stocked_by = $user->id;
-                $return->quantity = $detail->quantity_returned;
-                $return->rate = $detail->rate;
-                $return->amount = $detail->amount;
-                $return->reason = $detail->reason;
-                $return->date = $date;
-                $return->save();
+                $details = json_decode(json_encode($return_report->returns));
+                foreach ($details as $detail) {
+
+                    $return = new ReturnedProduct();
+                    $return->customer_id = $return_report->customer_id;
+                    $return->item_id = $detail->product_id;
+                    $return->expiry_date = date('Y-m-d', strtotime($detail->expiry_date));
+                    $return->stocked_by = $user->id;
+                    $return->quantity = $detail->quantity_returned;
+                    $return->rate = $detail->rate;
+                    $return->amount = $detail->amount;
+                    $return->reason = $detail->reason;
+                    $return->date = $date;
+                    $return->save();
+                }
             }
         }
     }

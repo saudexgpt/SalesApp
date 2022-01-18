@@ -195,7 +195,13 @@ class SubInventoriesController extends Controller
             ->where('balance', '>', 0)
             ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(moved_to_van) as van_quantity'), \DB::raw('SUM(balance) as total_balance'))
             ->get();
-        return $inventories;
+        $sub_inventories = VanInventory::with('item')
+            ->groupBy('item_id')
+            ->where('staff_id', $user->id)
+            ->where('balance', '>', 0)
+            ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(sold) as total_sold'), \DB::raw('SUM(balance) as total_balance'))
+            ->get();
+        return response()->json(compact('inventories', 'sub_inventories'), 200);
     }
 
     /**

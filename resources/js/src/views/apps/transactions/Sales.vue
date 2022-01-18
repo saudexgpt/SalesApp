@@ -84,7 +84,7 @@
         <div
           slot="expiry_date"
           slot-scope="props"
-        >{{ moment(props.row.expiry_date).format('ll') }}</div>
+        >{{ (props.row.expiry_date) ? moment(props.row.expiry_date).format('ll') : '' }}</div>
         <div
           slot="transaction.created_at"
           slot-scope="props"

@@ -214,10 +214,10 @@ export default {
     setCustomerReturns(index, customer) {
       this.selected_index = index;
       this.returned_items = [];
-      if (!customer.returned_items) {
+      if (!customer.returns) {
         this.addRow();
       } else {
-        this.returned_items = customer.returned_items;
+        this.returned_items = customer.returns;
       }
       this.customer_name = customer.business_name;
       this.dialogVisible = true;
