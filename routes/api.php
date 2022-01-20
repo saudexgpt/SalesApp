@@ -50,6 +50,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('user-notifications', [UsersController::class, 'userNotifications']);
     Route::get('notification/mark-as-read', [UsersController::class, 'markNotificationAsRead']);
 
+    Route::get('location-trails', [UsersController::class, 'showLocationTrails']);
+
     Route::group(['prefix' => 'customers'], function () {
         Route::get('/sample', [CustomersController::class, 'sampleCustomers'])->middleware('permission:read-customers');
         Route::get('/', [CustomersController::class, 'index'])->middleware('permission:read-customers');
@@ -150,6 +152,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::put('reset-password/{user}', [UsersController::class, 'adminResetUserPassword'])->middleware('permission:update-users');
 
         Route::delete('{user}', [UsersController::class, 'destroy'])->middleware('permission:delete-users');
+
+        Route::post('set-current-location', [UsersController::class, 'setCurrentLocation']);
     });
     Route::group(['prefix' => 'visits'], function () {
         Route::get('fetch', [VisitsController::class, 'index']);

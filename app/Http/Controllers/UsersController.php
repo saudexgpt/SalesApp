@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\UserResource;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\UserGeolocation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -312,5 +313,35 @@ class UsersController extends Controller
                 'array'
             ],
         ];
+    }
+
+    public function setCurrentLocation(Request $request)
+    {
+        $today = todayDate();
+        $user = $this->getUser();
+        $longitude = $request->longitude;
+        $latitude = $request->latitude;
+        $location = UserGeolocation::where('user_id', $user->id)
+            ->where('created_at', 'LIKE', '%' . $today . '%')
+            ->where(['longitude' => $longitude, 'latitude' => $latitude])->first();
+        if (!$location) {
+            $location = new UserGeolocation();
+            $location->user_id = $user->id;
+            $location->longitude = $longitude;
+            $location->latitude = $latitude;
+            $location->save();
+        }
+        $locations = UserGeolocation::where('user_id', $user->id)
+            ->where('created_at', 'LIKE', '%' . $today . '%')->get();
+        return response()->json(compact('locations'), 200);
+    }
+
+    public function showLocationTrails()
+    {
+        $today = todayDate();
+        $user = $this->getUser();
+        $locations = UserGeolocation::where('user_id', $user->id)
+            ->where('created_at', 'LIKE', '%' . $today . '%')->get();
+        return response()->json(compact('locations'), 200);
     }
 }

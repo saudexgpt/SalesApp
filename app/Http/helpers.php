@@ -37,3 +37,8 @@ function getDateFormatWords($dateTime)
 {
     return date('M d, Y', strtotime($dateTime));
 }
+
+function todayDate()
+{
+    return date('Y-m-d', strtotime('now'));
+}

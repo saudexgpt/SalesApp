@@ -78,7 +78,7 @@ class User extends Authenticatable
     }
     public function geolocation()
     {
-        return $this->hasOne(UserGeolocation::class, 'user_id', 'id');
+        return $this->hasMany(UserGeolocation::class, 'user_id', 'id');
     }
     public function mySchedules()
     {
