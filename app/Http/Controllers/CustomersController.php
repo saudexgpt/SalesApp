@@ -67,6 +67,7 @@ class CustomersController extends Controller
 
         }
         $customers = $userQuery->Confirmed()->with([
+            'customerContacts',
             'customerType', /*'tier', 'subRegion', 'region',*/ 'registrar', 'assignedOfficer',
 
             'visits' => function ($q) {
@@ -145,7 +146,7 @@ class CustomersController extends Controller
             // $condition = ['relating_officer' => $user->id];
 
         }
-        $customers = Customer::where($condition)->get();
+        $customers = Customer::with('customerContacts')->where($condition)->get();
         return response()->json(compact('customers'), 200);
     }
 

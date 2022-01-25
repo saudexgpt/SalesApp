@@ -321,6 +321,7 @@ class UsersController extends Controller
         $user = $this->getUser();
         $longitude = $request->longitude;
         $latitude = $request->latitude;
+        $accuracy = $request->accuracy;
         $location = UserGeolocation::where('user_id', $user->id)
             ->where('created_at', 'LIKE', '%' . $today . '%')
             ->where(['longitude' => $longitude, 'latitude' => $latitude])->first();
@@ -329,6 +330,7 @@ class UsersController extends Controller
             $location->user_id = $user->id;
             $location->longitude = $longitude;
             $location->latitude = $latitude;
+            $location->accuracy = $accuracy;
             $location->save();
         }
         $locations = UserGeolocation::where('user_id', $user->id)

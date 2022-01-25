@@ -15,10 +15,10 @@ class VisitsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index()
     {
         $user = $this->getUser();
-        $visits = $user->visits()->with('customer', 'visitedBy', 'details')->orderBy('id', 'DESC')->get();
+        $visits = $user->visits()->with('customer', 'visitedBy', 'details.contact')->orderBy('id', 'DESC')->get();
         return response()->json(compact('visits'), 200);
     }
 
@@ -117,32 +117,46 @@ class VisitsController extends Controller
     public function store(Request $request)
     {
         $user = $this->getUser();
-        $customer_id = $request->customer_id;
-        $date = date('Y-m-d', strtotime('now'));
-        $visit = Visit::where(['customer_id' => $customer_id, 'visitor' => $user->id, 'visit_date' => $date])->first();
-        if (!$visit) {
-            $visit = new Visit();
-            $visit->customer_id = $customer_id;
-            $visit->visitor = $user->id;
-            $visit->visit_date = $date;
-            $visit->save();
+        $unsaved_visits = json_decode(json_encode($request->unsaved_visits));
+        $visit_list = [];
+        $unsaved_list = [];
+        foreach ($unsaved_visits as $unsaved_visit) {
+            try {
+                $customer_id = $unsaved_visit->customer_id;
+                $date = date('Y-m-d', strtotime('now'));
+                $visit = Visit::where(['customer_id' => $customer_id, 'visitor' => $user->id, 'visit_date' => $date])->first();
+                if (!$visit) {
+                    $visit = new Visit();
+                    $visit->customer_id = $customer_id;
+                    $visit->visitor = $user->id;
+                    $visit->visit_date = $date;
+                    $visit->rep_latitude = $unsaved_visit->rep_latitude;
+                    $visit->rep_longitude = $unsaved_visit->rep_longitude;
+                    $visit->save();
+                }
+                $this->saveVisitDetails($unsaved_visit, $visit);
+            } catch (\Throwable $th) {
+                $unsaved_list[] = $unsaved_visit;
+            }
         }
-        $this->saveVisitDetails($request, $visit);
-        return $this->show($visit);
+        $visits = $user->visits()->with('customer', 'visitedBy', 'details.contact')->orderBy('id', 'DESC')->take(10)->get();
+        return response()->json(compact('visits', 'unsaved_list'), 200);
     }
-    private function saveVisitDetails($request, $visit)
+    private function saveVisitDetails($unsaved_visit, $visit)
     {
         $user = $this->getUser();
+        $purposes = json_decode(json_encode($unsaved_visit->purposes));
+        $purpose = implode(',', $purposes);
         $visit_detail = new VisitDetail();
         $visit_detail->visit_id = $visit->id;
-        $visit_detail->customer_contact_id = $request->contact_id;
-        $visit_detail->visit_type = $request->visit_type;
-        $visit_detail->purpose = $request->purpose;
-        $visit_detail->description = $request->description;
+        $visit_detail->customer_contact_id = $unsaved_visit->customer_contact_id;
+        $visit_detail->visit_type = ($visit->rep_latitude != '') ? 'on site' : 'off site';
+        $visit_detail->purpose = $purpose;
+        $visit_detail->description = $unsaved_visit->description;
         $visit_detail->save();
 
         $title = "New customer visit made";
-        $description = $user->name . " made a new visit to $visit->customer->business_name";
+        $description = $user->name . " made a new visit to " . $visit->customer->business_name;
         $this->logUserActivity($title, $description, $user);
     }
 
@@ -155,7 +169,7 @@ class VisitsController extends Controller
     public function show(Visit $visit)
     {
         //
-        $visit =  $visit->with('customer', 'visitedBy', 'details')->find($visit->id);
+        $visit =  $visit->with('customer', 'visitedBy', 'details.contact')->find($visit->id);
         return response()->json(compact('visit'), 200);
     }
 

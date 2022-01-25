@@ -23,7 +23,7 @@
         </div>
         <div v-else>
 
-          <sales-report :visited-customers-list="customersSalesList" :my-customers="my_customers" :products="products" />
+          <sales-report :visited-customers-list="customersSalesList" :my-customers="my_customers" :products="products"/>
         </div>
       </tab-content>
       <tab-content title="Collection Report" class="mb-5" icon="el-icon-money">
@@ -167,6 +167,18 @@ export default {
     this.fetchMyProducts();
   },
   methods: {
+    validateSales() {
+      return new Promise((resolve, reject) => {
+        this.$validator.validateAll('step-1').then(result => {
+          console.log(result);
+          if (result) {
+            resolve(true);
+          } else {
+            reject('correct all values');
+          }
+        });
+      });
+    },
     fetchMyProducts() {
       const app = this;
       const getProducts = new Resource('products/my-products');

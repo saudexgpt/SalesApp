@@ -37,10 +37,9 @@ class TransactionsController extends Controller
         $date_to = Carbon::now()->endOfQuarter();
         $panel = 'quarter';
         $currency = $this->currency();
-        if (isset($request->from, $request->to, $request->panel)) {
+        if (isset($request->from, $request->to)) {
             $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
             $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
-            $panel = $request->panel;
         }
         $condition = [];
         if (isset($request->customer_id) && $request->customer_id != 'all') {
@@ -107,12 +106,10 @@ class TransactionsController extends Controller
         $user = $this->getUser();
         $date_from = Carbon::now()->startOfQuarter();
         $date_to = Carbon::now()->endOfQuarter();
-        $panel = 'quarter';
         $currency = $this->currency();
-        if (isset($request->from, $request->to, $request->panel)) {
+        if (isset($request->from, $request->to)) {
             $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
             $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
-            $panel = $request->panel;
         }
         $condition = [];
         if (isset($request->customer_id) && $request->customer_id != 'all') {
