@@ -132,6 +132,7 @@ class VisitsController extends Controller
                     $visit->visit_date = $date;
                     $visit->rep_latitude = $unsaved_visit->rep_latitude;
                     $visit->rep_longitude = $unsaved_visit->rep_longitude;
+                    $visit->accuracy = $unsaved_visit->accuracy;
                     $visit->save();
                 }
                 $this->saveVisitDetails($unsaved_visit, $visit);
@@ -147,17 +148,25 @@ class VisitsController extends Controller
         $user = $this->getUser();
         $purposes = json_decode(json_encode($unsaved_visit->purposes));
         $purpose = implode(',', $purposes);
-        $visit_detail = new VisitDetail();
-        $visit_detail->visit_id = $visit->id;
-        $visit_detail->customer_contact_id = $unsaved_visit->customer_contact_id;
-        $visit_detail->visit_type = ($visit->rep_latitude != '') ? 'on site' : 'off site';
-        $visit_detail->purpose = $purpose;
-        $visit_detail->description = $unsaved_visit->description;
-        $visit_detail->save();
+        $customer_contact_id = $unsaved_visit->contact_id;
+        $visit_type = ($visit->rep_latitude != '') ? 'on site' : 'off site';
+        $purpose = $purpose;
+        $description = $unsaved_visit->description;
 
-        $title = "New customer visit made";
-        $description = $user->name . " made a new visit to " . $visit->customer->business_name;
-        $this->logUserActivity($title, $description, $user);
+        $visit_detail = VisitDetail::where(['visit_id' => $visit->id, 'customer_contact_id' => $customer_contact_id, 'visit_type' => $visit_type, 'purpose' => $purpose, 'description' => $description])->first();
+        if (!$visit_detail) {
+            $visit_detail = new VisitDetail();
+            $visit_detail->visit_id = $visit->id;
+            $visit_detail->customer_contact_id = $customer_contact_id;
+            $visit_detail->visit_type = $visit_type;
+            $visit_detail->purpose = $purpose;
+            $visit_detail->description = $description;
+            $visit_detail->save();
+
+            $title = "New customer visit made";
+            $description = $user->name . " made a new visit to " . $visit->customer->business_name;
+            $this->logUserActivity($title, $description, $user);
+        }
     }
 
     /**
