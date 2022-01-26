@@ -180,9 +180,10 @@ class TransactionsController extends Controller
 
                     $this->createInvoiceItems($invoice, $invoice_items);
 
-                    if ($unsaved_order->payment_mode == 'now') {
-                        $this->makePayments($invoice);
-                    }
+                    //uncomment this if the sales feature for the app is reactivated
+                    // if ($unsaved_order->payment_mode == 'now') {
+                    //     $this->makePayments($invoice);
+                    // }
 
                     if (isset($unsaved_order->amount_collected) && $unsaved_order->amount_collected > 0) {
                         $this->payAmount($invoice, $unsaved_order->amount_collected);
@@ -278,7 +279,7 @@ class TransactionsController extends Controller
     private function makePayments($transaction)
     {
         $user = $this->getUser();
-        $date = ($transaction->entry_date != null) ? date('Y-m-d H:i:s', strtotime($transaction->entry_date))  : date('Y-m-d H:i:s', strtotime('now'));;
+        $date = ($transaction->entry_date != null) ? $transaction->entry_date : date('Y-m-d', strtotime('now'));;
         // $batches = $item->batches;
         $payment = new Payment();
         $payment->transaction_id = $transaction->id;
@@ -292,20 +293,22 @@ class TransactionsController extends Controller
             $transaction->save();
 
             $title = "Payment Received";
-            $description = $user->name . " successfully received NGN$transaction->amount_due from $customer->business_name";
+            $description = $user->name . " successfully received ₦$transaction->amount_due from $customer->business_name";
             $this->logUserActivity($title, $description, $user);
         }
     }
 
     private function payAmount($transaction, $amount)
     {
+        $original_amount = $amount;
         $user = $this->getUser();
         $customer_id = $transaction->customer_id;
         $customer = Customer::find($customer_id);
+
+        $date = ($transaction->entry_date != null) ? $transaction->entry_date  : date('Y-m-d', strtotime('now'));
         $customer_transactions = Transaction::where('customer_id', $customer_id)->whereRaw('amount_due - amount_paid > 0')->orderBy('id')->get();
         foreach ($customer_transactions as $customer_transaction) {
             $debt = $customer_transaction->amount_due - $customer_transaction->amount_paid;
-            $date = ($customer_transaction->entry_date != null) ? date('Y-m-d H:i:s', strtotime($customer_transaction->entry_date))  : date('Y-m-d H:i:s', strtotime('now'));
             if ($debt <= $amount) {
 
                 $customer_transaction->amount_paid += $debt;
@@ -346,7 +349,7 @@ class TransactionsController extends Controller
             $payment->save();
         }
         $title = "Payment Received";
-        $description = $user->name . " successfully received NGN$amount from $customer->business_name";
+        $description = $user->name . " successfully received ₦$original_amount from $customer->business_name";
         $this->logUserActivity($title, $description, $user);
     }
 

@@ -19,7 +19,7 @@
           </td>
           <td>
             {{ customer.business_name }}
-            <el-button circle type="danger" icon="el-icon-delete" @click="removeExtraCustomer(customer.id)" />
+            <el-button v-if="customer.can_delete === 'yes'" circle type="danger" icon="el-icon-delete" @click="removeExtraCustomer(customer.id)" />
           </td>
           <!-- <td>0</td> -->
           <!-- <td>{{ customer.amount }}</td>
@@ -92,7 +92,7 @@
                   v-for="(product, product_index) in products"
                   :key="product_index"
                   :value="product_index"
-                  :label="product.item.name"
+                  :label="product.name"
                 />
               </el-select>
             </td>
@@ -158,8 +158,8 @@
       </table>
       <span slot="footer" class="dialog-footer">
         <el-button @click="clearForm()">Clear</el-button>
-        <el-button type="danger" @click="dialogVisible = false">Cancel</el-button>
-        <el-button v-if="showSaveButton" type="primary" @click="addCustomerReturns()">Done</el-button>
+        <el-button type="danger" @click="cancelAction()">Cancel</el-button>
+        <el-button :disabled="isRowEmpty()" type="primary" @click="addCustomerReturns()">Done</el-button>
       </span>
     </el-dialog>
   </div>
@@ -205,7 +205,7 @@ export default {
     fetchItemDetails(index) {
       const app = this;
       const product_index = app.returned_items[index].product_index;
-      const item = app.products[product_index].item;
+      const item = app.products[product_index];
       app.returned_items[index].product_id = item.id;
       app.returned_items[index].rate = item.price.sale_price;
       app.returned_items[index].package_type = item.package_type;
@@ -229,9 +229,21 @@ export default {
       // console.log(app.customersReturnsList[app.selected_index]);
       this.dialogVisible = false;
     },
-    addRow() {
-      this.fill_fields_error = false;
-
+    cancelAction(){
+      for (let index = 0; index < this.invoice_items.length; index++) {
+        const detail = this.invoice_items[index];
+        if (detail.product_id === '' ||
+          detail.quantity_returned === '' ||
+          detail.rate === '' ||
+          detail.expiry_date === '' ||
+          detail.batch_no === '' ||
+          detail.reason === '') {
+          this.removeRow(index);
+        }
+      }
+      this.dialogVisible = false;
+    },
+    isRowEmpty() {
       const checkEmptyLines = this.returned_items.filter(
         (detail) =>
           detail.product_id === '' ||
@@ -241,8 +253,14 @@ export default {
           detail.batch_no === '' ||
           detail.reason === ''
       );
-
-      if (checkEmptyLines.length >= 1 && this.returned_items.length > 0) {
+      if (checkEmptyLines.length > 0) {
+        return true;
+      }
+      return false;
+    },
+    addRow() {
+      this.fill_fields_error = false;
+      if (this.isRowEmpty()) {
         this.fill_fields_error = true;
         // this.returned_items[index].seleted_category = true;
         return;
@@ -278,6 +296,7 @@ export default {
       if (!app.customersReturnsList.filter(e => e.id === customer_id).length > 0) {
         app.myCustomers[value].customer_id = customer_id;
         app.myCustomers[value].payment_mode = 'later';
+        app.myCustomers[value].can_delete = 'yes';
         app.customersReturnsList.push(app.myCustomers[value]);
       }
     },

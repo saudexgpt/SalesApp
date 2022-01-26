@@ -63,6 +63,22 @@
         <template slot="role" slot-scope="scope">
           <span :id="scope.row.id">{{ scope.row.roles.join(', ') }}</span>
         </template>
+        <template slot="assign_role" slot-scope="{ row }">
+          <el-select
+            v-if="!row.roles.includes('admin')"
+            v-model="row.new_role"
+            class="filter-item"
+            placeholder="Please select role"
+            @change="assignUserRole(row, $event)"
+          >
+            <el-option
+              v-for="role in roles"
+              :key="role.name"
+              :label="role.display_name"
+              :value="role.name"
+            />
+          </el-select>
+        </template>
         <template slot="action" slot-scope="scope">
           <el-tooltip
             class="item"
@@ -226,6 +242,7 @@ export default {
         'email',
         'phone',
         'role',
+        'assign_role',
         'action',
       ],
 

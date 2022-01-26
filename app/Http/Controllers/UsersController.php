@@ -77,14 +77,19 @@ class UsersController extends Controller
         $sales_reps = $userQuery->get();
         return response()->json(compact('sales_reps'), 200);
     }
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
+
+    public function assignRole(Request $request, User $user)
     {
-        //
+        $actor = $this->getUser();
+        if ($actor->isSuperAdmin() || $actor->isAdmin()) {
+            // $role = Role::findByName($request->role);
+            // $user->syncRoles($role);
+            $user->syncRoles([$request->role]);
+            $title = "User assigned role";
+            $description = ucwords($user->name) . " was assigned the role of " . $request->role . " by $actor->name ($actor->email)";
+            $this->logUserActivity($title, $description);
+            return new UserResource($user);
+        }
     }
 
     /**
@@ -126,8 +131,8 @@ class UsersController extends Controller
 
             if ($user->save()) {
                 // $role = Role::where('name', $request->role)->first();
-                // $user->syncRoles($role);
-                $user->attachRole($request->role);
+                $user->syncRoles([$request->role]);
+                // $user->attachRole($request->role);
 
 
                 $title = "New Registration";

@@ -241,7 +241,12 @@
                     </tr>
                     <tr>
                       <td class="font-semibold">Marketed Products:</td>
-                      <td>{{ hospital.marketed_products }}</td>
+                      <td>
+                        <span v-for="(product, index) in hospital.marketed_products.split(',')" :key="index">
+                          <strong>{{ '(' + parseInt(index + 1) + ') ' + product }}</strong><br>
+                        </span>
+
+                      </td>
                     </tr>
                     <tr>
                       <td class="font-semibold">Personnel Contacted:</td>

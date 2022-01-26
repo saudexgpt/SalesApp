@@ -14,7 +14,7 @@
         <tr v-for="(customer, index) in visitedCustomersList" :key="index">
           <td>
             {{ customer.business_name }}
-            <el-button circle type="danger" icon="el-icon-delete" @click="removeExtraCustomer(customer.id)" />
+            <el-button v-if="customer.can_delete === 'yes'" circle type="danger" icon="el-icon-delete" @click="removeExtraCustomer(customer.id)" />
           </td>
           <!-- <td>0</td> -->
           <td>
@@ -91,6 +91,7 @@ export default {
       if (!app.visitedCustomersList.filter(e => e.id === customer_id).length > 0) {
         app.myCustomers[value].customer_id = customer_id;
         app.myCustomers[value].payment_mode = 'later';
+        app.myCustomers[value].can_delete = 'yes';
         app.visitedCustomersList.push(app.myCustomers[value]);
       }
     },

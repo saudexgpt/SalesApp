@@ -17,16 +17,16 @@
     </div>
     <form-wizard v-loading="loadForm" v-if="form.date !== ''" :title="null" :subtitle="null" color="rgba(var(--vs-primary), 1)" finish-button-text="Submit" @on-complete="formSubmitted">
 
-      <tab-content title="Sales Report" class="mb-5" icon="feather icon-shopping-cart">
+      <tab-content :before-change="()=>validateSales()" title="Sales Report" class="mb-5" icon="feather icon-shopping-cart">
         <div v-if="show_reported_message">
           <reported-message />
         </div>
         <div v-else>
 
-          <sales-report :visited-customers-list="customersSalesList" :my-customers="my_customers" :products="products"/>
+          <sales-report :visited-customers-list="customersSalesList" :my-customers="my_customers" :products="products" />
         </div>
       </tab-content>
-      <tab-content title="Collection Report" class="mb-5" icon="el-icon-money">
+      <tab-content :before-change="()=>validateCollections()" title="Collection Report" class="mb-5" icon="el-icon-money">
         <div v-if="show_reported_message">
           <reported-message />
         </div>
@@ -35,23 +35,23 @@
           <collection-report :visited-customers-list="customersCollectionList" :my-customers="my_customers" />
         </div>
       </tab-content>
-      <tab-content title="Product Returned Report" class="mb-5" icon="el-icon-sell">
+      <tab-content :before-change="()=>validateReturns()" title="Product Returned Report" class="mb-5" icon="el-icon-sell">
         <div v-if="show_reported_message">
           <reported-message />
         </div>
         <div v-else>
           <!-- tab 2 content -->
-          <returns-report :customers-returns-list="customersReturnsList" :my-customers="my_customers" :products="products" />
+          <returns-report :customers-returns-list="customersReturnsList" :my-customers="my_customers" :products="all_products" />
         </div>
       </tab-content>
 
       <!-- tab 3 content -->
-      <tab-content title="Hospital Visit Report" class="mb-5" icon="el-icon-office-building">
+      <tab-content :before-change="()=>validateHospitalVisit()" title="Hospital Visit Report" class="mb-5" icon="el-icon-office-building">
         <div v-if="show_reported_message">
           <reported-message />
         </div>
         <div v-else>
-          <hospital-visit-report :visited-customers-list="visitedHospitalsList" :my-customers="my_hospital_customers" :products="products" />
+          <hospital-visit-report :visited-customers-list="visitedHospitalsList" :my-customers="my_hospital_customers" :products="all_products" />
         </div>
       </tab-content>
       <tab-content title="General Report" class="mb-5" icon="el-icon-guide">
@@ -149,6 +149,7 @@ export default {
       my_hospital_customers: [],
       my_customers: [],
       products: [],
+      all_products: [],
       form: {
         work_with_manager_check: '0',
         time_duration_with_manager: null,
@@ -168,22 +169,106 @@ export default {
   },
   methods: {
     validateSales() {
-      return new Promise((resolve, reject) => {
-        this.$validator.validateAll('step-1').then(result => {
-          console.log(result);
-          if (result) {
-            resolve(true);
+      const sales = this.customersSalesList;
+      if (sales.length > 0) {
+        let errorCount = 0;
+        sales.forEach(sale => {
+          if (sale.due_date === '' || sale.due_date === undefined) {
+            errorCount++;
+          }
+          if (sale.invoice_items === undefined) {
+            errorCount++;
           } else {
-            reject('correct all values');
+            const checkEmptyLines = sale.invoice_items.filter(
+              (detail) => detail.item_id === '' || detail.quantity === '' || detail.quantity === 0 || detail.rate === ''
+            );
+            if (checkEmptyLines.length > 0) {
+              errorCount++;
+            }
           }
         });
-      });
+        if (errorCount > 0) {
+          this.$alert('Kindly fill all empty fields under Sales Report before continuing');
+          return false;
+        }
+      }
+
+      return true;
+    },
+    validateCollections() {
+      const collections = this.customersCollectionList;
+      if (collections.length > 0) {
+        let errorCount = 0;
+        collections.forEach(sale => {
+          if (sale.amount_collected === '' || sale.payment_method === undefined) {
+            errorCount++;
+          }
+        });
+        if (errorCount > 0) {
+          this.$alert('Kindly fill all empty fields under Collections Report before continuing');
+          return false;
+        }
+      }
+
+      return true;
+    },
+    validateReturns() {
+      const returnsList = this.customersReturnsList;
+      if (returnsList.length > 0) {
+        let errorCount = 0;
+        returnsList.forEach(item => {
+          if (item.returns === undefined) {
+            errorCount++;
+          } else {
+            const checkEmptyLines = item.returns.filter(
+              (detail) => detail.product_id === '' || detail.quantity_returned === '' || detail.quantity === 0 || detail.rate === '' || detail.batch_no === '' || detail.expiry_date === '' || detail.reason === ''
+            );
+            if (checkEmptyLines.length > 0) {
+              errorCount++;
+            }
+          }
+        });
+        if (errorCount > 0) {
+          this.$alert('Kindly fill all empty fields under Product Returned Report before continuing');
+          return false;
+        }
+      }
+
+      return true;
+    },
+    validateHospitalVisit() {
+      const hospitalVisits = this.visitedHospitalsList;
+      console.log(hospitalVisits);
+      if (hospitalVisits.length > 0) {
+        let errorCount = 0;
+        hospitalVisits.forEach(item => {
+          if (item.hospital_visit_details === undefined) {
+            errorCount++;
+          } else {
+            const checkEmptyLines = item.hospital_visit_details.filter(
+              (detail) => detail.hospital_contacts === '' ||
+          detail.hospital_feedback === '' ||
+          detail.marketed_products_to_hospitals.length < 1
+            );
+            if (checkEmptyLines.length > 0) {
+              errorCount++;
+            }
+          }
+        });
+        if (errorCount > 0) {
+          this.$alert('Kindly fill all empty fields under Hospital Visit Report before continuing');
+          return false;
+        }
+      }
+
+      return true;
     },
     fetchMyProducts() {
       const app = this;
       const getProducts = new Resource('products/my-products');
       getProducts.list().then((response) => {
-        app.products = response.products;
+        app.products = response.my_products;
+        app.all_products = response.all_products;
       });
     },
     visitedCustomers() {
@@ -202,11 +287,25 @@ export default {
         } else {
           const visits = response.visits;
           visits.forEach(element => {
+            const details = element.details;
+
+            let purpose_string = ''; // element.purpose.split(',');
+            details.forEach(detail => {
+              purpose_string = purpose_string.concat(',', detail.purpose);
+            });
+            const purposes = purpose_string.split(',');
             element.customer.customer_id = element.customer.id;
             element.customer.payment_mode = 'later';
-            app.customersCollectionList.push(element.customer);
-            app.customersSalesList.push(element.customer);
-            app.customersReturnsList.push(element.customer);
+            element.customer.can_delete = 'no';
+            if (purposes.includes('Collections')) {
+              app.customersCollectionList.push(element.customer);
+            }
+            if (purposes.includes('Sales')) {
+              app.customersSalesList.push(element.customer);
+            }
+            if (purposes.includes('Returns')) {
+              app.customersReturnsList.push(element.customer);
+            }
             // Hospital has customer_type_id to be 1
             if (element.customer.customer_type_id === 1) {
               app.visitedHospitalsList.push(element.customer);
@@ -235,6 +334,7 @@ export default {
           type: 'info',
           message: 'Sending...',
         });
+        app.loadForm = true;
         const param = app.form;
         const unsaved_orders = { unsaved_orders: app.customersSalesList, date: param.date };
         const submitSales = new Resource('sales/store');
@@ -247,6 +347,7 @@ export default {
         param.returns_report = app.customersReturnsList;
         const submitReport = new Resource('daily-report/store');
         submitReport.store(param).then(() => {
+          app.loadForm = false;
           this.$message({
             type: 'success',
             message: 'Report Submitted',
@@ -254,7 +355,9 @@ export default {
           this.$router.replace({ path: '/daily-reports' });
           // console.log(response);
         });
-      }).catch(() => {});
+      }).catch(() => {
+        app.loadForm = false;
+      });
     },
   },
 };

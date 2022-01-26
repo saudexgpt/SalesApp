@@ -19,7 +19,7 @@
           </td>
           <td>
             {{ customer.business_name }}
-            <el-button circle type="danger" icon="el-icon-delete" @click="removeExtraCustomer(customer.id)" />
+            <el-button v-if="customer.can_delete === 'yes'" circle type="danger" icon="el-icon-delete" @click="removeExtraCustomer(customer.id)" />
           </td>
           <!-- <td>0</td> -->
           <td>{{ customer.amount }}</td>
@@ -30,7 +30,7 @@
               type="date"
               placeholder="Due Date"
               style="width: 100%;"
-              format="yyyy/MM/dd"
+              format="yyyy-MM-dd"
               value-format="yyyy-MM-dd"
             />
           </td>
@@ -105,8 +105,7 @@
                 outline
                 placeholder="Quantity"
                 min="1"
-                @input="calculateTotal(index);"
-                @blur="deductProduct(index);"
+                @input="calculateTotal(index); deductProduct(index);"
               >
                 <template slot="append">{{ sale.type }}</template>
               </el-input>
@@ -132,8 +131,8 @@
       </table>
       <span slot="footer" class="dialog-footer">
         <el-button @click="clearForm()">Clear</el-button>
-        <el-button type="danger" @click="dialogVisible = false">Cancel</el-button>
-        <el-button v-if="showSaveButton" type="primary" @click="addCustomerSales()">Done</el-button>
+        <el-button type="danger" @click="cancelAction()">Cancel</el-button>
+        <el-button :disabled="isRowEmpty()" type="primary" @click="addCustomerSales()">Done</el-button>
       </span>
     </el-dialog>
   </div>
@@ -176,13 +175,28 @@ export default {
     };
   },
   methods: {
-    // fetchMyProducts() {
-    //   const app = this;
-    //   const getProducts = new Resource('products/my-products');
-    //   getProducts.list().then((response) => {
-    //     app.products = response.products;
-    //   });
-    // },
+    cancelAction(){
+      for (let index = 0; index < this.invoice_items.length; index++) {
+        const detail = this.invoice_items[index];
+        if (detail.item_id === '' || detail.quantity === '' || detail.quantity === 0 || detail.rate === '') {
+          this.removeLine(index);
+        }
+      }
+      this.dialogVisible = false;
+    },
+    isRowEmpty() {
+      const checkEmptyLines = this.invoice_items.filter(
+        (detail) =>
+          detail.item_id === '' ||
+          detail.quantity === '' ||
+          detail.quantity === 0 ||
+          detail.rate === ''
+      );
+      if (checkEmptyLines.length > 0) {
+        return true;
+      }
+      return false;
+    },
     setCustomerSales(index, customer) {
       this.selected_index = index;
       this.invoice_items = [];
@@ -216,14 +230,7 @@ export default {
     addLine() {
       this.fill_fields_error = false;
 
-      const checkEmptyLines = this.invoice_items.filter(
-        (detail) =>
-          detail.item_id === '' ||
-          detail.quantity === '' ||
-          detail.rate === ''
-      );
-
-      if (checkEmptyLines.length >= 1 && this.invoice_items.length > 0) {
+      if (this.isRowEmpty()) {
         this.fill_fields_error = true;
         // this.invoice_items[index].seleted_category = true;
         return;
@@ -233,7 +240,7 @@ export default {
         this.invoice_items.push({
           item_index: null,
           item_id: '',
-          quantity: 0,
+          quantity: '',
           rate: '',
           delivery_mode: 'now',
           quantity_supplied: 0,
@@ -253,26 +260,32 @@ export default {
     deductProduct(index) {
       const app = this;
       const item_index = app.invoice_items[index].item_index;
-      const quantity = parseInt(app.invoice_items[index].quantity);
-      const quantity_supplied = app.invoice_items[index].quantity_supplied;
+      const quantity = Math.abs(parseInt(app.invoice_items[index].quantity));
+      const quantity_supplied = Math.abs(app.invoice_items[index].quantity_supplied);
       let balance = parseInt(app.products[item_index].total_balance) + parseInt(quantity_supplied);
+      if (quantity !== null || quantity !== '') {
+        if (balance >= quantity){
+          balance -= parseInt(quantity);
 
-      if (balance >= quantity){
-        balance -= parseInt(quantity);
+          app.invoice_items[index].quantity_supplied = quantity;
+        } else {
+          app.invoice_items[index].quantity = 0;
 
-        app.invoice_items[index].quantity_supplied = quantity;
-      } else {
-        app.invoice_items[index].quantity = 0;
+          app.invoice_items[index].quantity_supplied = 0;
+          // balance += (quantity_supplied) ? parseInt(quantity_supplied) : 0;
+          app.$alert('You are out of van product for supply. Kindly restock your van under Inventory Menu');
+        }
 
-        app.invoice_items[index].quantity_supplied = 0;
-        // balance += (quantity_supplied) ? parseInt(quantity_supplied) : 0;
-        app.$alert('You are out of van product for supply. Kindly restock your van. You can do that under Inventory Menu');
+        app.products[item_index].total_balance = balance;
       }
 
-      app.products[item_index].total_balance = balance;
       // const item = app.products[item_index].item;
     },
     clearForm() {
+      const invoice_items = this.invoice_items;
+      for (let index = 0; index < invoice_items.length; index++) {
+        this.products[index].total_balance = parseInt(this.products[index].initial_total_balance);
+      }
       this.invoice_items = [];
       this.addLine();
       this.addCustomerSales();
@@ -282,6 +295,7 @@ export default {
       const item_index = app.invoice_items[index].item_index;
       const van_inventory = app.products[item_index];
       const item = van_inventory.item;
+      app.products[item_index].initial_total_balance = parseInt(app.products[item_index].total_balance);
       app.invoice_items[index].main_rate = item.price.sale_price;
       app.invoice_items[index].rate = item.price.sale_price;
       app.invoice_items[index].item_id = item.id;
@@ -314,7 +328,7 @@ export default {
       const app = this;
       // Get total amount for this item without tax
       if (index !== null) {
-        const quantity = app.invoice_items[index].quantity;
+        const quantity = Math.abs(app.invoice_items[index].quantity); // we want only positive numbers
         const unit_rate = app.invoice_items[index].rate;
         const main_unit_rate = app.invoice_items[index].main_rate;
         app.invoice_items[index].amount = parseFloat(
@@ -350,6 +364,7 @@ export default {
       if (!app.visitedCustomersList.filter(e => e.id === customer_id).length > 0) {
         app.myCustomers[value].customer_id = customer_id;
         app.myCustomers[value].payment_mode = 'later';
+        app.myCustomers[value].can_delete = 'yes';
         app.visitedCustomersList.push(app.myCustomers[value]);
       }
     },

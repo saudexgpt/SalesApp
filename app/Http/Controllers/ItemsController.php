@@ -29,9 +29,11 @@ class ItemsController extends Controller
     {
         //
         $user = $this->getUser();
-        $products = VanInventory::with(['item.price'])->groupBy('item_id')->where('staff_id', $user->id)->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(sold) as total_sold'), \DB::raw('SUM(balance) as total_balance'))->get();
+        $my_products = VanInventory::with(['item.price'])->groupBy('item_id')->where('staff_id', $user->id)->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(sold) as total_sold'), \DB::raw('SUM(balance) as total_balance'))->get();
 
-        return response()->json(compact('products'));
+        $all_products = Item::with(['category', 'price'])->orderBy('name')->get();
+
+        return response()->json(compact('my_products', 'all_products'));
     }
     public function fetchWarehouseProducts()
     {

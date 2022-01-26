@@ -150,7 +150,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::put('update-password/{user}', [UsersController::class, 'updatePassword']);
 
         Route::put('reset-password/{user}', [UsersController::class, 'adminResetUserPassword'])->middleware('permission:update-users');
-
+        Route::put('assign-role/{user}', [UsersController::class, 'assignRole']);
         Route::delete('{user}', [UsersController::class, 'destroy'])->middleware('permission:delete-users');
 
         Route::post('set-current-location', [UsersController::class, 'setCurrentLocation']);

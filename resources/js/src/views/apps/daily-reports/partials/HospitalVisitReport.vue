@@ -17,7 +17,7 @@
           </td>
           <td>
             {{ customer.business_name }}
-            <el-button circle type="danger" icon="el-icon-delete" @click="removeExtraCustomer(customer.id)" />
+            <el-button v-if="customer.can_delete === 'yes'" circle type="danger" icon="el-icon-delete" @click="removeExtraCustomer(customer.id)" />
           </td>
         </tr>
         <tr>
@@ -90,8 +90,8 @@
                 <el-option
                   v-for="(product, item_index) in products"
                   :key="item_index"
-                  :value="product.item.name"
-                  :label="product.item.name"
+                  :value="product.name"
+                  :label="product.name"
                 />
               </el-select>
             </td>
@@ -125,8 +125,8 @@
         </tbody>
       </table>
       <span slot="footer" class="dialog-footer">
-        <el-button @click="dialogVisible = false">Cancel</el-button>
-        <el-button type="primary" @click="addVisitDetails()">Done</el-button>
+        <el-button @click="cancelAction()">Cancel</el-button>
+        <el-button :disabled="isRowEmpty()" type="primary" @click="addVisitDetails()">Done</el-button>
       </span>
     </el-dialog>
   </div>
@@ -178,16 +178,32 @@ export default {
       this.customer_name = customer.business_name;
       this.dialogVisible = true;
     },
-    addLine() {
-      this.fill_fields_error = false;
-
+    cancelAction(){
+      for (let index = 0; index < this.hospital_visit_details.length; index++) {
+        const detail = this.hospital_visit_details[index];
+        if (detail.hospital_contacts === '' ||
+          detail.hospital_feedback === '' ||
+          detail.marketed_products_to_hospitals.length < 1) {
+          this.removeLine(index);
+        }
+      }
+      this.dialogVisible = false;
+    },
+    isRowEmpty() {
       const checkEmptyLines = this.hospital_visit_details.filter(
         (detail) =>
           detail.hospital_contacts === '' ||
-          detail.hospital_feedback === ''
+          detail.hospital_feedback === '' ||
+          detail.marketed_products_to_hospitals.length < 1
       );
-
-      if (checkEmptyLines.length >= 1 && this.hospital_visit_details.length > 0) {
+      if (checkEmptyLines.length > 0) {
+        return true;
+      }
+      return false;
+    },
+    addLine() {
+      this.fill_fields_error = false;
+      if (this.isRowEmpty()) {
         this.fill_fields_error = true;
         // this.hospital_visit_details[index].seleted_category = true;
         return;
@@ -207,7 +223,6 @@ export default {
       this.fill_fields_error = false;
       if (!this.blockRemoval) {
         this.hospital_visit_details.splice(detailId, 1);
-        this.calculateTotal(null);
       }
     },
     addVisitDetails() {
@@ -223,6 +238,7 @@ export default {
       if (!app.visitedCustomersList.filter(e => e.id === customer_id).length > 0) {
         app.myCustomers[value].customer_id = customer_id;
         app.myCustomers[value].payment_mode = 'later';
+        app.myCustomers[value].can_delete = 'yes';
         app.visitedCustomersList.push(app.myCustomers[value]);
       }
     },

@@ -29,7 +29,7 @@ class DailyReportController extends Controller
             ->first();
         if (!$existing_report) {
             $message = 'unreported';
-            $visits = Visit::with(['customer' => function ($q) {
+            $visits = Visit::with(['details', 'customer' => function ($q) {
                 $q->select('id', 'customer_type_id', 'business_name');
             }, 'customer.customerContacts'])->where('visitor', $user->id)->where('visit_date', $date)->get();
             $my_customers = Customer::with('customerContacts')->where('relating_officer', $user->id)->get();
