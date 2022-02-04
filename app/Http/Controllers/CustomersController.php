@@ -62,20 +62,42 @@ class CustomersController extends Controller
             }
         }
         if ($user->hasRole('sales_rep')) {
-            $condition = array_merge($condition, ['relating_officer' => $user->id]);
-            // $condition = ['relating_officer' => $user->id];
+            $customers = $userQuery->Confirmed()->with([
+                'customerContacts',
+                'customerType', /*'tier', 'subRegion', 'region',*/ 'registrar', 'assignedOfficer',
 
+                'visits' => function ($q) {
+                    $q->orderBy('id', 'DESC')->paginate(10);
+                },
+
+            ])->where($condition)->where('relating_officer', $user->id)->orderBy('id', 'DESC')->paginate($limit);
+            return response()->json(compact('customers'), 200);
+        } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+            // $sales_reps_ids is in array form
+            list($sales_reps, $sales_reps_ids) = $this->teamMembers();
+            $customers = $userQuery->Confirmed()->with([
+                'customerContacts',
+                'customerType', /*'tier', 'subRegion', 'region',*/ 'registrar', 'assignedOfficer',
+
+                'visits' => function ($q) {
+                    $q->orderBy('id', 'DESC')->paginate(10);
+                },
+
+            ])->where($condition)->whereIn('relating_officer', $sales_reps_ids)->orderBy('id', 'DESC')->paginate($limit);
+            return response()->json(compact('customers'), 200);
+        } else {
+            // admin and super admin only
+            $customers = $userQuery->Confirmed()->with([
+                'customerContacts',
+                'customerType', /*'tier', 'subRegion', 'region',*/ 'registrar', 'assignedOfficer',
+
+                'visits' => function ($q) {
+                    $q->orderBy('id', 'DESC')->paginate(10);
+                },
+
+            ])->where($condition)->orderBy('id', 'DESC')->paginate($limit);
+            return response()->json(compact('customers'), 200);
         }
-        $customers = $userQuery->Confirmed()->with([
-            'customerContacts',
-            'customerType', /*'tier', 'subRegion', 'region',*/ 'registrar', 'assignedOfficer',
-
-            'visits' => function ($q) {
-                $q->orderBy('id', 'DESC')->paginate(10);
-            },
-
-        ])->where($condition)->orderBy('id', 'DESC')->paginate($limit);
-        return response()->json(compact('customers'), 200);
     }
 
     public function prospectiveCustomers(Request $request)
@@ -110,19 +132,42 @@ class CustomersController extends Controller
             }
         }
         if ($user->hasRole('sales_rep')) {
-            $condition = array_merge($condition, ['relating_officer' => $user->id]);
-            // $condition = ['relating_officer' => $user->id];
+            $customers = $userQuery->Prospective()->with([
+                'customerContacts',
+                'customerType', /*'tier', 'subRegion', 'region',*/ 'registrar', 'assignedOfficer',
 
+                'visits' => function ($q) {
+                    $q->orderBy('id', 'DESC')->paginate(10);
+                },
+
+            ])->where($condition)->where('relating_officer', $user->id)->orderBy('id', 'DESC')->paginate($limit);
+            return response()->json(compact('customers'), 200);
+        } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+            // $sales_reps_ids is in array form
+            list($sales_reps, $sales_reps_ids) = $this->teamMembers();
+            $customers = $userQuery->Prospective()->with([
+                'customerContacts',
+                'customerType', /*'tier', 'subRegion', 'region',*/ 'registrar', 'assignedOfficer',
+
+                'visits' => function ($q) {
+                    $q->orderBy('id', 'DESC')->paginate(10);
+                },
+
+            ])->where($condition)->whereIn('relating_officer', $sales_reps_ids)->orderBy('id', 'DESC')->paginate($limit);
+            return response()->json(compact('customers'), 200);
+        } else {
+            // admin and super admin only
+            $customers = $userQuery->Prospective()->with([
+                'customerContacts',
+                'customerType', /*'tier', 'subRegion', 'region',*/ 'registrar', 'assignedOfficer',
+
+                'visits' => function ($q) {
+                    $q->orderBy('id', 'DESC')->paginate(10);
+                },
+
+            ])->where($condition)->orderBy('id', 'DESC')->paginate($limit);
+            return response()->json(compact('customers'), 200);
         }
-        $customers = $userQuery->Prospective()->with([
-            'customerType', /*'tier', 'subRegion', 'region',*/ 'registrar', 'assignedOfficer',
-
-            'visits' => function ($q) {
-                $q->orderBy('id', 'DESC')->paginate(10);
-            },
-
-        ])->where($condition)->orderBy('id', 'DESC')->paginate($limit);
-        return response()->json(compact('customers'), 200);
     }
     public function sampleCustomers(Request $request)
     {
@@ -140,14 +185,19 @@ class CustomersController extends Controller
     public function all()
     {
         $user = $this->getUser();
-        $condition = [];
         if ($user->hasRole('sales_rep')) {
-            $condition = array_merge($condition, ['relating_officer' => $user->id]);
-            // $condition = ['relating_officer' => $user->id];
-
+            $customers = Customer::with('customerContacts')->where(['relating_officer' => $user->id])->get();
+            return response()->json(compact('customers'), 200);
+        } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+            // $sales_reps_ids is in array form
+            list($sales_reps, $sales_reps_ids) = $this->teamMembers();
+            $customers = Customer::with('customerContacts')->whereIn('relating_officer', $sales_reps_ids)->get();
+            return response()->json(compact('customers'), 200);
+        } else {
+            // admin and super admin only
+            $customers = Customer::with('customerContacts')->get();
+            return response()->json(compact('customers'), 200);
         }
-        $customers = Customer::with('customerContacts')->where($condition)->get();
-        return response()->json(compact('customers'), 200);
     }
 
     // public function schedules(Customer $customer)
@@ -335,74 +385,6 @@ class CustomersController extends Controller
         $lat = $request->latitude;
         $long = $request->longitude;
         return $this->getLocationFromLatLong($lat, $long);
-    }
-    private function getLocationFromLatLong($lat, $long)
-    {
-
-        // echo urlencode($address);
-        $apiKey = env('GOOGLE_API_KEY');
-        $json = file_get_contents('https://maps.googleapis.com/maps/api/geocode/json?latlng=' . $lat . ',' . $long . '&key=' . $apiKey);
-
-        // $json = json_decode($json);
-        // print_r($json);
-        return $json;
-        // $lat = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lat'};
-        // $long = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lng'};
-        // $formatted_address = $json->{'results'}[0]->{'formatted_address'};
-        // $street = '';
-        // $area = '';
-        // $address_components = $json->{'results'}[0]->{'address_components'};
-        // foreach ($address_components as $address_component) {
-        //     $types = $address_component->types;
-        //     foreach ($types as $key => $value) {
-        //         if ($value === 'route') {
-        //             $street = $address_component->long_name;
-        //         }
-        //         if ($value === 'administrative_area_level_2') {
-        //             $area = $address_component->long_name;
-        //         } else if ($value === 'locality') {
-        //             $area = $address_component->long_name;
-        //         }
-        //     }
-        // }
-        // // $formatted_address = $json->{'results'}[0]->{'formatted_address'};
-        // // $street = $json->{'results'}[0]->{'address_components'}[1]->{'long_name'};
-        // // $area = $json->{'results'}[0]->{'address_components'}[4]->{'long_name'};
-        // return array($lat, $long, $formatted_address, $street, $area);
-    }
-    private function getLocationFromAddress($address)
-    {
-        $address = str_replace(',', '', $address);
-        // echo urlencode($address);
-        $apiKey = env('GOOGLE_API_KEY');
-        $json = file_get_contents('https://maps.googleapis.com/maps/api/geocode/json?address=' . urlencode($address) . '&key=' . $apiKey);
-
-        $json = json_decode($json);
-        // print_r($json);
-        // return $json;
-        $lat = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lat'};
-        $long = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lng'};
-        $formatted_address = $json->{'results'}[0]->{'formatted_address'};
-        $street = '';
-        $area = '';
-        $address_components = $json->{'results'}[0]->{'address_components'};
-        foreach ($address_components as $address_component) {
-            $types = $address_component->types;
-            foreach ($types as $key => $value) {
-                if ($value === 'route') {
-                    $street = $address_component->long_name;
-                }
-                if ($value === 'administrative_area_level_2') {
-                    $area = $address_component->long_name;
-                } else if ($value === 'locality') {
-                    $area = $address_component->long_name;
-                }
-            }
-        }
-        // $formatted_address = $json->{'results'}[0]->{'formatted_address'};
-        // $street = $json->{'results'}[0]->{'address_components'}[1]->{'long_name'};
-        // $area = $json->{'results'}[0]->{'address_components'}[4]->{'long_name'};
-        return array($lat, $long, $formatted_address, $street, $area);
     }
     /**
      * Display the specified resource.

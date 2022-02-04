@@ -40,6 +40,7 @@ import transactionsRoutes from '@/router-modules/transactions';
 import customersRoutes from '@/router-modules/customers';
 import inventoryRoutes from '@/router-modules/inventories';
 import dailyReportRoutes from '@/router-modules/daily-reports';
+
 export const constantRoutes = [
 
   // =============================================================================

@@ -130,18 +130,18 @@
                   slot="amount_due"
                   slot-scope="props"
                 >{{ currency + Number(props.row.amount_due).toLocaleString() }}</div>
-                <div
+                <!-- <div
                   slot="amount_paid"
                   slot-scope="props"
                 >{{ currency + Number(props.row.amount_paid).toLocaleString() }}</div>
                 <div
                   slot="balance"
                   slot-scope="props"
-                >{{ currency + Number(props.row.amount_due - props.row.amount_paid).toLocaleString() }}</div>
+                >{{ currency + Number(props.row.amount_due - props.row.amount_paid).toLocaleString() }}</div> -->
                 <div
-                  slot="created_at"
+                  slot="date"
                   slot-scope="props"
-                >{{ moment(props.row.created_at).format('lll') }}</div>
+                >{{ moment(props.row.date).format('ll') }}</div>
               </v-client-table>
 
             </div>
@@ -284,11 +284,11 @@
                     <td>{{ (report_details.work_with_manager_check === '1') ? 'Yes' : 'No' }}</td>
                   </tr>
                   <tr>
-                    <td class="font-semibold">How long did you work with your manager today in hours?</td>
+                    <td class="font-semibold">No. of hours spent with manager</td>
                     <td>{{ report_details.time_duration_with_manager }}</td>
                   </tr>
                   <tr>
-                    <td class="font-semibold">How was your relationship with your manager today?</td>
+                    <td class="font-semibold">Relationship with manager today</td>
                     <td>{{ report_details.relationship_with_manager }}</td>
                   </tr>
                   <tr>
@@ -331,10 +331,10 @@ export default {
         'customer.business_name',
         // 'invoice_no',
         'amount_due',
-        'amount_paid',
-        'balance',
+        // 'amount_paid',
+        // 'balance',
         'delivery_status',
-        'created_at',
+        'date',
       ],
 
       sales_options: {
@@ -376,7 +376,7 @@ export default {
           'customer.business_name': 'Customer',
           'item.name': 'Product',
           'rep.name': 'Field Staff',
-          'created_at': 'Created at',
+          date: 'Date',
           batch_no: 'Batch',
         },
         pagination: {

@@ -25,9 +25,11 @@ class TransactionsController extends Controller
     {
         $user = $this->getUser();
         // undelivered transactions are considered orders
-        $orders = $user->transactions()->with(['customer', 'payments' => function ($q) {
-            $q->orderBy('id', 'DESC');
-        }, 'payments.transaction.staff', 'payments.confirmer', 'details'])/*->where('delivery_status', 'pending')*/->orderBy('id', 'DESC')->get();
+        $orders = $user->transactions()
+            ->with(['customer', 'payments' => function ($q) {
+                $q->orderBy('id', 'DESC');
+            }, 'payments.transaction.staff', 'payments.confirmer', 'details'])
+            ->orderBy('id', 'DESC')->get();
         return response()->json(compact('orders'), 200);
     }
     public function fetchDebts(Request $request)
@@ -49,15 +51,42 @@ class TransactionsController extends Controller
 
         if ($user->hasRole('sales_rep')) {
 
-            $debts = $user->transactions()->groupBy('customer_id')->with(['customer.assignedOfficer', 'payments' => function ($q) {
-                $q->orderBy('id', 'DESC');
-            }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->whereRaw('amount_due - amount_paid > 0')->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->select('*', \DB::raw('SUM(amount_due) as total_amount_due'), \DB::raw('SUM(amount_paid) as total_amount_paid'))->paginate(10);
+            $debts = $user->transactions()
+                ->groupBy('customer_id')
+                ->with([
+                    'staff',
+                    'customer.assignedOfficer',
+                    'payments' => function ($q) {
+                        $q->orderBy('id', 'DESC');
+                    },
+                    'payments.transaction.staff', 'payments.confirmer', 'details'
+                ])
+                ->whereRaw('amount_due - amount_paid > 0')
+                ->where('created_at', '<=',  $date_to)
+                ->where('created_at', '>=',  $date_from)
+                ->where($condition)
+                ->select('*', \DB::raw('SUM(amount_due) as total_amount_due'), \DB::raw('SUM(amount_paid) as total_amount_paid'))
+                ->paginate(10);
 
             // $debts = $user->transactions()->with(['customer', 'payments' => function ($q) {
             //     $q->orderBy('id', 'DESC');
             // }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->whereRaw('amount_due - amount_paid > 0')->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(10);
+        } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+            // $sales_reps_ids is in array form
+            list($sales_reps, $sales_reps_ids) = $this->teamMembers();
+            $debts = Transaction::groupBy('customer_id')
+                ->with(['staff', 'customer.assignedOfficer', 'payments' => function ($q) {
+                    $q->orderBy('id', 'DESC');
+                }, 'payments.transaction.staff', 'payments.confirmer', 'details'])
+                ->whereRaw('amount_due - amount_paid > 0')
+                ->where('created_at', '<=',  $date_to)
+                ->where('created_at', '>=',  $date_from)
+                ->where($condition)
+                ->whereIn('field_staff', $sales_reps_ids)
+                ->select('*', \DB::raw('SUM(amount_due) as total_amount_due'), \DB::raw('SUM(amount_paid) as total_amount_paid'))
+                ->paginate(10);
         } else {
-            $debts = Transaction::groupBy('customer_id')->with(['customer.assignedOfficer', 'payments' => function ($q) {
+            $debts = Transaction::groupBy('customer_id')->with(['staff', 'customer.assignedOfficer', 'payments' => function ($q) {
                 $q->orderBy('id', 'DESC');
             }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->whereRaw('amount_due - amount_paid > 0')->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->select('*', \DB::raw('SUM(amount_due) as total_amount_due'), \DB::raw('SUM(amount_paid) as total_amount_paid'))->paginate(10);
             // $debts = Transaction::with(['customer', 'payments' => function ($q) {
@@ -91,6 +120,12 @@ class TransactionsController extends Controller
             $sales = $user->transactions()->with(['customer.assignedOfficer', 'payments' => function ($q) {
                 $q->orderBy('id', 'DESC');
             }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(10);
+        } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+            // $sales_reps_ids is in array form
+            list($sales_reps, $sales_reps_ids) = $this->teamMembers();
+            $sales = Transaction::with(['customer.assignedOfficer', 'payments' => function ($q) {
+                $q->orderBy('id', 'DESC');
+            }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->whereIn('field_staff', $sales_reps_ids)->orderBy('id', 'DESC')->paginate(10);
         } else {
             $sales = Transaction::with(['customer.assignedOfficer', 'payments' => function ($q) {
                 $q->orderBy('id', 'DESC');
@@ -118,12 +153,13 @@ class TransactionsController extends Controller
         $delivery_status = $request->delivery_status;
         if ($user->hasRole('sales_rep')) {
 
-            // $sales = $user->transactions()->with(['customer.assignedOfficer', 'payments' => function ($q) {
-            //     $q->orderBy('id', 'DESC');
-            // }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(10);
-
             $sales = TransactionDetail::with('transaction.customer')->join('transactions', 'transactions.id', 'transaction_details.transaction_id')
                 ->join('users', 'transactions.field_staff', 'users.id')->where('transactions.field_staff', $user->id)->where('transaction_details.created_at', '<=',  $date_to)->where('transaction_details.created_at', '>=',  $date_from)->where($condition)->orderBy('transaction_details.id', 'DESC')->paginate(10);
+        } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+            // $sales_reps_ids is in array form
+            list($sales_reps, $sales_reps_ids) = $this->teamMembers();
+            $sales = TransactionDetail::with('transaction.customer')->join('transactions', 'transactions.id', 'transaction_details.transaction_id')
+                ->join('users', 'transactions.field_staff', 'users.id')->where('transaction_details.created_at', '<=',  $date_to)->where('transaction_details.created_at', '>=',  $date_from)->where($condition)->whereIn('transactions.field_staff', $sales_reps_ids)->orderBy('transaction_details.id', 'DESC')->paginate(10);
         } else {
             $sales = TransactionDetail::with('transaction.customer')->join('transactions', 'transactions.id', 'transaction_details.transaction_id')
                 ->join('users', 'transactions.field_staff', 'users.id')->where('transaction_details.created_at', '<=',  $date_to)->where('transaction_details.created_at', '>=',  $date_from)->where($condition)->orderBy('transaction_details.id', 'DESC')->paginate(10);
@@ -221,6 +257,7 @@ class TransactionsController extends Controller
             $delivery_mode = $item->delivery_mode;
             $invoice_item = new TransactionDetail();
             $invoice_item->transaction_id = $invoice->id;
+            $invoice_item->field_staff = $invoice->field_staff;
             $invoice_item->item_id = $item->item_id;
             $invoice_item->product = Item::find($item->item_id)->name;
             $invoice_item->quantity = $item->quantity;

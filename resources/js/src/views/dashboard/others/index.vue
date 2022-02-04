@@ -171,7 +171,7 @@ export default {
       // this.$store.dispatch('dashboard/fetchDashboardData', 'debts-rep')
       // const fetchResource = new Resource('dashboard/debts-rep'); // enter the fetch customer url
       app.loading = true;
-      const fetchResource = new Resource('dashboard/sales-rep');
+      const fetchResource = new Resource('dashboard/manager');
       fetchResource.list().then(response => {
         app.dashboardData = response;
         // app.$store.dispatch('orders/setTodayOrders', response.today_orders);

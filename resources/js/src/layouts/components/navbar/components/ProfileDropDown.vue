@@ -40,9 +40,6 @@
 </template>
 
 <script>
-import firebase from 'firebase/app';
-import 'firebase/auth';
-
 export default {
   data() {
     return {
@@ -55,9 +52,10 @@ export default {
     },
   },
   methods: {
-    async logout() {
-      await this.$store.dispatch('user/logout');
-      this.$router.push('/login').catch(() => {});
+    logout() {
+      this.$store.dispatch('user/logout').then(() => {
+        this.$router.push('/login').catch(() => {});
+      });
     },
     // logout () {
 

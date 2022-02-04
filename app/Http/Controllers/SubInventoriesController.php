@@ -45,19 +45,42 @@ class SubInventoriesController extends Controller
      */
     public function viewByProduct(Request $request)
     {
+        $user = $this->getUser();
+
         $item_id = $request->item_id;
-        $inventories = SubInventory::with('staff', 'item')
-            ->groupBy('staff_id')
-            ->where('item_id', $item_id)
-            ->where('balance', '>', 0)
-            ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(moved_to_van) as van_quantity'), \DB::raw('SUM(balance) as total_balance'))
-            ->get();
-        $sub_inventories = VanInventory::with('staff', 'item')
-            ->groupBy('staff_id')
-            ->where('item_id', $item_id)
-            ->where('balance', '>', 0)
-            ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(sold) as total_sold'), \DB::raw('SUM(balance) as total_balance'))
-            ->get();
+        if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+            // $sales_reps_ids is in array form
+            list($sales_reps, $sales_reps_ids) = $this->teamMembers();
+
+            $inventories = SubInventory::with('staff', 'item')
+                ->groupBy('staff_id')
+                ->whereIn('staff_id', $sales_reps_ids)
+                ->where('item_id', $item_id)
+                ->where('balance', '>', 0)
+                ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(moved_to_van) as van_quantity'), \DB::raw('SUM(balance) as total_balance'))
+                ->get();
+            $sub_inventories = VanInventory::with('staff', 'item')
+                ->groupBy('staff_id')
+                ->whereIn('staff_id', $sales_reps_ids)
+                ->where('item_id', $item_id)
+                ->where('balance', '>', 0)
+                ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(sold) as total_sold'), \DB::raw('SUM(balance) as total_balance'))
+                ->get();
+        } else {
+
+            $inventories = SubInventory::with('staff', 'item')
+                ->groupBy('staff_id')
+                ->where('item_id', $item_id)
+                ->where('balance', '>', 0)
+                ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(moved_to_van) as van_quantity'), \DB::raw('SUM(balance) as total_balance'))
+                ->get();
+            $sub_inventories = VanInventory::with('staff', 'item')
+                ->groupBy('staff_id')
+                ->where('item_id', $item_id)
+                ->where('balance', '>', 0)
+                ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(sold) as total_sold'), \DB::raw('SUM(balance) as total_balance'))
+                ->get();
+        }
         return response()->json(compact('inventories', 'sub_inventories'), 200);
     }
 

@@ -65,7 +65,7 @@
         </template>
         <template slot="assign_role" slot-scope="{ row }">
           <el-select
-            v-if="!row.roles.includes('admin')"
+            v-if="!row.roles.includes('super')"
             v-model="row.new_role"
             class="filter-item"
             placeholder="Please select role"

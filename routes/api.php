@@ -16,8 +16,12 @@ use App\Http\Controllers\VisitsController;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\PaymentsController;
+use App\Http\Controllers\PermissionsController;
 use App\Http\Controllers\SubInventoriesController;
 use App\Http\Controllers\ReturnsController;
+use App\Http\Controllers\RolesController;
+use App\Http\Controllers\TeamsController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -51,7 +55,17 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('notification/mark-as-read', [UsersController::class, 'markNotificationAsRead']);
 
     Route::get('location-trails', [UsersController::class, 'showLocationTrails']);
+    Route::group(['prefix' => 'acl'], function () {
+        Route::get('roles/index', [RolesController::class, 'index']);
+        Route::post('roles/save', [RolesController::class, 'store']);
+        Route::put('roles/update/{role}', [RolesController::class, 'update']);
+        Route::post('roles/assign', [RolesController::class, 'assignRoles']);
 
+
+        Route::get('permissions/index', [PermissionsController::class, 'index']);
+        Route::post('permissions/assign-user', [PermissionsController::class, 'assignUserPermissions']);
+        Route::post('permissions/assign-role', [PermissionsController::class, 'assignRolePermissions']);
+    });
     Route::group(['prefix' => 'customers'], function () {
         Route::get('/sample', [CustomersController::class, 'sampleCustomers'])->middleware('permission:read-customers');
         Route::get('/', [CustomersController::class, 'index'])->middleware('permission:read-customers');
@@ -82,6 +96,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix' => 'dashboard'], function () {
         Route::get('/', [DashboardController::class, 'dashboard']);
         Route::get('sales-rep', [DashboardController::class, 'saleRepDashboard']);
+        Route::get('manager', [DashboardController::class, 'managerDashboard']);
+
         Route::get('transaction-stats', [DashboardController::class, 'transactionStat']);
     });
     Route::group(['prefix' => 'daily-report'], function () {
@@ -132,11 +148,23 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('fetch', [SchedulesController::class, 'index']);
         Route::post('store', [SchedulesController::class, 'store']); //->middleware('permission:create-sales');
     });
+    Route::group(['prefix' => 'teams'], function () {
+        Route::get('/', [TeamsController::class, 'index']);
+        Route::post('/store', [TeamsController::class, 'store']);
+        Route::put('/update/{team}', [TeamsController::class, 'update']);
+        Route::delete('/delete/{team}', [TeamsController::class, 'destroy']);
+
+        Route::get('/members', [TeamsController::class, 'fetchTeamMembers']);
+        Route::post('/add-members', [TeamsController::class, 'addMembers']);
+        Route::delete('/remove-member/{team_member}', [TeamsController::class, 'removeMember']);
+        Route::put('/create-team-lead/{team_member}', [TeamsController::class, 'createTeamLead']);
+    });
     Route::group(['prefix' => 'tiers'], function () {
         Route::get('fetch', [TiersController::class, 'fetch']);
     });
     Route::group(['prefix' => 'users'], function () {
 
+        Route::get('all', [UsersController::class, 'allUsers']);
         Route::get('fetch-sales-reps', [UsersController::class, 'fetchSalesReps']);
 
         Route::get('/', [UsersController::class, 'index'])->middleware('permission:read-users');
@@ -160,6 +188,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('store', [VisitsController::class, 'store']);
         Route::get('fetch-hospital-visits', [VisitsController::class, 'fetchHospitalVisits']);
         Route::get('fetch-general-visits', [VisitsController::class, 'fetchGeneralVisits']);
+        Route::get('fetch-footprints', [VisitsController::class, 'fetchFootPrints']);
     });
 
     Route::group(['prefix' => 'reports'], function () {

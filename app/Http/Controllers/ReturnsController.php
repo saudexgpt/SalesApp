@@ -39,6 +39,16 @@ class ReturnsController extends Controller
                 ->where($condition)
                 ->orderBy('id', 'DESC')
                 ->paginate(10);
+        } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+            // $sales_reps_ids is in array form
+            list($sales_reps, $sales_reps_ids) = $this->teamMembers();
+            $returns = ReturnedProduct::with('customer', 'rep', 'item')
+                ->where('created_at', '<=',  $date_to)
+                ->where('created_at', '>=',  $date_from)
+                ->where($condition)
+                ->whereIn('stocked_by', $sales_reps_ids)
+                ->orderBy('id', 'DESC')
+                ->paginate(10);
         } else {
             $returns = ReturnedProduct::with('customer', 'rep', 'item')
                 ->where('created_at', '<=',  $date_to)

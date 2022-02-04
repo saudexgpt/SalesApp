@@ -1,82 +1,88 @@
 <template>
-  <el-card class="box-card">
-    <div v-loading="load_table" v-if="page==='list'" class="app-container">
-      <div class="vx-row">
-        <div class="vx-col lg:w-3/4 w-full">
-          <div class="flex staffs-end px-3">
-            <feather-icon svg-classes="w-6 h-6" icon="ShoppingBagIcon" class="mr-2" />
-            <span class="font-medium text-lg">Daily Report {{ sub_title }}</span>
+  <el-tabs type="border-card">
+    <el-tab-pane label="Entries">
+      <div v-loading="load_table" v-if="page==='list'" class="app-container">
+        <div class="vx-row">
+          <div class="vx-col lg:w-3/4 w-full">
+            <div class="flex staffs-end px-3">
+              <feather-icon svg-classes="w-6 h-6" icon="ShoppingBagIcon" class="mr-2" />
+              <span class="font-medium text-lg">Daily Report Entry {{ sub_title }}</span>
+            </div>
+            <vs-divider />
           </div>
-          <vs-divider />
-        </div>
-        <div class="vx-col lg:w-1/4 w-full">
-          <div class="flex staffs-end px-3">
-            <span class="pull-right">
-              <div v-if="!checkRole(['sales_rep'])" class="block">
-                <span class="demonstration">Select Rep</span>
-                <el-select v-model="form.user_id" placeholder="Select Reps" @input="fetchDailyReports()">
-                  <el-option
-                    v-for="(rep, index) in sales_reps"
-                    :key="index"
-                    :label="rep.name"
-                    :value="rep.id"
+          <div class="vx-col lg:w-1/4 w-full">
+            <div class="flex staffs-end px-3">
+              <span class="pull-right">
+                <div v-if="!checkRole(['sales_rep'])">
+                  <span class="demonstration">Select Rep</span>
+                  <el-select v-model="form.user_id" placeholder="Select Reps" @input="fetchDailyReports()">
+                    <el-option
+                      v-for="(rep, index) in sales_reps"
+                      :key="index"
+                      :label="rep.name"
+                      :value="rep.id"
+                    />
+                  </el-select>
+                </div>
+                <br>
+                <el-popover placement="right" trigger="click">
+                  <date-range-picker
+                    :from="$route.query.from"
+                    :to="$route.query.to"
+                    :panel="panel"
+                    :panels="panels"
+                    :submit-title="submitTitle"
+                    :future="future"
+                    @update="setDateRange"
                   />
-                </el-select>
-              </div>
-              <el-popover placement="right" trigger="click">
-                <date-range-picker
-                  :from="$route.query.from"
-                  :to="$route.query.to"
-                  :panel="panel"
-                  :panels="panels"
-                  :submit-title="submitTitle"
-                  :future="future"
-                  @update="setDateRange"
-                />
-                <el-button id="pick_date" slot="reference" type="primary">
-                  <i class="el-icon-date" /> Pick Date Range
-                </el-button>
-              </el-popover>
-            </span>
+                  <el-button id="pick_date" slot="reference" type="primary">
+                    <i class="el-icon-date" /> Pick Date Range
+                  </el-button>
+                </el-popover>
+              </span>
+            </div>
           </div>
         </div>
-      </div>
-      <v-client-table
-        v-model="daily_reports"
-        :columns="columns"
-        :options="options"
-      >
-        <template slot="work_with_manager_check" slot-scope="{row}">
-          <span>{{ (row.work_with_manager_check === '1') ? 'Yes' : 'No' }}</span>
-        </template>
-        <template slot="date" slot-scope="{row}">
-          <span>{{ moment(row.date).format('ll') }}</span>
-        </template>
-        <template slot="created_at" slot-scope="{row}">
-          <span>{{ moment(row.created_at).format('ll') }}</span>
-        </template>
-        <template slot="action" slot-scope="{row}">
-          <el-tooltip
-            class="item"
-            effect="dark"
-            content="View Report Details"
-            placement="top-start"
-          >
-            <router-link
-              :to="'/daily-report/details/' + row.id + '/' + row.report_by"
+        <v-client-table
+          v-model="daily_reports"
+          :columns="columns"
+          :options="options"
+        >
+          <template slot="work_with_manager_check" slot-scope="{row}">
+            <span>{{ (row.work_with_manager_check === '1') ? 'Yes' : 'No' }}</span>
+          </template>
+          <template slot="date" slot-scope="{row}">
+            <span>{{ moment(row.date).format('ll') }}</span>
+          </template>
+          <template slot="created_at" slot-scope="{row}">
+            <span>{{ moment(row.created_at).format('ll') }}</span>
+          </template>
+          <template slot="action" slot-scope="{row}">
+            <el-tooltip
+              class="item"
+              effect="dark"
+              content="View Report Details"
+              placement="top-start"
             >
-              <el-button
-                circle
-                type="success"
-                size="small"
-                icon="el-icon-view"
-              />
-            </router-link>
-          </el-tooltip>
-        </template>
-      </v-client-table>
-    </div>
-  </el-card>
+              <router-link
+                :to="'/daily-report/details/' + row.id + '/' + row.report_by"
+              >
+                <el-button
+                  circle
+                  type="success"
+                  size="small"
+                  icon="el-icon-view"
+                />
+              </router-link>
+            </el-tooltip>
+          </template>
+        </v-client-table>
+      </div>
+    </el-tab-pane>
+    <el-tab-pane v-if="sales_reps.length > 0" label="Footprints">
+      <foot-prints :sales-reps="sales_reps"/>
+    </el-tab-pane>
+  </el-tabs>
 </template>
 
 <script>
@@ -86,10 +92,11 @@ import Resource from '@/api/resource';
 import permission from '@/directive/permission'; // Permission directive
 import checkPermission from '@/utils/permission'; // Permission checking
 import checkRole from '@/utils/role'; // Permission checking
+import FootPrints from './Footprints';
 const dailyReportResource = new Resource('daily-report/my-reports');
 export default {
   name: 'Customers',
-  components: { Pagination },
+  components: { FootPrints, Pagination },
   directives: { permission },
   data() {
     return {
@@ -144,11 +151,12 @@ export default {
         filterable: ['reporter.name', 'date', 'created_at'],
       },
       page: 'list',
+      load_table: false,
     };
   },
   created() {
     this.fetchSalesRep();
-    this.fetchDailyReports();
+    // this.fetchDailyReports();
   },
   methods: {
     moment,
@@ -164,7 +172,6 @@ export default {
         })
         .catch((error) => {
           console.log(error);
-          this.load_table = false;
         });
     },
     format(date) {

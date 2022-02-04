@@ -1,10 +1,10 @@
 <template>
   <el-tabs>
-    <el-tab-pane label="Hospital Visits">
-      <hospital-visits :customers="customers" />
-    </el-tab-pane>
     <el-tab-pane label="General Visits">
       <general-visits :customers="customers" />
+    </el-tab-pane>
+    <el-tab-pane label="Hospital Visits">
+      <hospital-visits :customers="customers" />
     </el-tab-pane>
   </el-tabs>
 </template>

@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\UserResource;
 use App\Models\Role;
+use App\Models\TeamMember;
 use App\Models\User;
 use App\Notifications\AuditTrail;
 use Notification;
@@ -48,6 +49,92 @@ class Controller extends BaseController
     public function currency()
     {
         return '₦';
+    }
+
+    public function teamMembers()
+    {
+        $user = $this->getUser();
+        $team_members = $user->memberOfTeams;
+        $all_team_members = [];
+        $all_team_member_ids = [];
+        foreach ($team_members as $team_member) {
+            $team_id = $team_member->team_id;
+            $my_members = TeamMember::with('user')->where('team_id', $team_id)->where('user_id', '!=', $user->id)->get();
+            foreach ($my_members as $my_member) {
+                $all_team_members[] = $my_member->user;
+                $all_team_member_ids[] = $my_member->user->id;
+            }
+        }
+        return array($all_team_members, $all_team_member_ids);
+    }
+
+    public function getLocationFromLatLong($lat, $long)
+    {
+
+        // echo urlencode($address);
+        $apiKey = env('GOOGLE_API_KEY');
+        $json = file_get_contents('https://maps.googleapis.com/maps/api/geocode/json?latlng=' . $lat . ',' . $long . '&key=' . $apiKey);
+
+        // $json = json_decode($json);
+        // print_r($json);
+        return $json;
+        // $lat = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lat'};
+        // $long = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lng'};
+        // $formatted_address = $json->{'results'}[0]->{'formatted_address'};
+        // $street = '';
+        // $area = '';
+        // $address_components = $json->{'results'}[0]->{'address_components'};
+        // foreach ($address_components as $address_component) {
+        //     $types = $address_component->types;
+        //     foreach ($types as $key => $value) {
+        //         if ($value === 'route') {
+        //             $street = $address_component->long_name;
+        //         }
+        //         if ($value === 'administrative_area_level_2') {
+        //             $area = $address_component->long_name;
+        //         } else if ($value === 'locality') {
+        //             $area = $address_component->long_name;
+        //         }
+        //     }
+        // }
+        // // $formatted_address = $json->{'results'}[0]->{'formatted_address'};
+        // // $street = $json->{'results'}[0]->{'address_components'}[1]->{'long_name'};
+        // // $area = $json->{'results'}[0]->{'address_components'}[4]->{'long_name'};
+        // return array($lat, $long, $formatted_address, $street, $area);
+    }
+    public function getLocationFromAddress($address)
+    {
+        $address = str_replace(',', '', $address);
+        // echo urlencode($address);
+        $apiKey = env('GOOGLE_API_KEY');
+        $json = file_get_contents('https://maps.googleapis.com/maps/api/geocode/json?address=' . urlencode($address) . '&key=' . $apiKey);
+
+        $json = json_decode($json);
+        // print_r($json);
+        // return $json;
+        $lat = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lat'};
+        $long = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lng'};
+        $formatted_address = $json->{'results'}[0]->{'formatted_address'};
+        $street = '';
+        $area = '';
+        $address_components = $json->{'results'}[0]->{'address_components'};
+        foreach ($address_components as $address_component) {
+            $types = $address_component->types;
+            foreach ($types as $key => $value) {
+                if ($value === 'route') {
+                    $street = $address_component->long_name;
+                }
+                if ($value === 'administrative_area_level_2') {
+                    $area = $address_component->long_name;
+                } else if ($value === 'locality') {
+                    $area = $address_component->long_name;
+                }
+            }
+        }
+        // $formatted_address = $json->{'results'}[0]->{'formatted_address'};
+        // $street = $json->{'results'}[0]->{'address_components'}[1]->{'long_name'};
+        // $area = $json->{'results'}[0]->{'address_components'}[4]->{'long_name'};
+        return array($lat, $long, $formatted_address, $street, $area);
     }
     public function getInvoiceNo($prefix, $next_no)
     {

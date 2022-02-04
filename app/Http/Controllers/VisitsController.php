@@ -48,10 +48,19 @@ class VisitsController extends Controller
                 ->where('hospital_reports.created_at', '>=',  $date_from)
                 ->where($condition)
                 ->paginate(10);
+        } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+            // $sales_reps_ids is in array form
+            list($sales_reps, $sales_reps_ids) = $this->teamMembers();
+            $hospital_reports = HospitalReport::with('customer', 'dailyReport.reporter')
+                ->join('daily_reports', 'daily_reports.id', 'hospital_reports.daily_report_id')
+                ->whereIn('daily_reports.report_by', $sales_reps_ids)
+                ->where('hospital_reports.created_at', '<=',  $date_to)
+                ->where('hospital_reports.created_at', '>=',  $date_from)
+                ->where($condition)
+                ->paginate(10);
         } else {
             $hospital_reports = HospitalReport::with('customer', 'dailyReport.reporter')
                 ->join('daily_reports', 'daily_reports.id', 'hospital_reports.daily_report_id')
-                ->where('daily_reports.report_by',  $user->id)
                 ->where('hospital_reports.created_at', '<=',  $date_to)
                 ->where('hospital_reports.created_at', '>=',  $date_from)
                 ->where($condition)
@@ -94,6 +103,16 @@ class VisitsController extends Controller
                 ->where('visit_details.created_at', '>=',  $date_from)
                 ->where($condition)
                 ->paginate(10);
+        } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+            // $sales_reps_ids is in array form
+            list($sales_reps, $sales_reps_ids) = $this->teamMembers();
+            $visit_details = VisitDetail::with('visit.visitedBy', 'visit.customer', 'contact')
+                ->join('visits', 'visits.id', 'visit_details.visit_id')
+                ->where('visit_details.created_at', '<=',  $date_to)
+                ->where('visit_details.created_at', '>=',  $date_from)
+                ->where($condition)
+                ->whereIn('visits.visitor', $sales_reps_ids)
+                ->paginate(10);
         } else {
             $visit_details = VisitDetail::with('visit.visitedBy', 'visit.customer', 'contact')
                 ->join('visits', 'visits.id', 'visit_details.visit_id')
@@ -108,6 +127,31 @@ class VisitsController extends Controller
         return response()->json(compact('visit_details', 'currency', 'date_from', 'date_to'), 200);
     }
 
+    public function fetchFootPrints(Request $request)
+    {
+        $user = $this->getUser();
+        $date = date('Y-m-d', strtotime('now'));
+        $currency = $this->currency();
+        if (isset($request->date) && $request->date !== '') {
+            $date = date('Y-m-d', strtotime($request->date));
+        }
+
+        if ($user->hasRole('sales_rep')) {
+
+            $visits = Visit::with('details.contact', 'customer', 'visitedBy')
+                ->where('visitor',  $user->id)
+                ->where('created_at', 'LIKE', '%' . $date . '%')
+                ->get();
+        } else {
+            $visits = Visit::with('details.contact', 'customer', 'visitedBy')
+                ->where('visitor', $request->user_id)
+                ->where('created_at', 'LIKE', '%' . $date . '%')
+                ->get();
+        }
+
+        $date = getDateFormatWords($date);
+        return response()->json(compact('visits', 'currency', 'date'), 200);
+    }
     /**
      * Store a newly created resource in storage.
      *
@@ -121,17 +165,23 @@ class VisitsController extends Controller
         $visit_list = [];
         $unsaved_list = [];
         foreach ($unsaved_visits as $unsaved_visit) {
+            $lat = $unsaved_visit->rep_latitude;
+            $long = $unsaved_visit->rep_longitude;
             try {
                 $customer_id = $unsaved_visit->customer_id;
                 $date = date('Y-m-d', strtotime('now'));
                 $visit = Visit::where(['customer_id' => $customer_id, 'visitor' => $user->id, 'visit_date' => $date])->first();
                 if (!$visit) {
+                    $str_response = $this->getLocationFromLatLong($lat, $long);
+                    $json = json_decode($str_response);
+                    $formatted_address = $json->{'results'}[0]->{'formatted_address'};
                     $visit = new Visit();
                     $visit->customer_id = $customer_id;
                     $visit->visitor = $user->id;
                     $visit->visit_date = $date;
-                    $visit->rep_latitude = $unsaved_visit->rep_latitude;
-                    $visit->rep_longitude = $unsaved_visit->rep_longitude;
+                    $visit->rep_latitude = $lat;
+                    $visit->rep_longitude = $long;
+                    $visit->address = $formatted_address;
                     $visit->accuracy = $unsaved_visit->accuracy;
                     $visit->save();
                 }

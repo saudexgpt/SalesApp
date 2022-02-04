@@ -44,7 +44,7 @@
             :future="future"
             @update="setDateRange"
           />
-          <el-button id="pick_date" slot="reference" type="primary">
+          <el-button id="pick_date3" slot="reference" type="primary">
             <i class="el-icon-date" /> Pick Date Range
           </el-button>
         </el-popover>
@@ -168,7 +168,7 @@ export default {
     },
     setDateRange(values) {
       const app = this;
-      document.getElementById('pick_date').click();
+      document.getElementById('pick_date3').click();
       app.show_calendar = false;
       let panel = app.panel;
       let from = app.week_start;

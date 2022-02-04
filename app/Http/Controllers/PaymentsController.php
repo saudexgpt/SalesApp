@@ -33,6 +33,10 @@ class PaymentsController extends Controller
         if ($user->hasRole('sales_rep')) {
 
             $payments = $user->customerPayments()->with(['customer.assignedOfficer', 'confirmer'])->where('payment_date', '<=',  $date_to)->where('payment_date', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(10);
+        } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+            // $sales_reps_ids is in array form
+            list($sales_reps, $sales_reps_ids) = $this->teamMembers();
+            $payments = Payment::with(['customer.assignedOfficer', 'confirmer'])->where('payment_date', '<=',  $date_to)->where('payment_date', '>=',  $date_from)->where($condition)->whereIn('received_by', $sales_reps_ids)->orderBy('id', 'DESC')->paginate(10);
         } else {
             $payments = Payment::with(['customer.assignedOfficer', 'confirmer'])->where('payment_date', '<=',  $date_to)->where('payment_date', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(10);
         }

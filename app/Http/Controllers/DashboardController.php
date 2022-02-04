@@ -23,11 +23,11 @@ class DashboardController extends Controller
         $customers = $user->customers;
 
         /// $sales = Transaction::where('payment_status', 'paid')->count();
-        $all_sales = Transaction::select(\DB::raw('SUM(amount_due) as amount_due'))->first();
+        $all_sales = Transaction::where('field_staff', $user->id)->select(\DB::raw('SUM(amount_due) as amount_due'))->first();
         // $payment = Transaction::where('payment_status', 'paid')->select(\DB::raw('SUM(amount_due) as amount_due'))->first();
-        $all_debt = Transaction::where('payment_status', 'unpaid')->select(\DB::raw('SUM(amount_due - amount_paid) as amount_due'))->first();
+        $all_debt = Transaction::where('field_staff', $user->id)->where('payment_status', 'unpaid')->select(\DB::raw('SUM(amount_due - amount_paid) as amount_due'))->first();
 
-        $all_overdue = Transaction::where('payment_status', 'unpaid')->where('due_date', '<=', $today)->select(\DB::raw('SUM(amount_due - amount_paid) as amount_due'))->first();
+        $all_overdue = Transaction::where('field_staff', $user->id)->where('payment_status', 'unpaid')->where('due_date', '<=', $today)->select(\DB::raw('SUM(amount_due - amount_paid) as amount_due'))->first();
 
         $overdue = 0;
         $debt = 0;
@@ -42,7 +42,7 @@ class DashboardController extends Controller
             $sales = ($all_sales->amount_due) ? $all_sales->amount_due : 0;
         }
 
-        $today_orders = Transaction::with('customer', 'details')->where('created_at', '>=', $today)->orderBy('id', 'DESC')->get();
+        $today_orders = Transaction::where('field_staff', $user->id)->with('customer', 'details')->where('created_at', '>=', $today)->orderBy('id', 'DESC')->get();
 
         $today_visits = $user->visits()->with('customer', 'visitedBy', 'details')->where('created_at', '>=', $today)->orderBy('id', 'DESC')->get();
 
@@ -52,6 +52,40 @@ class DashboardController extends Controller
         })->get();
 
         return response()->json(compact('user', 'customers', 'sales', 'debt', 'overdue', 'currency', 'today_orders', 'today_visits', 'today_schedule'), 200);
+    }
+
+    public function managerDashboard()
+    {
+        $today = date('Y-m-d', strtotime('now'));
+        $day = date('l', strtotime('now'));
+        $user = $this->getUser();
+        $currency = $this->currency();
+        list($sales_reps, $sales_reps_ids) = $this->teamMembers();
+
+        // let's fetch this user's customers
+        $customers = Customer::whereIn('relating_officer', $sales_reps_ids)->get();
+
+        /// $sales = Transaction::where('payment_status', 'paid')->count();
+        $all_sales = Transaction::whereIn('field_staff', $sales_reps_ids)->select(\DB::raw('SUM(amount_due) as amount_due'))->first();
+        // $payment = Transaction::where('payment_status', 'paid')->select(\DB::raw('SUM(amount_due) as amount_due'))->first();
+        $all_debt = Transaction::whereIn('field_staff', $sales_reps_ids)->where('payment_status', 'unpaid')->select(\DB::raw('SUM(amount_due - amount_paid) as amount_due'))->first();
+
+        $all_overdue = Transaction::whereIn('field_staff', $sales_reps_ids)->where('payment_status', 'unpaid')->where('due_date', '<=', $today)->select(\DB::raw('SUM(amount_due - amount_paid) as amount_due'))->first();
+
+        $overdue = 0;
+        $debt = 0;
+        $sales = 0;
+        if ($all_overdue) {
+            $overdue = ($all_overdue->amount_due) ? $all_overdue->amount_due : 0;
+        }
+        if ($all_debt) {
+            $debt = ($all_debt->amount_due) ? $all_debt->amount_due : 0;
+        }
+        if ($all_sales) {
+            $sales = ($all_sales->amount_due) ? $all_sales->amount_due : 0;
+        }
+
+        return response()->json(compact('user', 'customers', 'sales', 'debt', 'overdue', 'currency', 'sales_reps'), 200);
     }
 
     public function dashboard()

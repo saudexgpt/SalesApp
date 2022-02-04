@@ -44,7 +44,7 @@
             :future="future"
             @update="setDateRange"
           />
-          <el-button id="pick_date" slot="reference" type="primary">
+          <el-button id="pick_date6" slot="reference" type="primary">
             <i class="el-icon-date" /> Pick Date Range
           </el-button>
         </el-popover>
@@ -52,6 +52,10 @@
     </el-row>
     <el-row :gutter="10">
       <v-client-table v-model="hospital_reports" :columns="hospital_reports_columns" :options="hospital_reports_options">
+        <div
+          slot="follow_up_schedule"
+          slot-scope="props"
+        >{{ moment(props.row.follow_up_schedule).format('lll') }}</div>
         <div
           slot="created_at"
           slot-scope="props"
@@ -146,7 +150,7 @@ export default {
     },
     setDateRange(values) {
       const app = this;
-      document.getElementById('pick_date').click();
+      document.getElementById('pick_date6').click();
       app.show_calendar = false;
       let panel = app.panel;
       let from = app.week_start;

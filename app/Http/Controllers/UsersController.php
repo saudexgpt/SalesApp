@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\UserResource;
 use App\Models\Role;
+use App\Models\TeamMember;
 use App\Models\User;
 use App\Models\UserGeolocation;
 use Illuminate\Http\Request;
@@ -65,16 +66,31 @@ class UsersController extends Controller
 
         return UserResource::collection($userQuery->paginate($limit));
     }
+    public function allUsers(Request $request)
+    {
+        $userQuery = User::query();
+        $userQuery->whereHas('roles', function ($q) {
+            $q->whereNotIn('name', ['admin', 'super']);
+        });
+        $users = $userQuery->get();
+        return response()->json(compact('users'), 200);
+    }
 
     public function fetchSalesReps()
     {
-        $userQuery = User::query();
+        $user = $this->getUser();
+        if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+            list($sales_reps, $sales_reps_ids) = $this->teamMembers();
+        } else {
+            $userQuery = User::query();
 
-        $userQuery->whereHas('roles', function ($q) {
-            $q->where('name', 'sales_rep');
-        });
+            $userQuery->whereHas('roles', function ($q) {
+                $q->where('name', 'sales_rep');
+            });
 
-        $sales_reps = $userQuery->get();
+            $sales_reps = $userQuery->get();
+        }
+
         return response()->json(compact('sales_reps'), 200);
     }
 

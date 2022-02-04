@@ -23,6 +23,24 @@ const settingsRoutes = {
       },
     },
     {
+      hidden: false,
+      component: () => import('@/views/apps/teams/index.vue'),
+      path: '/settings/manage-teams',
+      name: 'ManageTeams',
+      slug: 'manage-teams',
+      i18n: 'Manage Teams',
+      meta: {
+        permissions: ['manage-teams'],
+      },
+    },
+    {
+      path: 'team/members/:team_id(\\d+)',
+      component: () => import('@/views/apps/teams/Members'),
+      name: 'TeamMembers',
+      meta: { noCache: true, permissions: ['manage-teams'] },
+      hidden: true,
+    },
+    {
       path: 'users/edit/:id(\\d+)',
       component: () => import('@/views/apps/user/UserProfile'),
       name: 'UserProfile',
@@ -50,17 +68,28 @@ const settingsRoutes = {
     // },
     {
       hidden: false,
-      // component: () => import('@/views/pages/ComingSoon.vue'),
-      path: '/access-control',
-      name: 'Permissions',
-      slug: 'external',
-      i18n: 'User Permissions',
-      target: '_blank',
+      component: () => import('@/views/apps/access-control/Roles'),
+      path: '/acl/roles',
+      name: 'ACL',
+      slug: 'roles',
+      i18n: 'Access Control',
       meta: {
-        roles: ['super'],
+        roles: ['super', 'admin'],
       },
-
     },
+    // {
+    //   hidden: false,
+    //   // component: () => import('@/views/pages/ComingSoon.vue'),
+    //   path: '/access-control',
+    //   name: 'Permissions',
+    //   slug: 'external',
+    //   i18n: 'User Permissions',
+    //   target: '_blank',
+    //   meta: {
+    //     roles: ['super'],
+    //   },
+
+    // },
   ],
 
 };

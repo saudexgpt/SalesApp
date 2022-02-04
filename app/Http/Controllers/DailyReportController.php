@@ -55,6 +55,16 @@ class DailyReportController extends Controller
 
 
             $daily_reports = DailyReport::with($with_array)->where('report_by', $user->id)->where('date', '>=', $date_from)->where('date', '<=', $date_to)->orderBy('id', 'DESC')->get();
+        } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+            // $sales_reps_ids is in array form
+            if (isset($request->user_id) && $request->user_id !== '') {
+                $daily_reports = DailyReport::with($with_array)->where('report_by', $request->user_id)->where('date', '>=', $date_from)->where('date', '<=', $date_to)->orderBy('id', 'DESC')->get();
+            } else {
+
+                list($sales_reps, $sales_reps_ids) = $this->teamMembers();
+
+                $daily_reports = DailyReport::with($with_array)->whereIn('report_by', $sales_reps_ids)->where('date', '>=', $date_from)->where('date', '<=', $date_to)->orderBy('id', 'DESC')->get();
+            }
         } else {
             $condition = ($request->user_id) ? ['report_by' => $request->user_id] : [];
             $daily_reports = DailyReport::with($with_array)->where($condition)->where('date', '>=', $date_from)->where('date', '<=', $date_to)->orderBy('id', 'DESC')->get();
