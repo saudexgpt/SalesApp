@@ -53,6 +53,18 @@
         :columns="columns"
         :options="options"
       >
+
+        <template slot="assigned_officer.name" slot-scope="props">
+          <el-select v-if="checkPermission(['assign-field-staff'])" v-model="props.row.relating_officer" placeholder="Select Reps" @input="assignOfficer(props.row, $event, props.index)">
+            <el-option
+              v-for="(rep, index) in sales_reps"
+              :key="index"
+              :label="rep.name"
+              :value="rep.id"
+            />
+          </el-select>
+          <span v-else>{{ props.row.assigned_officer.name }}</span>
+        </template>
         <template slot="visits" slot-scope="scope">
           <span>{{ (scope.row.visits.length > 0) ? moment(scope.row.visits[0].visit_date).format('ll') : '' }}</span>
         </template>
@@ -188,6 +200,7 @@ export default {
   directives: { permission },
   data() {
     return {
+      sales_reps: [],
       list: [],
       columns: [
         'business_name',
@@ -243,10 +256,23 @@ export default {
   },
   created() {
     this.getList();
+    this.fetchSalesRep();
   },
   methods: {
     moment,
     checkPermission,
+    fetchSalesRep() {
+      const app = this;
+      const salesRepResource = new Resource('users/fetch-sales-reps');
+      salesRepResource
+        .list()
+        .then((response) => {
+          app.sales_reps = response.sales_reps;
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    },
     getList() {
       const { limit, page } = this.query;
       this.options.perPage = limit;
@@ -265,6 +291,19 @@ export default {
         .catch((error) => {
           console.log(error);
           this.load_table = false;
+        });
+    },
+    assignOfficer(customer, staffId, index) {
+      const app = this;
+      app.list[index - 1].relating_officer = staffId;
+      const assignOfficerResource = new Resource('customers/assign-field-staff');
+      assignOfficerResource
+        .update(customer.id, { staff_id: staffId })
+        .then(() => {
+          app.$message('Officer Assigned Successfully');
+        })
+        .catch((error) => {
+          console.log(error);
         });
     },
     showCustomerDetails(selectedCustomer){

@@ -86,6 +86,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::put('verify/{customer}', [CustomersController::class, 'verify'])->middleware('permission:verify-customers');
         Route::put('confirm/{customer}', [CustomersController::class, 'confirmCustomer'])->middleware('permission:confirm-customers');
 
+        Route::put('assign-field-staff/{customer}', [CustomersController::class, 'assignFieldStaff'])->middleware('permission:assign-field-staff');
+
 
 
         // Route::delete('{user}', [UsersController::class, 'destroyCustomer'])->middleware('permission:delete-customers');

@@ -156,7 +156,7 @@ export default {
   },
   created() {
     this.fetchSalesRep();
-    // this.fetchDailyReports();
+    this.fetchDailyReports();
   },
   methods: {
     moment,

@@ -8,6 +8,7 @@ use App\Models\CustomerContact;
 use App\Models\CustomerVerification;
 use App\Models\SampleCustomer;
 use App\Models\Schedule;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 
@@ -482,6 +483,24 @@ class CustomersController extends Controller
 
         // return $this->prospectiveCustomers($request);
     }
+
+    public function assignFieldStaff(Request $request, Customer $customer)
+    {
+        $staff_id = $request->staff_id;
+        $relating_officer = User::find($staff_id);
+        $user = $this->getUser();
+        $today  = date('Y-m-d', strtotime('now'));
+        $customer->relating_officer = $staff_id;
+        $customer->save();
+
+        $title = "Customer's Relating Officer Assigned";
+        $description = $user->name . " successfully assigned $relating_officer->name to $customer->business_name on $today";
+        $this->logUserActivity($title, $description, $relating_officer);
+
+        // return $this->prospectiveCustomers($request);
+    }
+
+
 
     /**
      * Update the specified resource in storage.
