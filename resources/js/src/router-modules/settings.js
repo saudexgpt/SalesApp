@@ -6,11 +6,18 @@ const settingsRoutes = {
   icon: 'SettingsIcon',
   i18n: 'Admin Settings',
   meta: {
-    roles: ['super', 'admin'],
+    // roles: ['super', 'admin'],
   },
   children: [
     // //////////////////Settings///////////////////////////
 
+    {
+      hidden: true,
+      path: '/settings/default-password',
+      name: 'DefaultPassword',
+      slug: 'default-password',
+      component: () => import('@/views/apps/user/ChangeDefaultPassword.vue'),
+    },
     {
       hidden: false,
       component: () => import('@/views/apps/user/index.vue'),

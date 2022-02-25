@@ -34,6 +34,7 @@ const getters = {
   addRoutes: state => state.permission.addRoutes,
   notifications: state => state.user.notifications,
   unreadNotificationCount: state => state.user.unreadNotificationCount,
+  pStatus: state => state.user.p_status,
 //   sidebar: state => state.app.sidebar,
 //   language: state => state.app.language,
 //   size: state => state.app.size,

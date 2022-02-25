@@ -13,6 +13,7 @@ const state = {
   permissions: [],
   notifications: [],
   unreadNotificationCount: null,
+  p_status: '',
 };
 
 const mutations = {
@@ -45,6 +46,9 @@ const mutations = {
   },
   ADD_NEW_NOTIFICATION: (state, notification) => {
     state.notifications.unshift(notification);
+  },
+  SET_PASSWORD_STATUS: (state, p_status) => {
+    state.p_status = p_status;
   },
 };
 
@@ -86,6 +90,10 @@ const actions = {
         });
     });
   },
+  resetPasswordStatus({ commit }, status) {
+    const { p_status } = status;
+    commit('SET_PASSWORD_STATUS', p_status);
+  },
 
   // get user info
   getInfo({ commit, state }) {
@@ -98,7 +106,7 @@ const actions = {
             reject('Verification failed, please Login again.');
           }
 
-          const { roles, name, avatar, introduction, permissions, id } = data;
+          const { roles, name, avatar, introduction, permissions, p_status, notifications, id } = data;
           // roles must be a non-empty array
           if (!roles || roles.length <= 0) {
             reject('getInfo: roles must be a non-null array!');
@@ -110,6 +118,8 @@ const actions = {
           commit('SET_AVATAR', avatar);
           commit('SET_INTRODUCTION', introduction);
           commit('SET_ID', id);
+          commit('SET_PASSWORD_STATUS', p_status);
+          commit('SET_NOTIFICATIONS', notifications);
           resolve(data);
         })
         .catch(error => {

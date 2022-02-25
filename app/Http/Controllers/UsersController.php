@@ -126,8 +126,8 @@ class UsersController extends Controller
             'username' => 'required|string|unique:users',
             'phone' => 'required|string|unique:users',
             'email' => 'required|string|unique:users',
-            'password' => 'required|string',
-            'confirmPassword' => 'required|same:password'
+            // 'password' => 'required|string',
+            // 'confirmPassword' => 'required|same:password'
         ];
 
         $validator = Validator::make($request->all(), $rules);
@@ -142,12 +142,13 @@ class UsersController extends Controller
                 'phone'  => $request->phone,
                 'email' => $request->email,
                 'user_type' => 'staff',
-                'password' => bcrypt($request->password),
+                'password' => bcrypt('password'), // default password
             ]);
 
             if ($user->save()) {
                 // $role = Role::where('name', $request->role)->first();
                 $user->syncRoles([$request->role]);
+                $user->flushCache();
                 // $user->attachRole($request->role);
 
 

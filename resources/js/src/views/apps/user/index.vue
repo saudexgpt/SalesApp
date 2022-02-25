@@ -191,16 +191,16 @@
               </vs-select>
             </div>
           </div>
-          <div class="vx-row">
+          <!-- <div class="vx-row">
             <div class="vx-col sm:w-1/2 w-full mb-2">
               <vs-input v-validate="'required|min:8'" v-model="newUser.password" name="password" type="password" show-password label-placeholder="Password" class="mt-3 w-full" data-vv-validate-on="blur"/>
               <span v-show="errors.has('password')" class="text-danger text-sm">{{ errors.first('password') }}</span>
             </div>
             <div class="vx-col sm:w-1/2 w-full mb-2">
-              <vs-input v-validate="'required|min:8|confirmed:password'" v-model="newUser.confirmPassword" name="confirm-password" type="password" show-password label-placeholder="Confirm Password" class="mt-3 w-full" data-vv-validate-on="blur"/>
-              <span v-show="errors.has('confirm-password')" class="text-danger text-sm">{{ errors.first('confirm-password') }}</span>
+              <vs-input v-validate="'required|min:8|confirmed:password'" v-model="newUser.confirmPassword" :show-password="true" name="confirm_password" type="password" label-placeholder="Confirm Password" class="mt-3 w-full" data-vv-validate-on="blur"/>
+              <span v-show="errors.has('confirm_password')" class="text-danger text-sm">{{ errors.first('confirm_password') }}</span>
             </div>
-          </div>
+          </div> -->
 
           <div class="dialog-footer">
             <vs-button color="danger" type="filled" @click="dialogFormVisible = false">Cancel</vs-button>
@@ -275,6 +275,13 @@ export default {
       roles: [],
       defaultRoles: [],
       newUser: {
+        first_name: '',
+        last_name: '',
+        name: '',
+        email: '',
+        phone: '',
+        password: 'password',
+        confirmPassword: 'password',
         role: 'admin',
       },
       dialogFormVisible: false,
@@ -441,6 +448,7 @@ export default {
               this.resetNewUser();
               this.dialogFormVisible = false;
               this.handleFilter();
+              this.$alert('The default password is: password and should be changed on first login');
             })
             .catch((error) => {
               console.log(error);
@@ -493,7 +501,10 @@ export default {
     resetNewUser() {
       this.newUser = {
         name: '',
+        first_name: '',
+        last_name: '',
         email: '',
+        phone: '',
         password: '',
         confirmPassword: '',
         role: '',
