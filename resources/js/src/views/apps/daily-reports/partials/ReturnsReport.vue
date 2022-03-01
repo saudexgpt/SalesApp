@@ -230,8 +230,8 @@ export default {
       this.dialogVisible = false;
     },
     cancelAction(){
-      for (let index = 0; index < this.invoice_items.length; index++) {
-        const detail = this.invoice_items[index];
+      for (let index = 0; index < this.returned_items.length; index++) {
+        const detail = this.returned_items[index];
         if (detail.product_id === '' ||
           detail.quantity_returned === '' ||
           detail.rate === '' ||

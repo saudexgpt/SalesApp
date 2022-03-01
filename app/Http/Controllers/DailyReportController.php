@@ -24,29 +24,29 @@ class DailyReportController extends Controller
         if (isset($request->date)) {
             $date = date('Y-m-d', strtotime($request->date));
         }
-        $existing_report = DailyReport::where('date', 'LIKE', '%' . $date . '%')
-            ->where('report_by', $user->id)
-            ->first();
-        if (!$existing_report) {
-            $message = 'unreported';
-            $visits = Visit::with(['details', 'customer' => function ($q) {
-                $q->select('id', 'customer_type_id', 'business_name');
-            }, 'customer.customerContacts'])->where('visitor', $user->id)->where('visit_date', $date)->get();
-            $my_customers = Customer::with('customerContacts')->where('relating_officer', $user->id)->get();
-            return response()->json(compact('message', 'visits', 'my_customers'), 200);
-        }
-        return response()->json(['message' => 'reported'], 200);
+        // $existing_report = DailyReport::where('date', 'LIKE', '%' . $date . '%')
+        //     ->where('report_by', $user->id)
+        //     ->first();
+        // if (!$existing_report) {
+        $message = 'unreported';
+        $visits = Visit::with(['details', 'customer' => function ($q) {
+            $q->select('id', 'customer_type_id', 'business_name');
+        }, 'customer.customerContacts'])->where('visitor', $user->id)->where('visit_date', $date)->get();
+        $my_customers = Customer::with('customerContacts')->where('relating_officer', $user->id)->get();
+        return response()->json(compact('message', 'visits', 'my_customers'), 200);
+        // }
+        // return response()->json(['message' => 'reported'], 200);
     }
     public function myReports(Request $request)
     {
         $user = $this->getUser();
-        $date_from = Carbon::now()->startOfMonth();
-        $date_to = Carbon::now()->endOfMonth();
+        $date_from = Carbon::now()->startOfQuarter();
+        $date_to = Carbon::now()->endOfQuarter();
         $panel = 'month';
-        if (isset($request->from, $request->to, $request->panel)) {
+        if (isset($request->from, $request->to)) {
             $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
             $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
-            $panel = $request->panel;
+            // $panel = $request->panel;
         }
 
         $with_array = ['hospitalReports', 'reporter', 'customerReports'];
@@ -103,35 +103,35 @@ class DailyReportController extends Controller
         if (!$existing_report) {
             // create new Daily report
             $daily_report = new DailyReport();
-            $daily_report->report_by = $user->id;
-            $daily_report->work_with_manager_check = $request->work_with_manager_check;
-            $daily_report->time_duration_with_manager = $request->time_duration_with_manager;
-            $daily_report->relationship_with_manager = $request->relationship_with_manager;
-            $daily_report->date = $request->date;
-            $daily_report->market_feedback = $request->market_feedback;
+        }
+        $daily_report->report_by = $user->id;
+        $daily_report->work_with_manager_check = $request->work_with_manager_check;
+        $daily_report->time_duration_with_manager = $request->time_duration_with_manager;
+        $daily_report->relationship_with_manager = $request->relationship_with_manager;
+        $daily_report->date = $request->date;
+        $daily_report->market_feedback = $request->market_feedback;
 
-            if ($daily_report->save()) {
-                if (isset($request->customers_report) && $request->customers_report != '') {
+        if ($daily_report->save()) {
+            if (isset($request->customers_report) && $request->customers_report != '') {
 
-                    $customers_report = json_decode(json_encode($request->customers_report));
-                    $this->saveCustomersReport($daily_report->id, $customers_report);
-                }
-
-                if (isset($request->hospital_report) && $request->hospital_report != '') {
-
-                    $hospital_report = json_decode(json_encode($request->hospital_report));
-                    $this->saveHospitalReport($daily_report->id, $hospital_report);
-                }
-
-                if (isset($request->returns_report) && $request->returns_report != '') {
-                    $returns_report = json_decode(json_encode($request->returns_report));
-                    $this->saveReturnsReport($returns_report, $date);
-                }
-
-                $title = "Daily Report Successfully Submitted";
-                $description = ucwords($user->name) . "'s daily report has been submitted successfully for $date";
-                $this->logUserActivity($title, $description, $user);
+                $customers_report = json_decode(json_encode($request->customers_report));
+                $this->saveCustomersReport($daily_report->id, $customers_report);
             }
+
+            if (isset($request->hospital_report) && $request->hospital_report != '') {
+
+                $hospital_report = json_decode(json_encode($request->hospital_report));
+                $this->saveHospitalReport($daily_report->id, $hospital_report);
+            }
+
+            if (isset($request->returns_report) && $request->returns_report != '') {
+                $returns_report = json_decode(json_encode($request->returns_report));
+                $this->saveReturnsReport($returns_report, $date);
+            }
+
+            $title = "Daily Report Successfully Submitted";
+            $description = ucwords($user->name) . "'s daily report has been submitted successfully for $date";
+            $this->logUserActivity($title, $description, $user);
         }
     }
     private function saveCustomersReport($daily_report_id, $customers_report)
@@ -183,6 +183,7 @@ class DailyReportController extends Controller
                     $return->stocked_by = $user->id;
                     $return->quantity = $detail->quantity_returned;
                     $return->rate = $detail->rate;
+                    $return->batch_no = $detail->batch_no;
                     $return->amount = $detail->amount;
                     $return->reason = $detail->reason;
                     $return->date = $date;

@@ -27,7 +27,7 @@ const inventoryRoutes = {
       path: '/my-inventory',
       name: 'MyInventory',
       slug: 'my-inventory',
-      i18n: 'View Inventory',
+      i18n: 'Manage Inventory',
       component: () => import('@/views/apps/inventories/SalesRepInventory'),
       meta: {
         roles: ['sales_rep'],

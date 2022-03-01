@@ -19,7 +19,7 @@ class UsersController extends Controller
     public function userNotifications()
     {
         $user = $this->getUser();
-        $notifications = $user->notifications()->orderBy('created_at', 'DESC')->take(20)->get();
+        $notifications = $user->notifications()->orderBy('created_at', 'DESC')->take(50)->get();
         $unread_notifications = $user->unreadNotifications()->count();
         // if ($notifications->isEmpty()) {
         //     $notifications = $user->notifications()->orderBy('created_at', 'DESC')->take(20)->get();

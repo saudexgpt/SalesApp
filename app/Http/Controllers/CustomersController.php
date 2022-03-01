@@ -336,8 +336,8 @@ class CustomersController extends Controller
 
                         $customer_list[] = $this->show($customer);
 
-                        $title = "New Customer Added";
-                        $description = "New customer, $customer->business_name, was added by " . $user->id;
+                        $title = "Prospective Customer Added";
+                        $description = "New prospective customer, $customer->business_name, was added by " . $user->name;
                         $this->logUserActivity($title, $description, $user);
                     }
                     // Generate notification before returning ///////////////////////
