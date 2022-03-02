@@ -66,11 +66,11 @@ class TransactionsController extends Controller
                 ->where('created_at', '>=',  $date_from)
                 ->where($condition)
                 ->select('*', \DB::raw('SUM(amount_due) as total_amount_due'), \DB::raw('SUM(amount_paid) as total_amount_paid'))
-                ->paginate(10);
+                ->paginate(50);
 
             // $debts = $user->transactions()->with(['customer', 'payments' => function ($q) {
             //     $q->orderBy('id', 'DESC');
-            // }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->whereRaw('amount_due - amount_paid > 0')->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(10);
+            // }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->whereRaw('amount_due - amount_paid > 0')->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(50);
         } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
             // $sales_reps_ids is in array form
             list($sales_reps, $sales_reps_ids) = $this->teamMembers();
@@ -84,14 +84,14 @@ class TransactionsController extends Controller
                 ->where($condition)
                 ->whereIn('field_staff', $sales_reps_ids)
                 ->select('*', \DB::raw('SUM(amount_due) as total_amount_due'), \DB::raw('SUM(amount_paid) as total_amount_paid'))
-                ->paginate(10);
+                ->paginate(50);
         } else {
             $debts = Transaction::groupBy('customer_id')->with(['staff', 'customer.assignedOfficer', 'payments' => function ($q) {
                 $q->orderBy('id', 'DESC');
-            }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->whereRaw('amount_due - amount_paid > 0')->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->select('*', \DB::raw('SUM(amount_due) as total_amount_due'), \DB::raw('SUM(amount_paid) as total_amount_paid'))->paginate(10);
+            }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->whereRaw('amount_due - amount_paid > 0')->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->select('*', \DB::raw('SUM(amount_due) as total_amount_due'), \DB::raw('SUM(amount_paid) as total_amount_paid'))->paginate(50);
             // $debts = Transaction::with(['customer', 'payments' => function ($q) {
             //     $q->orderBy('id', 'DESC');
-            // }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->whereRaw('amount_due - amount_paid > 0')->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(10);
+            // }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->whereRaw('amount_due - amount_paid > 0')->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(50);
         }
 
         $date_from = getDateFormatWords($date_from);
@@ -119,17 +119,17 @@ class TransactionsController extends Controller
 
             $sales = $user->transactions()->with(['customer.assignedOfficer', 'payments' => function ($q) {
                 $q->orderBy('id', 'DESC');
-            }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(10);
+            }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(50);
         } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
             // $sales_reps_ids is in array form
             list($sales_reps, $sales_reps_ids) = $this->teamMembers();
             $sales = Transaction::with(['customer.assignedOfficer', 'payments' => function ($q) {
                 $q->orderBy('id', 'DESC');
-            }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->whereIn('field_staff', $sales_reps_ids)->orderBy('id', 'DESC')->paginate(10);
+            }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->whereIn('field_staff', $sales_reps_ids)->orderBy('id', 'DESC')->paginate(50);
         } else {
             $sales = Transaction::with(['customer.assignedOfficer', 'payments' => function ($q) {
                 $q->orderBy('id', 'DESC');
-            }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(10);
+            }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(50);
         }
 
         $date_from = getDateFormatWords($date_from);
@@ -154,18 +154,18 @@ class TransactionsController extends Controller
         if ($user->hasRole('sales_rep')) {
 
             $sales = TransactionDetail::with('transaction.customer')->join('transactions', 'transactions.id', 'transaction_details.transaction_id')
-                ->join('users', 'transactions.field_staff', 'users.id')->where('transactions.field_staff', $user->id)->where('transaction_details.created_at', '<=',  $date_to)->where('transaction_details.created_at', '>=',  $date_from)->where($condition)->orderBy('transaction_details.id', 'DESC')->paginate(10);
+                ->join('users', 'transactions.field_staff', 'users.id')->where('transactions.field_staff', $user->id)->where('transaction_details.created_at', '<=',  $date_to)->where('transaction_details.created_at', '>=',  $date_from)->where($condition)->orderBy('transaction_details.id', 'DESC')->paginate(50);
         } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
             // $sales_reps_ids is in array form
             list($sales_reps, $sales_reps_ids) = $this->teamMembers();
             $sales = TransactionDetail::with('transaction.customer')->join('transactions', 'transactions.id', 'transaction_details.transaction_id')
-                ->join('users', 'transactions.field_staff', 'users.id')->where('transaction_details.created_at', '<=',  $date_to)->where('transaction_details.created_at', '>=',  $date_from)->where($condition)->whereIn('transactions.field_staff', $sales_reps_ids)->orderBy('transaction_details.id', 'DESC')->paginate(10);
+                ->join('users', 'transactions.field_staff', 'users.id')->where('transaction_details.created_at', '<=',  $date_to)->where('transaction_details.created_at', '>=',  $date_from)->where($condition)->whereIn('transactions.field_staff', $sales_reps_ids)->orderBy('transaction_details.id', 'DESC')->paginate(50);
         } else {
             $sales = TransactionDetail::with('transaction.customer')->join('transactions', 'transactions.id', 'transaction_details.transaction_id')
-                ->join('users', 'transactions.field_staff', 'users.id')->where('transaction_details.created_at', '<=',  $date_to)->where('transaction_details.created_at', '>=',  $date_from)->where($condition)->orderBy('transaction_details.id', 'DESC')->paginate(10);
+                ->join('users', 'transactions.field_staff', 'users.id')->where('transaction_details.created_at', '<=',  $date_to)->where('transaction_details.created_at', '>=',  $date_from)->where($condition)->orderBy('transaction_details.id', 'DESC')->paginate(50);
             // $sales = Transaction::with(['customer.assignedOfficer', 'payments' => function ($q) {
             //     $q->orderBy('id', 'DESC');
-            // }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(10);
+            // }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(50);
         }
 
         $date_from = getDateFormatWords($date_from);
@@ -195,52 +195,52 @@ class TransactionsController extends Controller
         $order_list = [];
         $unsaved_list = [];
         foreach ($unsaved_orders as $unsaved_order) {
-            try {
-                $date = $unsaved_order->due_date;
-                $invoice_items = json_decode(json_encode($unsaved_order->invoice_items));
+            // try {
+            $date = $unsaved_order->due_date;
+            $invoice_items = json_decode(json_encode($unsaved_order->invoice_items));
 
-                $invoice = new Transaction();
-                $customer = Customer::find($unsaved_order->customer_id);
-                $invoice->customer_id    = $unsaved_order->customer_id;
-                $invoice->field_staff    = $user->id;
-                $invoice->payment_status = ($unsaved_order->payment_mode == 'now') ? 'paid' : 'unpaid';
-                $invoice->amount_due     = $unsaved_order->amount;
-                $invoice->main_amount     = $unsaved_order->main_amount;
+            $invoice = new Transaction();
+            $customer = Customer::find($unsaved_order->customer_id);
+            $invoice->customer_id    = $unsaved_order->customer_id;
+            $invoice->field_staff    = $user->id;
+            $invoice->payment_status = ($unsaved_order->payment_mode == 'now') ? 'paid' : 'unpaid';
+            $invoice->amount_due     = $unsaved_order->amount;
+            $invoice->main_amount     = $unsaved_order->main_amount;
 
-                $invoice->due_date       = ($unsaved_order->payment_mode == 'later') ? date('Y-m-d', strtotime($date)) : date('Y-m-d', strtotime('now'));
-                $invoice->entry_date = ($request->date) ? date('Y-m-d', strtotime($request->date)) : null;
-                if ($invoice->save()) {
+            $invoice->due_date       = ($unsaved_order->payment_mode == 'later') ? date('Y-m-d', strtotime($date)) : date('Y-m-d', strtotime('now'));
+            $invoice->entry_date = ($request->date) ? date('Y-m-d', strtotime($request->date)) : null;
+            if ($invoice->save()) {
 
-                    $invoice->invoice_no = $this->getInvoiceNo($prefix, $invoice->id);
-                    $invoice->save();
+                $invoice->invoice_no = $this->getInvoiceNo($prefix, $invoice->id);
+                $invoice->save();
 
-                    $this->createInvoiceItems($invoice, $invoice_items);
+                $this->createInvoiceItems($invoice, $invoice_items);
 
-                    //uncomment this if the sales feature for the app is reactivated
-                    // if ($unsaved_order->payment_mode == 'now') {
-                    //     $this->makePayments($invoice);
-                    // }
+                //uncomment this if the sales feature for the app is reactivated
+                // if ($unsaved_order->payment_mode == 'now') {
+                //     $this->makePayments($invoice);
+                // }
 
-                    if (isset($unsaved_order->amount_collected) && $unsaved_order->amount_collected > 0) {
-                        $this->payAmount($invoice, $unsaved_order->amount_collected);
-                    }
-
-                    $title = "New Sales made";
-                    $description = $user->name . " successfully made sales to $customer->business_name";
-                    $this->logUserActivity($title, $description, $user);
-
-
-                    $order_list[] = $this->show($invoice);
+                if (isset($unsaved_order->amount_collected) && $unsaved_order->amount_collected > 0) {
+                    $this->payAmount($invoice, $unsaved_order->amount_collected);
                 }
-                // $title = "New order received";
-                // $description = "New $invoice->payment_status order ($invoice->invoice_no) was generated by $user->name";
-                //log this action to invoice history
-                // $this->createInvoiceHistory($invoice, $title, $description);
-                //create items invoiceed for
 
-            } catch (\Throwable $th) {
-                $unsaved_list[] = $unsaved_order;
+                $title = "New Sales made";
+                $description = $user->name . " successfully made sales to $customer->business_name";
+                $this->logUserActivity($title, $description, $user);
+
+
+                $order_list[] = $this->show($invoice);
             }
+            // $title = "New order received";
+            // $description = "New $invoice->payment_status order ($invoice->invoice_no) was generated by $user->name";
+            //log this action to invoice history
+            // $this->createInvoiceHistory($invoice, $title, $description);
+            //create items invoiceed for
+
+            // } catch (\Throwable $th) {
+            //     $unsaved_list[] = $unsaved_order;
+            // }
         }
         //////update next invoice number/////
         // $this->incrementReceiptNo('invoice');

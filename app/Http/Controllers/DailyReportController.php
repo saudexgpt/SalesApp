@@ -54,20 +54,20 @@ class DailyReportController extends Controller
         if ($user->hasRole('sales_rep')) {
 
 
-            $daily_reports = DailyReport::with($with_array)->where('report_by', $user->id)->where('date', '>=', $date_from)->where('date', '<=', $date_to)->orderBy('id', 'DESC')->get();
+            $daily_reports = DailyReport::with($with_array)->where('report_by', $user->id)->where('date', '>=', $date_from)->where('date', '<=', $date_to)->orderBy('date', 'DESC')->get();
         } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
             // $sales_reps_ids is in array form
             if (isset($request->user_id) && $request->user_id !== '') {
-                $daily_reports = DailyReport::with($with_array)->where('report_by', $request->user_id)->where('date', '>=', $date_from)->where('date', '<=', $date_to)->orderBy('id', 'DESC')->get();
+                $daily_reports = DailyReport::with($with_array)->where('report_by', $request->user_id)->where('date', '>=', $date_from)->where('date', '<=', $date_to)->orderBy('date', 'DESC')->get();
             } else {
 
                 list($sales_reps, $sales_reps_ids) = $this->teamMembers();
 
-                $daily_reports = DailyReport::with($with_array)->whereIn('report_by', $sales_reps_ids)->where('date', '>=', $date_from)->where('date', '<=', $date_to)->orderBy('id', 'DESC')->get();
+                $daily_reports = DailyReport::with($with_array)->whereIn('report_by', $sales_reps_ids)->where('date', '>=', $date_from)->where('date', '<=', $date_to)->orderBy('date', 'DESC')->get();
             }
         } else {
             $condition = ($request->user_id) ? ['report_by' => $request->user_id] : [];
-            $daily_reports = DailyReport::with($with_array)->where($condition)->where('date', '>=', $date_from)->where('date', '<=', $date_to)->orderBy('id', 'DESC')->get();
+            $daily_reports = DailyReport::with($with_array)->where($condition)->where('date', '>=', $date_from)->where('date', '<=', $date_to)->orderBy('date', 'DESC')->get();
         }
         return response()->json(compact('daily_reports'), 200);
     }
@@ -96,43 +96,51 @@ class DailyReportController extends Controller
     public function store(Request $request)
     {
         $user = $this->getUser();
-        $date = date('Y-m-d', strtotime($request->date));
-        $existing_report = DailyReport::where('date', 'LIKE', '%' . $date . '%')
-            ->where('report_by', $user->id)
-            ->first();
-        if (!$existing_report) {
-            // create new Daily report
-            $daily_report = new DailyReport();
+        $unsaved_daily_reports = json_decode(json_encode($request->unsaved_daily_reports));
+        // $order_list = [];
+        // $unsaved_list = [];
+        foreach ($unsaved_daily_reports as $unsaved_daily_report) {
+
+            $date = date('Y-m-d', strtotime($unsaved_daily_report->date));
+            $daily_report = DailyReport::where('date', 'LIKE', '%' . $date . '%')
+                ->where('report_by', $user->id)
+                ->first();
+            if (!$daily_report) {
+                // create new Daily report
+                $daily_report = new DailyReport();
+            }
+            $daily_report->report_by = $user->id;
+            $daily_report->work_with_manager_check = $unsaved_daily_report->work_with_manager_check;
+            $daily_report->time_duration_with_manager = $unsaved_daily_report->time_duration_with_manager;
+            $daily_report->relationship_with_manager = $unsaved_daily_report->relationship_with_manager;
+            $daily_report->date = date('Y-m-d', strtotime($unsaved_daily_report->date));
+            $daily_report->market_feedback = $unsaved_daily_report->market_feedback;
+
+            if ($daily_report->save()) {
+                if (isset($unsaved_daily_report->customers_report) && $unsaved_daily_report->customers_report != '') {
+
+                    $customers_report = json_decode(json_encode($unsaved_daily_report->customers_report));
+                    $this->saveCustomersReport($daily_report->id, $customers_report);
+                }
+
+                if (isset($unsaved_daily_report->hospital_report) && $unsaved_daily_report->hospital_report != '') {
+
+                    $hospital_report = json_decode(json_encode($unsaved_daily_report->hospital_report));
+                    $this->saveHospitalReport($daily_report->id, $hospital_report);
+                }
+
+                if (isset($unsaved_daily_report->returns_report) && $unsaved_daily_report->returns_report != '') {
+                    $returns_report = json_decode(json_encode($unsaved_daily_report->returns_report));
+                    $this->saveReturnsReport($returns_report, $date);
+                }
+
+                $title = "Daily Report Successfully Submitted";
+                $description = ucwords($user->name) . "'s daily report has been submitted successfully for $date";
+                $this->logUserActivity($title, $description, $user);
+            }
         }
-        $daily_report->report_by = $user->id;
-        $daily_report->work_with_manager_check = $request->work_with_manager_check;
-        $daily_report->time_duration_with_manager = $request->time_duration_with_manager;
-        $daily_report->relationship_with_manager = $request->relationship_with_manager;
-        $daily_report->date = $request->date;
-        $daily_report->market_feedback = $request->market_feedback;
 
-        if ($daily_report->save()) {
-            if (isset($request->customers_report) && $request->customers_report != '') {
-
-                $customers_report = json_decode(json_encode($request->customers_report));
-                $this->saveCustomersReport($daily_report->id, $customers_report);
-            }
-
-            if (isset($request->hospital_report) && $request->hospital_report != '') {
-
-                $hospital_report = json_decode(json_encode($request->hospital_report));
-                $this->saveHospitalReport($daily_report->id, $hospital_report);
-            }
-
-            if (isset($request->returns_report) && $request->returns_report != '') {
-                $returns_report = json_decode(json_encode($request->returns_report));
-                $this->saveReturnsReport($returns_report, $date);
-            }
-
-            $title = "Daily Report Successfully Submitted";
-            $description = ucwords($user->name) . "'s daily report has been submitted successfully for $date";
-            $this->logUserActivity($title, $description, $user);
-        }
+        return $this->myReports($request);
     }
     private function saveCustomersReport($daily_report_id, $customers_report)
     {

@@ -435,6 +435,7 @@ export default {
           userResource
             .store(this.newUser)
             .then((response) => {
+              this.userCreating = false;
               this.$message({
                 message:
                   'New user ' +
@@ -451,10 +452,19 @@ export default {
               this.$alert('The default password is: password and should be changed on first login');
             })
             .catch((error) => {
-              console.log(error);
-            })
-            .finally(() => {
               this.userCreating = false;
+              let issues = '';
+              const errors = error.response.data.errors;
+              for (const key in errors) {
+                if (Object.hasOwnProperty.call(errors, key)) {
+                  issues += errors[key][0] + '<br>';
+                }
+              }
+              console.log(issues);
+              this.$alert(issues, 'Issues Found', {
+                dangerouslyUseHTMLString: true,
+              });
+              // alert(issues);
             });
         } else {
           console.log('error submit!!');
