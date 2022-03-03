@@ -66,7 +66,6 @@ class SalesRepDetailsRequest extends Command
     private function storeReps($reps)
     {
         //
-        $user = $this->getUser();
         foreach ($reps as $rep) {
             $id = $rep->id;
             $repUser = $rep->user;
