@@ -153,7 +153,7 @@ class UsersController extends Controller
 
 
                 $title = "New Registration";
-                $description = ucwords($user->name) . "'s was newly registered by $actor->name ($actor->email)";
+                $description = ucwords($user->name) . " was newly registered by $actor->name ($actor->email)";
                 $this->logUserActivity($title, $description);
 
                 return new UserResource($user);

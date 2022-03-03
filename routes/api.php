@@ -184,6 +184,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::delete('{user}', [UsersController::class, 'destroy'])->middleware('permission:delete-users');
 
         Route::post('set-current-location', [UsersController::class, 'setCurrentLocation']);
+        Route::post('fetch-reps-details', [UsersController::class, 'fetchWarehouseRepDetails']);
     });
     Route::group(['prefix' => 'visits'], function () {
         Route::get('fetch', [VisitsController::class, 'index']);
