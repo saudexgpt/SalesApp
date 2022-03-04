@@ -6,7 +6,7 @@ const settingsRoutes = {
   icon: 'SettingsIcon',
   i18n: 'Admin Settings',
   meta: {
-    // roles: ['super', 'admin'],
+    roles: ['super', 'admin'],
   },
   children: [
     // //////////////////Settings///////////////////////////

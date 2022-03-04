@@ -52,6 +52,7 @@ class ItemsController extends Controller
         // Open the file using the HTTP headers set above
         // DOCS: https://www.php.net/manual/en/function.file-get-contents.php
         $products =  file_get_contents('https://gpl.3coretechnology.com/api/get-warehouse-products', false, $context);
+        // $products = file_get_contents('http://localhost:8001/api/get-warehouse-products', false, $context);
         $products_in_json =  json_decode($products);
         $items = $products_in_json->items;
         $this->store($items);
@@ -62,11 +63,11 @@ class ItemsController extends Controller
 
     public function stockProductsFromWarehouse()
     {
-        $user_id = $this->getUser()->id;
+        $user = $this->getUser();
         // Create a stream
         set_time_limit(0);
         $parameters = [
-            "rep" => $user_id
+            "rep_ids" => $user->rep_ids
         ];
 
         $params =  http_build_query($parameters);
@@ -88,7 +89,7 @@ class ItemsController extends Controller
         // $products =  file_get_contents('http://localhost:8001/api/rep-stock', false, $context);
         $products_in_json =  json_decode($products);
         $items = $products_in_json->items;
-        $this->storeWarehouseStock($user_id, $items);
+        $this->storeWarehouseStock($user->id, $items);
         // return $this->showWarehouseStock();
         // $products = file_get_contents('http://localhost:8080/api/get-warehouse-products');
         // print_r($products);
@@ -102,7 +103,7 @@ class ItemsController extends Controller
             $waybill_item_id = $warehouse_item->waybill_item_id;
             $item_stock_sub_batch_id = $warehouse_item->item_stock_sub_batch_id;
             $stock = WarehouseStock::where(['dispatched_product_id' => $id, 'waybill_item_id' => $waybill_item_id, 'item_stock_sub_batch_id' => $item_stock_sub_batch_id])->first();
-            $item = Item::find($warehouse_item->item_id);
+            $item = Item::find($warehouse_item->item_stock->item_id);
             if (!$stock) {
                 $stock = new WarehouseStock();
                 $stock->dispatched_product_id = $id;
@@ -110,17 +111,17 @@ class ItemsController extends Controller
                 $stock->item_stock_sub_batch_id = $item_stock_sub_batch_id;
 
                 $stock->user_id = $user_id;
-                $stock->item_id = $warehouse_item->item_id;
+                $stock->item_id = $warehouse_item->item_stock->item_id;
                 $stock->quantity_supplied = $warehouse_item->total_quantity_supplied;
                 // $stock->sku = $sku;
-                $stock->batch_no = $warehouse_item->batch_no;
-                $stock->sub_batch_no = $warehouse_item->sub_batch_no;
-                $stock->expiry_date = $warehouse_item->expiry_date;
+                $stock->batch_no = $warehouse_item->item_stock->batch_no;
+                $stock->sub_batch_no = $warehouse_item->item_stock->sub_batch_no;
+                $stock->expiry_date = $warehouse_item->item_stock->expiry_date;
                 $stock->save();
 
-                $title = "Warehouse products supplied";
-                $description = "$stock->quantity_supplied $item->package_type  of $item->name with Batch No.  $stock->batch_no was sent from warehouse";
-                $this->logUserActivity($title, $description, $user);
+                // $title = "Warehouse products supplied";
+                // $description = "$stock->quantity_supplied $item->package_type  of $item->name with Batch No.  $stock->batch_no was sent from warehouse";
+                // $this->logUserActivity($title, $description, $user);
             }
         }
     }

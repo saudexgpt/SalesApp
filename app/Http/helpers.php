@@ -42,3 +42,17 @@ function todayDate()
 {
     return date('Y-m-d', strtotime('now'));
 }
+
+function addSingleElementToString($parent_string, $child_string)
+{
+    if ($parent_string == '') {
+        $str =  $child_string;
+    } else {
+        $str =  $parent_string . '~' . $child_string;
+    }
+
+
+    $string_array = array_unique(explode('~', $str));
+
+    return $new_parent_str = implode('~', $string_array);
+}

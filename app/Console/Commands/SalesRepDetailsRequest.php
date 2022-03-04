@@ -54,14 +54,12 @@ class SalesRepDetailsRequest extends Command
 
         // Open the file using the HTTP headers set above
         // DOCS: https://www.php.net/manual/en/function.file-get-contents.php
+        // $customers =  file_get_contents('http://localhost:8001/api/fetch-reps-details', false, $context);
         $customers =  file_get_contents('https://gpl.3coretechnology.com/api/fetch-reps-details', false, $context);
         // $products =  file_get_contents('http://localhost:8001/api/rep-stock', false, $context);
         $customers_in_json =  json_decode($customers);
         $reps = $customers_in_json->reps;
         $this->storeReps($reps);
-        // return $this->showWarehouseStock();
-        // $products = file_get_contents('http://localhost:8080/api/get-warehouse-products');
-        // print_r($products);
     }
     private function storeReps($reps)
     {
@@ -69,17 +67,18 @@ class SalesRepDetailsRequest extends Command
         foreach ($reps as $rep) {
             $id = $rep->id;
             $repUser = $rep->user;
+            $email = $repUser->email;
             $name_array = explode(' ', $repUser->name);
             $last_name = $name_array[0];
             $first_name = $name_array[1];
-            $user = User::find($id);
+            $user = User::where('email', $email)->first();
             if (!$user) {
                 $user = new User();
-
-                $user->id = $id;
                 $user->password = bcrypt('password');
                 $user->password_status = 'default';
+                $user->rep_ids = addSingleElementToString('', $id);
             }
+            $user->rep_ids = addSingleElementToString($user->rep_ids, $id);
             $user->first_name = $first_name;
             $user->last_name = $last_name;
             $user->name = $repUser->name;

@@ -24,9 +24,10 @@ export default {
     ]),
   },
   created() {
-    if (this.roles.includes('super')) {
-      this.currentRole = 'superAdminDashboard';
-    } else if (this.roles.includes('admin') || this.roles.includes('auditor')) {
+    //   if (this.roles.includes('super')) {
+    //   this.currentRole = 'superAdminDashboard';
+    // } else
+    if (this.roles.includes('admin') || this.roles.includes('super') || this.roles.includes('auditor')) {
       this.currentRole = 'adminDashboard';
     } else if (this.roles.includes('sales_rep')){
       this.currentRole = 'salesRepDashboard';
