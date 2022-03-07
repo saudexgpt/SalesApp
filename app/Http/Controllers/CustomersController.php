@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use App\Models\CustomerCall;
 use App\Models\CustomerContact;
+use App\Models\CustomerType;
 use App\Models\CustomerVerification;
+use App\Models\LocalGovernmentArea;
 use App\Models\SampleCustomer;
 use App\Models\Schedule;
 use App\Models\User;
@@ -22,12 +24,18 @@ class CustomersController extends Controller
      */
     private function uploadPhoto($avatar)
     {
-        $id = time();
         $upload_folder = 'uploads/customers';
-        $path = "$upload_folder/" . $id . '.jpeg';
-        $actualpath = "https://sales.3coretechnology.com/$path";
-        // $actualpath = "http://localhost:8000/$path";
-        file_put_contents($path, base64_decode($avatar));
+        if ($avatar === '' || $avatar === null) {
+            $path = $upload_folder . "/default.png";
+        } else {
+
+            $id = time();
+            $path = "$upload_folder/" . $id . '.jpeg';
+
+            file_put_contents($path, base64_decode($avatar));
+        }
+        // $actualpath = "https://sales.3coretechnology.com/$path";
+        $actualpath = "http://localhost:8000/$path";
         return $actualpath;
     }
     public function index(Request $request)
@@ -278,6 +286,69 @@ class CustomersController extends Controller
         ])->where($condition)->orderBy('id', 'DESC')->paginate(50);
         return response()->json(compact('customers'), 200);
     }
+    private function saveCustomersDetails($unsaved_customer, $status = 'Prospective')
+    {
+
+        $user = $this->getUser();
+        $lat = $unsaved_customer->customer_latitude;
+        $long = $unsaved_customer->customer_longitude;
+        $customer = Customer::where(['business_name' => $unsaved_customer->business_name, 'latitude' => $lat, 'longitude' => $long])->first();
+
+
+        if (!$customer) {
+
+
+            $reg_lat = $unsaved_customer->registrar_lat;
+            $reg_lng = $unsaved_customer->registrar_lng;
+            $formatted_address = $unsaved_customer->address;
+            $street = $unsaved_customer->street;
+            $area = $unsaved_customer->area;
+            // try {
+
+            // we fetch the geo information of the given address
+            if ($lat == '' && $long == '' &&  $area == '') {
+                list($lat, $long, $formatted_address, $street, $area) = $this->getLocationFromAddress($formatted_address);
+            }
+            $contacts = json_decode(json_encode($unsaved_customer->customer_contacts));
+            $customer = new Customer();
+            $customer->status = $status;
+            $customer->customer_type_id = $unsaved_customer->customer_type_id;
+            $customer->tier_id = $unsaved_customer->tier_id;
+            $customer->lga_id = $unsaved_customer->sub_region_id;
+            $customer->state_id = $unsaved_customer->region_id;
+            $customer->business_name = $unsaved_customer->business_name;
+            $customer->email = $unsaved_customer->email;
+            // $customer->phone1 = $unsaved_customer->phone1;
+            $customer->photo = $this->uploadPhoto($unsaved_customer->avatar);
+            $customer->base64_encoded_image = $unsaved_customer->avatar;
+            $customer->address = $formatted_address;
+            $customer->street = $street;
+            $customer->area = $area;
+            $customer->longitude = $long;
+            $customer->latitude = $lat;
+            $customer->registered_by = $user->id;
+            $customer->registrar_lat = $reg_lat;
+            $customer->registrar_lng = $reg_lng;
+            $customer->relating_officer = $user->id;
+            if ($customer->save()) {
+                if (count($contacts) > 0) {
+                    $this->saveCustomerContact($customer->id, $contacts);
+                }
+
+                // $customer_list[] = $this->show($customer);
+
+                $title = "Prospective Customer Added";
+                $description = "New prospective customer, $customer->business_name, was added by " . $user->name;
+                $this->logUserActivity($title, $description, $user);
+            }
+            // Generate notification before returning ///////////////////////
+            // Write notification code here////////////////////////////
+
+            // } catch (\Throwable $th) {
+            //     $unsaved_list[] = $unsaved_customer;
+            // }
+        }
+    }
     /**
      * Store a newly created resource in storage.
      *
@@ -286,69 +357,68 @@ class CustomersController extends Controller
      */
     public function store(Request $request)
     {
-        $user = $this->getUser();
         $unsaved_customers = json_decode(json_encode($request->unsaved_customers));
         $customer_list = [];
         $unsaved_list = [];
         foreach ($unsaved_customers as $unsaved_customer) {
-            $customer = Customer::where('business_name', $unsaved_customer->business_name)->first();
-
-
-            if (!$customer) {
-
-                $lat = $unsaved_customer->customer_latitude;
-                $long = $unsaved_customer->customer_longitude;
-                $reg_lat = $unsaved_customer->registrar_lat;
-                $reg_lng = $unsaved_customer->registrar_lng;
-                $formatted_address = $unsaved_customer->address;
-                $street = $unsaved_customer->street;
-                $area = $unsaved_customer->area;
-                // try {
-
-                // we fetch the geo information of the given address
-                if ($lat == '' || $long == '' ||  $area == '') {
-                    list($lat, $long, $formatted_address, $street, $area) = $this->getLocationFromAddress($formatted_address);
-                }
-                $contacts = json_decode(json_encode($unsaved_customer->customer_contacts));
-                $customer = new Customer();
-                $customer->customer_type_id = $unsaved_customer->customer_type_id;
-                $customer->tier_id = $unsaved_customer->tier_id;
-                $customer->lga_id = $unsaved_customer->sub_region_id;
-                $customer->state_id = $unsaved_customer->region_id;
-                $customer->business_name = $unsaved_customer->business_name;
-                $customer->email = $unsaved_customer->email;
-                // $customer->phone1 = $unsaved_customer->phone1;
-                $customer->photo = $this->uploadPhoto($unsaved_customer->avatar);
-                $customer->base64_encoded_image = $unsaved_customer->avatar;
-                $customer->address = $formatted_address;
-                $customer->street = $street;
-                $customer->area = $area;
-                $customer->longitude = $long;
-                $customer->latitude = $lat;
-                $customer->registered_by = $user->id;
-                $customer->registrar_lat = $reg_lat;
-                $customer->registrar_lng = $reg_lng;
-                $customer->relating_officer = $user->id;
-                if ($customer->save()) {
-                    if (count($contacts) > 0) {
-                        $this->saveCustomerContact($customer->id, $contacts);
-                    }
-
-                    $customer_list[] = $this->show($customer);
-
-                    $title = "Prospective Customer Added";
-                    $description = "New prospective customer, $customer->business_name, was added by " . $user->name;
-                    $this->logUserActivity($title, $description, $user);
-                }
-                // Generate notification before returning ///////////////////////
-                // Write notification code here////////////////////////////
-
-                // } catch (\Throwable $th) {
-                //     $unsaved_list[] = $unsaved_customer;
-                // }
-            }
+            $this->saveCustomersDetails($unsaved_customer);
         }
         return response()->json(['customers' => $customer_list, 'unsaved_list' => $unsaved_list, 'message' => 'success'], 200);
+    }
+    public function storeBulkCustomers(Request $request)
+    {
+        set_time_limit(0);
+        // $actor = $this->getUser();
+        $bulk_data = json_decode(json_encode($request->bulk_data));
+        $unsaved_customers = [];
+        // try {
+        foreach ($bulk_data as $data) {
+            try {
+
+                $business_name =  trim($data->BUSINESS_NAME);
+                // $email =  trim($data->EMAIL);
+                $address =  trim($data->ADDRESS);
+                $area =  trim($data->AREA);
+                $lga =  strtolower(trim($data->LGA));
+                $cordinate =  trim($data->CORDINATE);
+                $business_type = strtolower(trim($data->BUSINESS_TYPE));
+                $contact_name =  (isset($data->CONTACT_PERSON)) ? trim($data->CONTACT_PERSON) : NULL;
+                $contact_no = (isset($data->CONTACT_NUMBER)) ? trim($data->CONTACT_NUMBER) : NULL;
+
+                $request->business_name = $business_name;
+                $request->address = $address;
+                $request->area = $area;
+                // let's fetch the state_id and lga_id
+                $lga = LocalGovernmentArea::where('name', 'LIKE', '%' . ucwords($lga) . '%')->first();
+                if ($lga) {
+                    $request->lga_id = $lga->id;
+                    $request->state_id = $lga->state_id;
+                }
+
+                // let's extract the latitude and longitude from cordinate
+                if ($cordinate !== '') {
+                    $cordinate_array = explode(',', $cordinate); // since cordinate is in form of (lat, lng)
+                    $request->customer_latitude = str_replace(' ', '', $cordinate_array[0]);
+                    $request->customer_longitude = str_replace(' ', '', $cordinate_array[1]);
+                }
+                // fetch the customer type
+                $customer_type = CustomerType::where('name', 'LIKE', '%' . ucwords($business_type) . '%')->first();
+                if (!$customer_type) {
+                    $customer_type = new CustomerType();
+                    $customer_type->name = ucwords($business_type);
+                    $customer_type->save();
+                }
+                $request->customer_type_id = $customer_type->id;
+
+                $request->customer_contacts = [['name' => $contact_name, 'phone1' => $contact_no, 'phone2' => NULL, 'role' => NULL]];
+
+                $this->saveCustomersDetails($request, 'Confirmed');
+            } catch (\Throwable $th) {
+
+                $unsaved_customers[] = $data;
+            }
+        }
+        return response()->json(compact('unsaved_customers'), 200);
     }
     private function saveCustomerContact($customer_id, $contacts)
     {

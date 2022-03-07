@@ -11,6 +11,14 @@ const customersRoutes = {
   children: [
     {
       hidden: false,
+      path: '/customers/bulk',
+      name: 'BulkUpload',
+      slug: 'add-customers',
+      i18n: 'Add Bulk Customers',
+      component: () => import('@/views/apps/customers/BulkUpload.vue'),
+    },
+    {
+      hidden: false,
       path: '/customers/index',
       name: 'ViewCustomer',
       slug: 'view-customer',

@@ -74,6 +74,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('/all', [CustomersController::class, 'all'])->middleware('permission:read-customers');
 
         Route::post('store', [CustomersController::class, 'store'])->middleware('permission:create-customers');
+        Route::post('store-bulk', [CustomersController::class, 'storeBulkCustomers'])->middleware('permission:create-customers');
 
         Route::put('sample/update/{sample_customer}', [CustomersController::class, 'updateSampleCustomer'])->middleware('permission:create-customers');
         Route::post('add-customer-contact', [CustomersController::class, 'addCustomerContact'])->middleware('permission:create-customers');
