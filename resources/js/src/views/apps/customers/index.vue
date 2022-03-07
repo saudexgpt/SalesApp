@@ -36,6 +36,40 @@
         </div>
       </div>
       <div class="filter-container">
+        <el-row v-if="checkPermission(['assign-field-staff'])" :gutter="20">
+          <el-col :xs="24" :sm="24" :md="24">
+            <h4>Assign Rep to Customers</h4>
+            <aside>
+              <el-select
+                v-model="assignRep.relating_officer"
+                placeholder="Select Rep"
+                filterable
+              >
+                <el-option
+                  v-for="(rep, index) in sales_reps"
+                  :key="index"
+                  :label="rep.name"
+                  :value="rep.id"
+                />
+              </el-select>
+              <el-select
+                v-model="assignRep.customer_ids"
+                placeholder="Select Customers"
+                multiple
+                filterable
+                collapse-tags
+              >
+                <el-option
+                  v-for="(customer, customer_index) in list"
+                  :key="customer_index"
+                  :label="customer.business_name"
+                  :value="customer.id"
+                />
+              </el-select>
+              <el-button type="primary" @click="assignOfficer()">Assign</el-button>
+            </aside>
+          </el-col>
+        </el-row>
         <el-row :gutter="20">
           <el-col :xs="24" :sm="12" :md="12">
             <el-input
@@ -55,15 +89,7 @@
       >
 
         <template slot="assigned_officer.name" slot-scope="props">
-          <el-select v-if="checkPermission(['assign-field-staff'])" v-model="props.row.relating_officer" placeholder="Select Reps" @input="assignOfficer(props.row, $event, props.index)">
-            <el-option
-              v-for="(rep, index) in sales_reps"
-              :key="index"
-              :label="rep.name"
-              :value="rep.id"
-            />
-          </el-select>
-          <span v-else>{{ props.row.assigned_officer.name }}</span>
+          <span>{{ props.row.assigned_officer.name }}</span>
         </template>
         <template slot="visits" slot-scope="scope">
           <span>{{ (scope.row.visits.length > 0) ? moment(scope.row.visits[0].visit_date).format('ll') : '' }}</span>
@@ -109,10 +135,10 @@
               />
             </router-link>
           </el-tooltip>
-          <el-tooltip
+          <!-- <el-tooltip
             class="item"
             effect="dark"
-            content="Edit User"
+            content="Edit Customer"
             placement="top-start"
           >
             <router-link
@@ -126,7 +152,7 @@
                 icon="el-icon-edit"
               />
             </router-link>
-          </el-tooltip>
+          </el-tooltip> -->
         </template>
       </v-client-table>
       <el-row :gutter="20">
@@ -252,6 +278,10 @@ export default {
       dialogFormVisible: false,
       selected_customer: '',
       page: 'list',
+      assignRep: {
+        relating_officer: '',
+        customer_ids: [],
+      },
     };
   },
   created() {
@@ -293,14 +323,20 @@ export default {
           this.load_table = false;
         });
     },
-    assignOfficer(customer, staffId, index) {
+    assignOfficer() {
       const app = this;
-      app.list[index - 1].relating_officer = staffId;
+      const staffId = app.assignRep.relating_officer;
+      const customer_ids = app.assignRep.customer_ids;
       const assignOfficerResource = new Resource('customers/assign-field-staff');
       assignOfficerResource
-        .update(customer.id, { staff_id: staffId })
+        .update(staffId, { customer_ids: customer_ids })
         .then(() => {
+          app.assignRep = {
+            relating_officer: '',
+            customer_ids: [],
+          };
           app.$message('Officer Assigned Successfully');
+          app.getList();
         })
         .catch((error) => {
           console.log(error);

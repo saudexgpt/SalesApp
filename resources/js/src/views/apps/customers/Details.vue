@@ -56,14 +56,14 @@
           <!-- Avatar Col -->
           <div id="avatar-col" class="vx-col">
             <div class="img-container mb-4" @click="showFullPhoto = true">
-              <img :src="'data:image/png;base64,'+customer.base64_encoded_image" class="rounded w-full" >
+              <img :src="customer.photo" class="rounded w-full" >
             </div>
           </div>
           <vs-popup
             :active.sync="showFullPhoto"
             title="Customer Photo">
             <div class="con-exemple-prompt">
-              <img :src="'data:image/png;base64,'+customer.base64_encoded_image" class="rounded w-full" >
+              <img :src="customer.photo" class="rounded w-full" >
             </div>
           </vs-popup>
 

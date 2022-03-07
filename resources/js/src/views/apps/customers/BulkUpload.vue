@@ -11,7 +11,7 @@
             <li>Make sure your file follows the header names as stated in the sample below</li>
             <li>Each column should contain only the information that the header name suggests</li>
             <li>The <code>CORDINATE</code> column should contain only latitude and longitude decimal numbers with the format <code>latitude,longitude</code> without any trailing spaces or any other characters except the numbers. Latitude number is always greater than longitude</li>
-            <li>DO NOT bother including a customer with no <code>BUSSINESS_NAME</code></li>
+            <li>DO NOT bother including a customer with no <code>BUSINESS_NAME</code></li>
             <li>When all fields are correctly filled, upload the file, preview and then click SUMBIT</li>
           </ol> <br>
           <label>Sample</label>
@@ -20,7 +20,7 @@
             <table class="table table-bordered">
               <thead>
                 <tr>
-                  <th>BUSSINESS_NAME</th>
+                  <th>BUSINESS_NAME</th>
                   <th>ADDRESS</th>
                   <th>AREA</th>
                   <th>LGA</th>
@@ -173,7 +173,7 @@ export default {
     },
     downloadFormat() {
       import('@/vendor/Export2Excel').then(excel => {
-        const tHeader = ['BUSSINESS_NAME', 'BUSINESS_TYPE', 'ADDRESS', 'CONTACT_PERSON', 'CONTACT_NUMBER', 'CORDINATE', 'AREA', 'LGA'];
+        const tHeader = ['BUSINESS_NAME', 'BUSINESS_TYPE', 'ADDRESS', 'CONTACT_PERSON', 'CONTACT_NUMBER', 'CORDINATE', 'AREA', 'LGA'];
         const data = [];
         excel.export_json_to_excel({
           header: tHeader,

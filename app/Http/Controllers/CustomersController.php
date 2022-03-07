@@ -554,18 +554,19 @@ class CustomersController extends Controller
         // return $this->prospectiveCustomers($request);
     }
 
-    public function assignFieldStaff(Request $request, Customer $customer)
+    public function assignFieldStaff(Request $request, User $relating_officer)
     {
-        $staff_id = $request->staff_id;
-        $relating_officer = User::find($staff_id);
-        $user = $this->getUser();
         $today  = date('Y-m-d', strtotime('now'));
-        $customer->relating_officer = $staff_id;
-        $customer->save();
-
-        $title = "Customer's Relating Officer Assigned";
-        $description = $user->name . " successfully assigned $relating_officer->name to $customer->business_name on $today";
-        $this->logUserActivity($title, $description, $relating_officer);
+        $user = $this->getUser();
+        $customer_ids = json_decode(json_encode($request->customer_ids));
+        foreach ($customer_ids as $customer_id) {
+            $customer = Customer::find($customer_id);
+            $customer->relating_officer = $relating_officer->id;
+            $customer->save();
+            $title = "Customer's Relating Officer Assigned";
+            $description = $user->name . " successfully assigned $relating_officer->name to $customer->business_name on $today";
+            $this->logUserActivity($title, $description, $relating_officer);
+        }
 
         // return $this->prospectiveCustomers($request);
     }
