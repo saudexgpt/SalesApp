@@ -424,13 +424,16 @@ class CustomersController extends Controller
     private function saveCustomerContact($customer_id, $contacts)
     {
         foreach ($contacts as $contact) {
-            $new_contact = new CustomerContact();
-            $new_contact->customer_id = $customer_id;
-            $new_contact->name = $contact->name;
-            $new_contact->phone1 = $contact->phone1;
-            $new_contact->phone2 = $contact->phone2;
-            $new_contact->role = $contact->role;
-            $new_contact->save();
+            if ($contact->name !== NULL && $contact->phone1 !== NULL) {
+
+                $new_contact = new CustomerContact();
+                $new_contact->customer_id = $customer_id;
+                $new_contact->name = $contact->name;
+                $new_contact->phone1 = $contact->phone1;
+                $new_contact->phone2 = $contact->phone2;
+                $new_contact->role = $contact->role;
+                $new_contact->save();
+            }
         }
     }
     public function addCustomerContact(Request $request)

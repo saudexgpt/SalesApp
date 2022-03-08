@@ -153,6 +153,7 @@ export default {
       saveBulkCustomers
         .store(param)
         .then((response) => {
+          app.tableData = [];
           if (response.message === 'success') {
             app.$message({
               message: 'Bulk Customers Uploaded Successfully!!!',
@@ -163,7 +164,11 @@ export default {
           } else {
             app.errors = response.error;
           }
-          app.tableData = response.unsaved_customers;
+          if (response.unsaved_customers.length > 0) {
+            app.tableData = response.unsaved_customers;
+          } else {
+            app.$router.push({ name: 'ViewCustomer' });
+          }
           app.load = false;
         })
         .catch((error) => {
