@@ -209,3 +209,6 @@ aside {
 .VueTables__child-row-toggler--open::before {
     content: "-" !important;
 }
+.con-vs-popup {
+ z-index: 1005;
+}

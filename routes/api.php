@@ -67,6 +67,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('permissions/assign-role', [PermissionsController::class, 'assignRolePermissions']);
     });
     Route::group(['prefix' => 'customers'], function () {
+
+        Route::get('/lga-customers', [CustomersController::class, 'fetchLGACustomers'])->middleware('permission:read-customers');
         Route::get('/sample', [CustomersController::class, 'sampleCustomers'])->middleware('permission:read-customers');
         Route::get('/', [CustomersController::class, 'index'])->middleware('permission:read-customers');
         Route::get('/prospective', [CustomersController::class, 'prospectiveCustomers'])->middleware('permission:read-customers');

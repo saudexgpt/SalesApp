@@ -9,6 +9,7 @@ use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\UserResource;
+use App\Models\LocalGovernmentArea;
 use App\Models\Role;
 use App\Models\TeamMember;
 use App\Models\User;
@@ -50,7 +51,6 @@ class Controller extends BaseController
     {
         return '₦';
     }
-
     public function teamMembers()
     {
         $user = $this->getUser();
@@ -59,7 +59,7 @@ class Controller extends BaseController
         $all_team_member_ids = [];
         foreach ($team_members as $team_member) {
             $team_id = $team_member->team_id;
-            $my_members = TeamMember::with('user')->where('team_id', $team_id)->where('user_id', '!=', $user->id)->get();
+            $my_members = TeamMember::with('user.customers')->where('team_id', $team_id)->where('user_id', '!=', $user->id)->get();
             foreach ($my_members as $my_member) {
                 $all_team_members[] = $my_member->user;
                 $all_team_member_ids[] = $my_member->user->id;

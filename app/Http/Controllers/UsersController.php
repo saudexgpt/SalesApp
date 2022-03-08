@@ -88,7 +88,7 @@ class UsersController extends Controller
                 $q->where('name', 'sales_rep');
             });
 
-            $sales_reps = $userQuery->get();
+            $sales_reps = $userQuery->with('customers')->get();
         }
 
         return response()->json(compact('sales_reps'), 200);

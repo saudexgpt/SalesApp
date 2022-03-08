@@ -38,6 +38,12 @@ class CustomersController extends Controller
         $actualpath = "http://localhost:8000/$path";
         return $actualpath;
     }
+
+    public function fetchLGACustomers()
+    {
+        $lgas = LocalGovernmentArea::with('customers')->orderBy('name')->get();
+        return response()->json(compact('lgas'), 200);
+    }
     public function index(Request $request)
     {
 
@@ -314,8 +320,9 @@ class CustomersController extends Controller
             $customer->status = $status;
             $customer->customer_type_id = $unsaved_customer->customer_type_id;
             $customer->tier_id = $unsaved_customer->tier_id;
-            $customer->lga_id = $unsaved_customer->sub_region_id;
-            $customer->state_id = $unsaved_customer->region_id;
+            $customer->lga_id = $unsaved_customer->lga_id;
+            $customer->state_id = $unsaved_customer->state_id;
+            $customer->lga_text = $unsaved_customer->lga_text;
             $customer->business_name = $unsaved_customer->business_name;
             $customer->email = $unsaved_customer->email;
             // $customer->phone1 = $unsaved_customer->phone1;
@@ -380,7 +387,7 @@ class CustomersController extends Controller
                 // $email =  trim($data->EMAIL);
                 $address =  trim($data->ADDRESS);
                 $area =  trim($data->AREA);
-                $lga =  strtolower(trim($data->LGA));
+                $lga_text =  strtolower(trim($data->LGA));
                 $cordinate =  trim($data->CORDINATE);
                 $business_type = strtolower(trim($data->BUSINESS_TYPE));
                 $contact_name =  (isset($data->CONTACT_PERSON)) ? trim($data->CONTACT_PERSON) : NULL;
@@ -389,8 +396,9 @@ class CustomersController extends Controller
                 $request->business_name = $business_name;
                 $request->address = $address;
                 $request->area = $area;
+                $request->lga_text = $lga_text;
                 // let's fetch the state_id and lga_id
-                $lga = LocalGovernmentArea::where('name', 'LIKE', '%' . ucwords($lga) . '%')->first();
+                $lga = LocalGovernmentArea::where('name', 'LIKE', '%' . ucwords($lga_text) . '%')->first();
                 if ($lga) {
                     $request->lga_id = $lga->id;
                     $request->state_id = $lga->state_id;
