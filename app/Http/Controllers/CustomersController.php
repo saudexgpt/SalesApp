@@ -70,6 +70,16 @@ class CustomersController extends Controller
         //     }
         // }
         $condition = [];
+        $with = [
+            'customerContacts',
+            'state.lgas',
+            'customerType', /*'tier', 'subRegion', 'region',*/ 'registrar', 'assignedOfficer',
+
+            'visits' => function ($q) {
+                $q->orderBy('id', 'DESC')->paginate(10);
+            },
+
+        ];
         if (isset($request->customer_type_id)) {
 
             $customer_type_id = $request->customer_type_id;
@@ -78,39 +88,15 @@ class CustomersController extends Controller
             }
         }
         if ($user->hasRole('sales_rep')) {
-            $customers = $userQuery->Confirmed()->with([
-                'customerContacts',
-                'customerType', /*'tier', 'subRegion', 'region',*/ 'registrar', 'assignedOfficer',
-
-                'visits' => function ($q) {
-                    $q->orderBy('id', 'DESC')->paginate(10);
-                },
-
-            ])->where($condition)->where('relating_officer', $user->id)->orderBy('id', 'DESC')->paginate($limit);
+            $customers = $userQuery->Confirmed()->with($with)->where($condition)->where('relating_officer', $user->id)->orderBy('id', 'DESC')->paginate($limit);
             return response()->json(compact('customers'), 200);
         } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
             // $sales_reps_ids is in array form
             list($sales_reps, $sales_reps_ids) = $this->teamMembers();
-            $customers = $userQuery->Confirmed()->with([
-                'customerContacts',
-                'customerType', /*'tier', 'subRegion', 'region',*/ 'registrar', 'assignedOfficer',
-
-                'visits' => function ($q) {
-                    $q->orderBy('id', 'DESC')->paginate(10);
-                },
-
-            ])->where($condition)->whereIn('relating_officer', $sales_reps_ids)->orderBy('id', 'DESC')->paginate($limit);
+            $customers = $userQuery->Confirmed()->with($with)->where($condition)->whereIn('relating_officer', $sales_reps_ids)->orderBy('id', 'DESC')->paginate($limit);
         } else {
             // admin and super admin only
-            $customers = $userQuery->Confirmed()->with([
-                'customerContacts',
-                'customerType', /*'tier', 'subRegion', 'region',*/ 'registrar', 'assignedOfficer',
-
-                'visits' => function ($q) {
-                    $q->orderBy('id', 'DESC')->paginate(10);
-                },
-
-            ])->where($condition)->orderBy('id', 'DESC')->paginate($limit);
+            $customers = $userQuery->Confirmed()->with($with)->where($condition)->orderBy('id', 'DESC')->paginate($limit);
         }
         $customer_types = CustomerType::get();
         $states = State::with('lgas')->get();
@@ -508,7 +494,8 @@ class CustomersController extends Controller
         $user = $this->getUser();
         $today  = date('Y-m-d', strtotime('now'));
         $customer = $customer::with([
-            'customerContacts', 'customerType', 'tier', 'subRegion', 'region', 'registrar', 'assignedOfficer', 'verifier',
+            'customerContacts', 'customerType', 'tier', 'subRegion', 'region', 'registrar', 'state.lgas',
+            'lga', 'assignedOfficer', 'verifier',
             'payments' => function ($q) {
                 $q->orderBy('id', 'DESC');
             },

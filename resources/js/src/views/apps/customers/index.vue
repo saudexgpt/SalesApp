@@ -243,7 +243,7 @@
                     v-for="(lga, lga_index) in lgas"
                     :key="lga_index"
                     :label="lga.name"
-                    :value="lga_index"
+                    :value="lga.id"
                   />
                 </el-select>
               </div>
@@ -284,7 +284,7 @@ export default {
         'visits',
         'registrar.name',
         'assigned_officer.name',
-        'verifier.name',
+        // 'verifier.name',
         'created_at',
         'date_verified',
         'action',
@@ -364,6 +364,8 @@ export default {
     },
     setEditCustomerDetails(row){
       this.selectedCustomer = row;
+      this.selected_state = this.states.map(object => object.id).indexOf(this.selectedCustomer.state_id);
+      this.setStateLGAs();
       this.dialogFormVisible = true;
     },
     setStateLGAs() {
