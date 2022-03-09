@@ -187,13 +187,14 @@
             </div>
             <vs-divider />
             <div class="block overflow-x-auto">
-              <table class="table table-striped">
+              <table class="table table-bordered table-striped">
                 <thead>
                   <tr>
                     <th>Name</th>
                     <th>Phone No.</th>
                     <th>Alt No.</th>
                     <th>Role</th>
+                    <th />
                   </tr>
                 </thead>
                 <tbody>
@@ -203,6 +204,15 @@
                     <td class="px-3 py-2">{{ contact.phone1 }}</td>
                     <td class="px-3 py-2">{{ contact.phone2 }}</td>
                     <td class="px-3 py-2">{{ contact.role }}</td>
+                    <td>
+                      <el-button
+                        round
+                        type="danger"
+                        size="small"
+                        icon="el-icon-delete"
+                        @click="removeContact(contact, index)"
+                      />
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -449,6 +459,17 @@ export default {
       const app = this;
       app.customer.customer_contacts = contacts;
       app.dialogVisible = false;
+    },
+    removeContact(contact, index) {
+      const app = this;
+      if (confirm('Click OK to confirm that you want to remove ' + contact.name.toUpperCase() + ' from list of contacts')) {
+        const removeContactResource = new Resource('customers/remove-customer-contact');
+        removeContactResource.destroy(contact.id)
+          .then(() => {
+            app.$message('Contact removed successfully');
+            app.customer.customer_contacts.splice(index, 1);
+          });
+      }
     },
     fetchDetails() {
       const id = this.$route.params && this.$route.params.id;

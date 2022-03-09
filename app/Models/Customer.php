@@ -42,6 +42,14 @@ class Customer extends Model
     {
         return $this->belongsTo(Region::class);
     }
+    public function state()
+    {
+        return $this->belongsTo(State::class);
+    }
+    public function lga()
+    {
+        return $this->belongsTo(LocalGovernmentArea::class);
+    }
     public function registrar()
     {
         return $this->belongsTo(User::class, 'registered_by', 'id');

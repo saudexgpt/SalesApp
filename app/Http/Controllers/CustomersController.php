@@ -10,6 +10,7 @@ use App\Models\CustomerVerification;
 use App\Models\LocalGovernmentArea;
 use App\Models\SampleCustomer;
 use App\Models\Schedule;
+use App\Models\State;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -39,10 +40,10 @@ class CustomersController extends Controller
         return $actualpath;
     }
 
-    public function fetchLGACustomers()
+    public function fetchStateLGACustomers()
     {
-        $lgas = LocalGovernmentArea::with('customers')->orderBy('name')->get();
-        return response()->json(compact('lgas'), 200);
+        $states = State::with('lgas.customers')->orderBy('name')->get();
+        return response()->json(compact('states'), 200);
     }
     public function index(Request $request)
     {
@@ -99,7 +100,6 @@ class CustomersController extends Controller
                 },
 
             ])->where($condition)->whereIn('relating_officer', $sales_reps_ids)->orderBy('id', 'DESC')->paginate($limit);
-            return response()->json(compact('customers'), 200);
         } else {
             // admin and super admin only
             $customers = $userQuery->Confirmed()->with([
@@ -111,8 +111,10 @@ class CustomersController extends Controller
                 },
 
             ])->where($condition)->orderBy('id', 'DESC')->paginate($limit);
-            return response()->json(compact('customers'), 200);
         }
+        $customer_types = CustomerType::get();
+        $states = State::with('lgas')->get();
+        return response()->json(compact('customers', 'customer_types', 'states'), 200);
     }
 
     public function prospectiveCustomers(Request $request)
@@ -373,6 +375,21 @@ class CustomersController extends Controller
         }
         return response()->json(['customers' => $customer_list, 'unsaved_list' => $unsaved_list, 'message' => 'success'], 200);
     }
+
+    public function update(Request $request, Customer $customer)
+    {
+        $customer->state_id = $request->state_id;
+        $customer->lga_id = $request->lga_id;
+        $customer->business_name = $request->business_name;
+        $customer->customer_type_id = $request->customer_type_id;
+        $customer->latitude = $request->customer_latitude;
+        $customer->longitude = $request->customer_longitude;
+        $customer->street = $request->street;
+        $customer->address = $request->address;
+        $customer->area = $request->area;
+        $customer->save();
+        return response()->json([], 204);
+    }
     public function storeBulkCustomers(Request $request)
     {
         set_time_limit(0);
@@ -462,6 +479,17 @@ class CustomersController extends Controller
         }
         $contacts = CustomerContact::where('customer_id', $customer_id)->get();
         return $contacts;
+    }
+    public function removeCustomerContact(CustomerContact $contact)
+    {
+        $user = $this->getUser();
+        $customer = $contact->customer;
+        $title = "Customer Contacts Removed";
+        $description = $user->name . " removed $contact->name from contact list of $customer->business_name";
+        $contact->delete();
+
+        $this->logUserActivity($title, $description, $user);
+        return response()->json([], 204);
     }
     public function getLatLongLocation(Request $request)
     {
@@ -571,30 +599,19 @@ class CustomersController extends Controller
         $today  = date('Y-m-d', strtotime('now'));
         $user = $this->getUser();
         $customer_ids = json_decode(json_encode($request->customer_ids));
+        $customers_assigned = '';
         foreach ($customer_ids as $customer_id) {
             $customer = Customer::find($customer_id);
             $customer->relating_officer = $relating_officer->id;
             $customer->save();
-            $title = "Customer's Relating Officer Assigned";
-            $description = $user->name . " successfully assigned $relating_officer->name to $customer->business_name on $today";
-            $this->logUserActivity($title, $description, $relating_officer);
+            $customers_assigned .= $customer->business_name . ', ';
         }
 
+        $title = "Customer's Relating Officer Assigned";
+        $description = $user->name . " successfully assigned $relating_officer->name to $customers_assigned on $today";
+        $this->logUserActivity($title, $description, $relating_officer);
+
         // return $this->prospectiveCustomers($request);
-    }
-
-
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Customer  $customer
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Customer $customer)
-    {
-        //
     }
 
     /**

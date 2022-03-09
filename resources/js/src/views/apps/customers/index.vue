@@ -36,7 +36,7 @@
         </div>
       </div>
       <div class="filter-container">
-        <el-row v-if="checkPermission(['assign-field-staff'])" :gutter="20">
+        <!-- <el-row v-if="checkPermission(['assign-field-staff'])" :gutter="20">
           <el-col :xs="24" :sm="24" :md="24">
             <h4>Assign Rep to Customers</h4>
             <aside>
@@ -69,7 +69,7 @@
               <el-button type="primary" @click="assignOfficer()">Assign</el-button>
             </aside>
           </el-col>
-        </el-row>
+        </el-row> -->
         <el-row :gutter="20">
           <el-col :xs="24" :sm="12" :md="12">
             <el-input
@@ -135,24 +135,21 @@
               />
             </router-link>
           </el-tooltip>
-          <!-- <el-tooltip
+          <el-tooltip
             class="item"
             effect="dark"
             content="Edit Customer"
             placement="top-start"
           >
-            <router-link
-              :to="'/administrator/users/edit/' + scope.row.id"
-            >
-              <el-button
-                v-permission="['update-users']"
-                round
-                type="primary"
-                size="small"
-                icon="el-icon-edit"
-              />
-            </router-link>
-          </el-tooltip> -->
+            <el-button
+              v-permission="['update-customers']"
+              round
+              type="primary"
+              size="small"
+              icon="el-icon-edit"
+              @click="setEditCustomerDetails(scope.row)"
+            />
+          </el-tooltip>
         </template>
       </v-client-table>
       <el-row :gutter="20">
@@ -165,56 +162,107 @@
         />
       </el-row>
 
-      <!-- <vs-popup
+      <vs-popup
         :active.sync="dialogFormVisible"
         fullscreen
-        title="Add New User">
-        <div v-loading="userCreating" class="con-exemple-prompt">
+        title="Edit Customer Details">
+        <div v-loading="updatingCustomer" class="con-exemple-prompt">
           <form >
             <div class="vx-row">
               <div class="vx-col sm:w-1/2 w-full mb-2">
-                <vs-input v-model="newCustomer.first_name" v-validate="'required'" name="first_name" label-placeholder="First Name" class="mt-3 w-full" data-vv-validate-on="blur"/>
-                <span v-show="errors.has('first_name')" class="text-danger text-sm">{{ errors.first('first_name') }}</span>
+                <vs-input v-validate="'required'" v-model="selectedCustomer.business_name" name="business_name" label-placeholder="Business Name" class="mt-3 w-full" data-vv-validate-on="blur"/>
+                <span v-show="errors.has('business_name')" class="text-danger text-sm">{{ errors.first('business_name') }}</span>
               </div>
               <div class="vx-col sm:w-1/2 w-full mb-2">
-                <vs-input v-model="newCustomer.last_name" v-validate="'required'" name="last_name" label-placeholder="Last Name" class="mt-3 w-full" data-vv-validate-on="blur"/>
-                <span v-show="errors.has('last_name')" class="text-danger text-sm">{{ errors.first('last_name') }}</span>
+                <label>Select Customer Type</label>
+                <el-select
+                  v-model="selectedCustomer.customer_type_id"
+                  placeholder="Select Customer Type"
+                  filterable
+                  style="width: 100%"
+                >
+                  <el-option
+                    v-for="(customer_type, type_index) in customer_types"
+                    :key="type_index"
+                    :label="customer_type.name"
+                    :value="customer_type.id"
+                  />
+                </el-select>
               </div>
             </div>
             <div class="vx-row">
               <div class="vx-col sm:w-1/2 w-full mb-2">
-                <vs-input v-model="newCustomer.email" v-validate="'required'" type="email" name="email" label-placeholder="Email" class="mt-3 w-full" data-vv-validate-on="blur"/>
-                <span v-show="errors.has('email')" class="text-danger text-sm">{{ errors.first('email') }}</span>
+                <gmap-autocomplete
+                  class="form-control"
+                  placeholder="Customer Address"
+                  @place_changed="getAddressData" />
+                  <!-- <vue-google-autocomplete
+                  id="map"
+                  ref="address"
+                  :country="['ng']"
+                  class="mt-3 w-full"
+                  placeholder="Customer Address"
+                  @placechanged="getAddressData"
+                /> -->
               </div>
               <div class="vx-col sm:w-1/2 w-full mb-2">
-                <vs-input v-model="newCustomer.username" v-validate="'required'" name="username" label-placeholder="Username" class="mt-3 w-full" data-vv-validate-on="blur"/>
-                <span v-show="errors.has('username')" class="text-danger text-sm">{{ errors.first('username') }}</span>
+                <ol>
+                  <li><strong>Address:</strong> {{ selectedCustomer.address }}</li>
+                  <li><strong>Street:</strong> {{ selectedCustomer.street }}</li>
+                  <li><strong>Area:</strong> {{ selectedCustomer.area }}</li>
+                  <li><strong>Lat:</strong> {{ selectedCustomer.customer_latitude }}</li>
+                  <li><strong>Lng:</strong> {{ selectedCustomer.customer_longitude }}</li>
+                </ol>
               </div>
             </div>
             <div class="vx-row">
               <div class="vx-col sm:w-1/2 w-full mb-2">
-                <vs-input v-model="newCustomer.password" v-validate="'required|min:8'" name="password" type="password" show-password label-placeholder="Password" class="mt-3 w-full" data-vv-validate-on="blur"/>
-                <span v-show="errors.has('password')" class="text-danger text-sm">{{ errors.first('password') }}</span>
+                <el-select
+                  v-model="selected_state"
+                  placeholder="Select State"
+                  filterable
+                  style="width: 100%"
+                  @input="setStateLGAs()"
+                >
+                  <el-option
+                    v-for="(state, state_index) in states"
+                    :key="state_index"
+                    :label="state.name"
+                    :value="state_index"
+                  />
+                </el-select>
               </div>
               <div class="vx-col sm:w-1/2 w-full mb-2">
-                <vs-input v-model="newCustomer.confirmPassword" v-validate="'required|min:8|confirmed:password'" name="confirm-password" type="password" show-password label-placeholder="Confirm Password" class="mt-3 w-full" data-vv-validate-on="blur"/>
-                <span v-show="errors.has('confirm-password')" class="text-danger text-sm">{{ errors.first('confirm-password') }}</span>
+                <el-select
+                  v-model="selectedCustomer.lga_id"
+                  placeholder="Select LGA"
+                  style="width: 100%"
+                  filterable
+                >
+                  <el-option
+                    v-for="(lga, lga_index) in lgas"
+                    :key="lga_index"
+                    :label="lga.name"
+                    :value="lga_index"
+                  />
+                </el-select>
               </div>
             </div>
 
             <div class="dialog-footer">
               <vs-button color="danger" type="filled" @click="dialogFormVisible = false">Cancel</vs-button>
-              <vs-button color="success" type="filled" @click.prevent="createUser()">Submit</vs-button>
+              <vs-button color="success" type="filled" @click.prevent="updateCustomer()">Submit</vs-button>
             </div>
           </form>
         </div>
-      </vs-popup> -->
+      </vs-popup>
     </vx-card>
   </div>
 </template>
 
 <script>
 import moment from 'moment';
+import VueGoogleAutocomplete from 'vue-google-autocomplete';
 import Pagination from '@/components/Pagination'; // Secondary package based on el-pagination
 import Resource from '@/api/resource';
 import permission from '@/directive/permission'; // Permission directive
@@ -222,7 +270,7 @@ import checkPermission from '@/utils/permission'; // Permission checking
 const customersResource = new Resource('customers');
 export default {
   name: 'Customers',
-  components: { Pagination },
+  components: { Pagination, VueGoogleAutocomplete },
   directives: { permission },
   data() {
     return {
@@ -231,6 +279,7 @@ export default {
       columns: [
         'business_name',
         'customer_type.name',
+        'street',
         'area',
         'visits',
         'registrar.name',
@@ -260,21 +309,21 @@ export default {
         //   filter: 'Search:',
         // },
         // editableColumns:['name', 'category.name', 'sku'],
-        sortable: ['created_at', 'date_verified'],
+        sortable: ['business_name', 'customer_type.name', 'area', 'created_at', 'date_verified'],
         filterable: ['business_name', 'customer_type.name', 'area', 'registrar.name', 'assigned_officer.name'],
       },
       total: 0,
       loading: false,
       load_table: false,
       downloading: false,
-      userCreating: false,
+      updatingCustomer: false,
       query: {
         page: 1,
         limit: 100,
         keyword: '',
         role: '',
       },
-      newCustomer: {},
+      selectedCustomer: {},
       dialogFormVisible: false,
       selected_customer: '',
       page: 'list',
@@ -282,6 +331,10 @@ export default {
         relating_officer: '',
         customer_ids: [],
       },
+      selected_state: '',
+      states: [],
+      lgas: [],
+      customer_types: [],
     };
   },
   created() {
@@ -291,6 +344,34 @@ export default {
   methods: {
     moment,
     checkPermission,
+    getAddressData(addressData) {
+      // console.log(addressData);
+      // console.log(placeResultData)
+      // console.log(id)
+      const app = this;
+      app.selectedCustomer.address = addressData.formatted_address;
+      app.selectedCustomer.customer_longitude = addressData.geometry.location.lng();
+      app.selectedCustomer.customer_latitude = addressData.geometry.location.lat();
+      const address_components = addressData.address_components;
+      address_components.forEach(element => {
+        if (element.types[0] === 'route') {
+          app.selectedCustomer.street = element.long_name;
+        }
+        if (element.types[0] === 'administrative_area_level_2') {
+          app.selectedCustomer.area = element.long_name;
+        }
+      });
+    },
+    setEditCustomerDetails(row){
+      this.selectedCustomer = row;
+      this.dialogFormVisible = true;
+    },
+    setStateLGAs() {
+      const app = this;
+      app.lga = [];
+      app.lgas = app.states[app.selected_state].lgas;
+      app.selectedCustomer.state_id = app.states[app.selected_state].id;
+    },
     fetchSalesRep() {
       const app = this;
       const salesRepResource = new Resource('users/fetch-sales-reps');
@@ -310,6 +391,8 @@ export default {
       customersResource
         .list(this.query)
         .then((response) => {
+          this.states = response.states;
+          this.customer_types = response.customer_types;
           const customers = response.customers;
           this.list = customers.data;
           this.list.forEach((element, index) => {
@@ -339,6 +422,25 @@ export default {
           app.getList();
         })
         .catch((error) => {
+          console.log(error);
+        });
+    },
+    updateCustomer() {
+      const app = this;
+      app.updatingCustomer = true;
+      const selectedCustomer = app.selectedCustomer;
+      const assignOfficerResource = new Resource('customers/update');
+      assignOfficerResource
+        .update(selectedCustomer.id, selectedCustomer)
+        .then(() => {
+          app.selectedCustomer = {};
+          app.dialogFormVisible = false;
+          app.updatingCustomer = false;
+          app.$message('Customer Updated Successfully');
+          app.getList();
+        })
+        .catch((error) => {
+          app.updatingCustomer = false;
           console.log(error);
         });
     },

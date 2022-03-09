@@ -3,7 +3,7 @@
     <el-tab-pane label="User List">
       <user-list />
     </el-tab-pane>
-    <el-tab-pane label="Assign Customer Reps">
+    <el-tab-pane v-if="checkPermission(['assign-field-staff'])" label="Assign Customer Reps">
       <assign-reps-customers />
     </el-tab-pane>
   </el-tabs>
@@ -12,6 +12,7 @@
 <script>
 import UserList from './UserList.vue';
 import AssignRepsCustomers from './AssignRepsCustomers.vue';
+import checkPermission from '@/utils/permission';
 export default {
   name: 'ManageUsers',
   components: { UserList, AssignRepsCustomers },
@@ -29,6 +30,7 @@ export default {
   created() {
   },
   methods: {
+    checkPermission,
   },
 };
 </script>

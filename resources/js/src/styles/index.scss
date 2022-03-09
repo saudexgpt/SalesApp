@@ -210,5 +210,12 @@ aside {
     content: "-" !important;
 }
 .con-vs-popup {
- z-index: 1005;
+ z-index: 91;
+}
+.v-nav-menu .vs-sidebar {
+  z-index: 90;
+  position: fixed;
+}
+.vx-navbar-wrapper {
+  z-index: 90;
 }

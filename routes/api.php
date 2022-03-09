@@ -68,7 +68,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     });
     Route::group(['prefix' => 'customers'], function () {
 
-        Route::get('/lga-customers', [CustomersController::class, 'fetchLGACustomers'])->middleware('permission:read-customers');
+        Route::get('/state-lga-customers', [CustomersController::class, 'fetchStateLGACustomers'])->middleware('permission:read-customers');
         Route::get('/sample', [CustomersController::class, 'sampleCustomers'])->middleware('permission:read-customers');
         Route::get('/', [CustomersController::class, 'index'])->middleware('permission:read-customers');
         Route::get('/prospective', [CustomersController::class, 'prospectiveCustomers'])->middleware('permission:read-customers');
@@ -78,8 +78,11 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('store', [CustomersController::class, 'store'])->middleware('permission:create-customers');
         Route::post('store-bulk', [CustomersController::class, 'storeBulkCustomers'])->middleware('permission:create-customers');
 
-        Route::put('sample/update/{sample_customer}', [CustomersController::class, 'updateSampleCustomer'])->middleware('permission:create-customers');
-        Route::post('add-customer-contact', [CustomersController::class, 'addCustomerContact'])->middleware('permission:create-customers');
+        Route::put('update/{customer}', [CustomersController::class, 'update'])->middleware('permission:update-customers');
+
+        Route::post('add-customer-contact', [CustomersController::class, 'addCustomerContact'])->middleware('permission:update-customers');
+
+        Route::delete('remove-customer-contact/{contact}', [CustomersController::class, 'removeCustomerContact'])->middleware('permission:create-customers');
 
         Route::post('save-customer-calls', [CustomersController::class, 'saveCustomerCalls']);
 

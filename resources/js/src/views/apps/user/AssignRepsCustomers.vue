@@ -28,6 +28,19 @@
                 />
               </el-select>
               <el-select
+                v-model="selected_state"
+                placeholder="Select State"
+                filterable
+                @input="setStateLGAs()"
+              >
+                <el-option
+                  v-for="(state, state_index) in states"
+                  :key="state_index"
+                  :label="state.name"
+                  :value="state_index"
+                />
+              </el-select>
+              <el-select
                 v-model="selected_lga"
                 placeholder="Select LGA"
                 filterable
@@ -40,19 +53,24 @@
                   :value="lga_index"
                 />
               </el-select>
+
               <el-select
                 v-model="assignRep.customer_ids"
                 placeholder="Select Customers (Multiple Allowed)"
                 multiple
                 filterable
                 collapse-tags
+                @input="showCustomer()"
               >
                 <el-option
                   v-for="(customer, customer_index) in customer_list"
                   :key="customer_index"
                   :label="customer.business_name"
                   :value="customer.id"
-                />
+                >
+                  <span style="float: left">{{ '('+ customer.id + ') ' + customer.business_name }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">{{ ' at ' + customer.area }}</span>
+                </el-option>
               </el-select>
               <el-button
                 :disabled="customer_list.length < 1"
@@ -63,6 +81,16 @@
               </el-button>
             </aside>
           </el-col>
+          <el-tag
+            v-for="tag in assignRep.customer_ids"
+            :key="tag"
+            :disable-transitions="false"
+            type="danger"
+            closable
+            @close="handleClose(tag)"
+          >
+            {{ tag }}
+          </el-tag>
         </el-row>
       </div>
       <v-client-table
@@ -86,43 +114,47 @@
         <template slot="date_verified" slot-scope="scope">
           <span>{{ (scope.row.date_verified) ? moment(scope.row.date_verified).format('ll') : '' }}</span>
         </template>
-        <template slot="action" slot-scope="scope">
+        <template slot="action" slot-scope="{row}">
           <el-tooltip
             class="item"
             effect="dark"
-            content="View Customer Details"
+            content="View Rep Details"
             placement="top-start"
           >
-            <router-link
-              :to="'/customer/details/' + scope.row.id"
-            >
-              <el-button
-                round
-                type="success"
-                size="small"
-                icon="el-icon-view"
-              />
-            </router-link>
-          </el-tooltip>
-          <el-tooltip
-            class="item"
-            effect="dark"
-            content="View Customer Statement"
-            placement="top-start"
-          >
-            <router-link
-              :to="'/report/customer-statement/' + scope.row.id"
-            >
-              <el-button
-                round
-                type="warning"
-                size="small"
-                icon="el-icon-document"
-              />
-            </router-link>
+            <el-button
+              round
+              type="success"
+              size="small"
+              icon="el-icon-view"
+              @click="showRepDetails(row)"
+            />
           </el-tooltip>
         </template>
       </v-client-table>
+    </vx-card>
+    <vx-card v-if="page==='details'">
+      <div class="vx-row">
+        <div class="vx-col lg:w-3/4 w-full">
+          <div class="flex items-end px-3">
+            <feather-icon svg-classes="w-6 h-6" icon="UsersIcon" class="mr-2" />
+            <span class="font-medium text-lg">Rep Details</span>
+          </div>
+          <vs-divider />
+        </div>
+        <div class="vx-col lg:w-1/4 w-full">
+          <div class="flex items-end px-3">
+            <el-button
+              round
+              class="filter-item"
+              type="danger"
+              @click="page='list'"
+            >Back</el-button>
+          </div>
+        </div>
+      </div>
+      <div class="filter-container">
+        <rep-details :selected-rep="selectedRep"/>
+      </div>
     </vx-card>
   </div>
 </template>
@@ -133,14 +165,15 @@ import Pagination from '@/components/Pagination'; // Secondary package based on 
 import Resource from '@/api/resource';
 import permission from '@/directive/permission'; // Permission directive
 import checkPermission from '@/utils/permission'; // Permission checking
-
+import RepDetails from './RepDetails';
 export default {
   name: 'Customers',
-  components: { Pagination },
+  components: { Pagination, RepDetails },
   directives: { permission },
   data() {
     return {
       sales_reps: [],
+      states: [],
       lgas: [],
       columns: [
         // 'photo',
@@ -171,26 +204,36 @@ export default {
       total: 0,
       loading: false,
       load_table: false,
-      downloading: false,
-      userCreating: false,
-      dialogFormVisible: false,
-      selected_customer: '',
       page: 'list',
       assignRep: {
         relating_officer: '',
         customer_ids: [],
       },
+      selected_state: '',
       selected_lga: '',
       customer_list: [],
+      selectedRep: null,
     };
   },
   created() {
-    this.fetchLGACustomers();
+    this.fetchStateLGACustomers();
     this.fetchSalesRep();
   },
   methods: {
     moment,
     checkPermission,
+    showRepDetails(rep) {
+      this.selectedRep = rep;
+      this.page = 'details';
+    },
+    handleClose(tag) {
+      this.assignRep.customer_ids.splice(this.assignRep.customer_ids.indexOf(tag), 1);
+    },
+    setStateLGAs() {
+      const app = this;
+      app.lga = [];
+      app.lgas = app.states[app.selected_state].lgas;
+    },
     setLGACustomers() {
       const app = this;
       app.customer_list = [];
@@ -208,13 +251,13 @@ export default {
           console.log(error);
         });
     },
-    fetchLGACustomers() {
+    fetchStateLGACustomers() {
       const app = this;
-      const customersResource = new Resource('customers/lga-customers');
+      const customersResource = new Resource('customers/state-lga-customers');
       customersResource
         .list()
         .then((response) => {
-          app.lgas = response.lgas;
+          app.states = response.states;
         })
         .catch((error) => {
           console.log(error);
@@ -222,12 +265,14 @@ export default {
     },
     assignOfficer() {
       const app = this;
+      app.load_table = true;
       const staffId = app.assignRep.relating_officer;
       const customer_ids = app.assignRep.customer_ids;
       const assignOfficerResource = new Resource('customers/assign-field-staff');
       assignOfficerResource
         .update(staffId, { customer_ids: customer_ids })
         .then(() => {
+          app.load_table = false;
           app.assignRep = {
             relating_officer: '',
             customer_ids: [],
@@ -236,6 +281,7 @@ export default {
           app.fetchSalesRep();
         })
         .catch((error) => {
+          app.load_table = false;
           console.log(error);
         });
     },
