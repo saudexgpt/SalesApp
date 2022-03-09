@@ -382,8 +382,8 @@ class CustomersController extends Controller
         $customer->lga_id = $request->lga_id;
         $customer->business_name = $request->business_name;
         $customer->customer_type_id = $request->customer_type_id;
-        $customer->latitude = $request->customer_latitude;
-        $customer->longitude = $request->customer_longitude;
+        $customer->latitude = $request->latitude;
+        $customer->longitude = $request->longitude;
         $customer->street = $request->street;
         $customer->address = $request->address;
         $customer->area = $request->area;

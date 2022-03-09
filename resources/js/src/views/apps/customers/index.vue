@@ -210,8 +210,8 @@
                   <li><strong>Address:</strong> {{ selectedCustomer.address }}</li>
                   <li><strong>Street:</strong> {{ selectedCustomer.street }}</li>
                   <li><strong>Area:</strong> {{ selectedCustomer.area }}</li>
-                  <li><strong>Lat:</strong> {{ selectedCustomer.customer_latitude }}</li>
-                  <li><strong>Lng:</strong> {{ selectedCustomer.customer_longitude }}</li>
+                  <li><strong>Lat:</strong> {{ selectedCustomer.latitude }}</li>
+                  <li><strong>Lng:</strong> {{ selectedCustomer.longitude }}</li>
                 </ol>
               </div>
             </div>
@@ -279,7 +279,7 @@ export default {
       columns: [
         'business_name',
         'customer_type.name',
-        'street',
+        'address',
         'area',
         'visits',
         'registrar.name',
@@ -350,8 +350,8 @@ export default {
       // console.log(id)
       const app = this;
       app.selectedCustomer.address = addressData.formatted_address;
-      app.selectedCustomer.customer_longitude = addressData.geometry.location.lng();
-      app.selectedCustomer.customer_latitude = addressData.geometry.location.lat();
+      app.selectedCustomer.longitude = addressData.geometry.location.lng();
+      app.selectedCustomer.latitude = addressData.geometry.location.lat();
       const address_components = addressData.address_components;
       address_components.forEach(element => {
         if (element.types[0] === 'route') {
