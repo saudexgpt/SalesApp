@@ -56,7 +56,7 @@ class CustomersController extends Controller
         if (!empty($keyword)) {
             $userQuery->where(function ($q) use ($keyword) {
                 $q->where('business_name', 'LIKE', '%' . $keyword . '%');
-                $q->orWhere('email', 'LIKE', '%' . $keyword . '%');
+                $q->orWhere('lga_text', 'LIKE', '%' . $keyword . '%');
                 $q->orWhere('address', 'LIKE', '%' . $keyword . '%');
             });
         }
