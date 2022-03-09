@@ -132,8 +132,7 @@ export default {
       const checkEmptyLines = this.customer_contacts.filter(
         (detail) =>
           detail.name === '' ||
-          detail.phone1 === '' ||
-          detail.role === ''
+          detail.phone1 === ''
       );
 
       if (checkEmptyLines.length >= 1 && this.customer_contacts.length > 0) {
@@ -151,7 +150,7 @@ export default {
     },
     save() {
       const app = this;
-      if (!app.hasEmptyField) {
+      if (!app.hasEmptyField()) {
         const form = { customer_id: app.customer.id, customer_contacts: app.customer_contacts };
         // send to database
         const storeResource = new Resource('customers/add-customer-contact');

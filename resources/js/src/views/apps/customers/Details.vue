@@ -76,12 +76,12 @@
                   <td>{{ customer.business_name }}</td>
                 </tr>
                 <tr>
-                  <td class="font-semibold">Email:</td>
-                  <td>{{ customer.email }}</td>
-                </tr>
-                <tr>
                   <td class="font-semibold">Customer Type:</td>
                   <td>{{ (customer.customer_type) ? customer.customer_type.name : '' }}</td>
+                </tr>
+                <tr>
+                  <td class="font-semibold">Address:</td>
+                  <td>{{ customer.address }}</td>
                 </tr>
 
               </tbody>
@@ -94,16 +94,20 @@
             <table class="table table-striped">
               <tbody>
                 <tr>
-                  <td class="font-semibold">Address:</td>
-                  <td>{{ customer.address }}</td>
-                </tr>
-                <tr>
                   <td class="font-semibold">Street:</td>
                   <td>{{ customer.street }}</td>
                 </tr>
                 <tr>
                   <td class="font-semibold">Area:</td>
                   <td>{{ customer.area }}</td>
+                </tr>
+                <tr>
+                  <td class="font-semibold">LGA:</td>
+                  <td>{{ (customer.lga) ? customer.lga.name : '' }}</td>
+                </tr>
+                <tr>
+                  <td class="font-semibold">State:</td>
+                  <td>{{ (customer.state) ? customer.state.name : '' }}</td>
                 </tr>
 
               </tbody>
@@ -182,11 +186,11 @@
               <feather-icon svg-classes="w-6 h-6" icon="UsersIcon" class="mr-2" />
               <span class="font-medium text-lg leading-none">Contacts Information</span>
               <span class="pull-right">
-                <el-button v-if="checkPermission(['create-customers'])" round size="small" type="warning" icon="el-icon-plus" @click="dialogVisible = true">Add</el-button>
+                <el-button v-if="checkPermission(['create-customers'])" circle size="small" type="warning" icon="el-icon-plus" @click="dialogVisible = true" />
               </span>
             </div>
             <vs-divider />
-            <div class="block overflow-x-auto">
+            <div v-loading="removing_contact" class="block overflow-x-auto">
               <table class="table table-bordered table-striped">
                 <thead>
                   <tr>
@@ -206,7 +210,7 @@
                     <td class="px-3 py-2">{{ contact.role }}</td>
                     <td>
                       <el-button
-                        round
+                        circle
                         type="danger"
                         size="small"
                         icon="el-icon-delete"
@@ -424,6 +428,7 @@ export default {
       schedules: [],
       loader: false,
       dialogVisible: false,
+      removing_contact: false,
 
     };
   },
@@ -463,11 +468,15 @@ export default {
     removeContact(contact, index) {
       const app = this;
       if (confirm('Click OK to confirm that you want to remove ' + contact.name.toUpperCase() + ' from list of contacts')) {
+        app.removing_contact = true;
         const removeContactResource = new Resource('customers/remove-customer-contact');
         removeContactResource.destroy(contact.id)
           .then(() => {
+            app.removing_contact = false;
             app.$message('Contact removed successfully');
             app.customer.customer_contacts.splice(index, 1);
+          }).catch(() => {
+            app.removing_contact = false;
           });
       }
     },

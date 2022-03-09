@@ -220,6 +220,8 @@ class CustomersController extends Controller
     {
         $today  = date('Y-m-d', strtotime('now'));
         $customer = $customer::with([
+            'state',
+            'lga',
             'customerContacts', 'customerType', 'tier', 'subRegion', 'region', 'registrar', 'assignedOfficer', 'verifications.verifier' => function ($q) {
                 $q->orderBy('id', 'DESC');
             },
@@ -456,7 +458,11 @@ class CustomersController extends Controller
         if (count($contacts) > 0) {
 
             // delete old
-            $customer->customerContacts->delete();
+            if (count($customer->customerContacts) > 0) {
+                foreach ($customer->customerContacts as $customerContact) {
+                    $customerContact->delete();
+                }
+            }
             $this->saveCustomerContact($customer_id, $contacts);
 
             $title = "Customer Contacts Added";
@@ -489,27 +495,27 @@ class CustomersController extends Controller
      * @param  \App\Models\Customer  $customer
      * @return \Illuminate\Http\Response
      */
-    public function show(Customer $customer)
-    {
-        $user = $this->getUser();
-        $today  = date('Y-m-d', strtotime('now'));
-        $customer = $customer::with([
-            'customerContacts', 'customerType', 'tier', 'subRegion', 'region', 'registrar', 'state.lgas',
-            'lga', 'assignedOfficer', 'verifier',
-            'payments' => function ($q) {
-                $q->orderBy('id', 'DESC');
-            },
-            'visits' => function ($q) use ($user) {
-                $q->where('visitor', $user->id)->orderBy('id', 'DESC');
-            },
-            'visits.details.contact',
-            'payments.confirmer', 'payments.transaction.staff', 'transactions',
-            'schedules' => function ($query) use ($user, $today) {
-                $query->where('schedule_date', '>=', $today)->orWhere('repeat_schedule', 'yes')->where('rep', $user->id)->orderBy('day_num');
-            }
-        ])->find($customer->id);
-        return $customer;
-    }
+    // public function show(Customer $customer)
+    // {
+    //     $user = $this->getUser();
+    //     $today  = date('Y-m-d', strtotime('now'));
+    //     $customer = $customer::with([
+    //         'customerContacts', 'customerType', 'tier', 'subRegion', 'region', 'registrar', 'state',
+    //         'lga', 'assignedOfficer', 'verifier',
+    //         'payments' => function ($q) {
+    //             $q->orderBy('id', 'DESC');
+    //         },
+    //         'visits' => function ($q) use ($user) {
+    //             $q->where('visitor', $user->id)->orderBy('id', 'DESC');
+    //         },
+    //         'visits.details.contact',
+    //         'payments.confirmer', 'payments.transaction.staff', 'transactions',
+    //         'schedules' => function ($query) use ($user, $today) {
+    //             $query->where('schedule_date', '>=', $today)->orWhere('repeat_schedule', 'yes')->where('rep', $user->id)->orderBy('day_num');
+    //         }
+    //     ])->find($customer->id);
+    //     return $customer;
+    // }
     public function verify(Customer $customer)
     {
         $user = $this->getUser();
