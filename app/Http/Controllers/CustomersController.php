@@ -384,6 +384,7 @@ class CustomersController extends Controller
         // $actor = $this->getUser();
         $bulk_data = json_decode(json_encode($request->bulk_data));
         $unsaved_customers = [];
+        $error = [];
         // try {
         foreach ($bulk_data as $data) {
             try {
@@ -391,7 +392,7 @@ class CustomersController extends Controller
                 $business_name =  trim($data->BUSINESS_NAME);
                 // $email =  trim($data->EMAIL);
                 $address =  trim($data->ADDRESS);
-                $area =  trim($data->AREA);
+                $area =  (isset($data->AREA)) ? trim($data->AREA) : NULL;
                 $lga_text =  strtolower(trim($data->LGA));
                 $cordinate =  trim($data->CORDINATE);
                 $business_type = strtolower(trim($data->BUSINESS_TYPE));
@@ -430,9 +431,10 @@ class CustomersController extends Controller
             } catch (\Throwable $th) {
 
                 $unsaved_customers[] = $data;
+                $error[] = $th;
             }
         }
-        return response()->json(compact('unsaved_customers'), 200);
+        return response()->json(compact('unsaved_customers', 'error'), 200);
     }
     private function saveCustomerContact($customer_id, $contacts)
     {

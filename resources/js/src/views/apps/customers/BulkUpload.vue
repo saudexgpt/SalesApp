@@ -88,6 +88,9 @@
           </el-button>
         </el-col>
       </el-row>
+      <el-row>
+        {{ error }}
+      </el-row>
     </div>
     <!-- <el-dialog
       :title="preview_title"
@@ -123,6 +126,7 @@ export default {
       tableData: [],
       tableHeader: [],
       selected_index: 0,
+      error: [],
     };
   },
   methods: {
@@ -166,6 +170,7 @@ export default {
           }
           if (response.unsaved_customers.length > 0) {
             app.tableData = response.unsaved_customers;
+            app.error = response.error;
           } else {
             app.$router.push({ name: 'ViewCustomer' });
           }
