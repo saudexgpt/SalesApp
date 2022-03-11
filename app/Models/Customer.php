@@ -99,4 +99,12 @@ class Customer extends Model
     {
         return $query->whereStatus('Prospective');
     }
+    public function scopeVerified($query)
+    {
+        return $query->where('date_verified', '!=', NULL);
+    }
+    public function scopeUnverified($query)
+    {
+        return $query->where('date_verified', NULL);
+    }
 }

@@ -88,9 +88,6 @@
           </el-button>
         </el-col>
       </el-row>
-      <el-row>
-        {{ error }}
-      </el-row>
     </div>
     <!-- <el-dialog
       :title="preview_title"

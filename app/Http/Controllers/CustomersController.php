@@ -17,7 +17,7 @@ use Illuminate\Support\Arr;
 
 class CustomersController extends Controller
 {
-    const ITEM_PER_PAGE = 10;
+    const ITEM_PER_PAGE = 50;
     /**
      * Display a listing of the resource.
      *
@@ -42,7 +42,10 @@ class CustomersController extends Controller
 
     public function fetchStateLGACustomers()
     {
-        $states = State::with('lgas.customers')->orderBy('name')->get();
+        $states = State::with(['lgas.customers' => function ($q) {
+            $q->where('relating_officer', '!=', 1)
+                ->where('relating_officer', '!=', NULL);
+        }])->orderBy('name')->get();
         return response()->json(compact('states'), 200);
     }
     public function index(Request $request)
@@ -88,15 +91,15 @@ class CustomersController extends Controller
             }
         }
         if ($user->hasRole('sales_rep')) {
-            $customers = $userQuery->Confirmed()->with($with)->where($condition)->where('relating_officer', $user->id)->orderBy('id', 'DESC')->paginate($limit);
+            $customers = $userQuery->Verified()->with($with)->where($condition)->where('relating_officer', $user->id)->orderBy('id', 'DESC')->paginate($limit);
             return response()->json(compact('customers'), 200);
         } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
             // $sales_reps_ids is in array form
             list($sales_reps, $sales_reps_ids) = $this->teamMembers();
-            $customers = $userQuery->Confirmed()->with($with)->where($condition)->whereIn('relating_officer', $sales_reps_ids)->orderBy('id', 'DESC')->paginate($limit);
+            $customers = $userQuery->Verified()->with($with)->where($condition)->whereIn('relating_officer', $sales_reps_ids)->orderBy('id', 'DESC')->paginate($limit);
         } else {
             // admin and super admin only
-            $customers = $userQuery->Confirmed()->with($with)->where($condition)->orderBy('id', 'DESC')->paginate($limit);
+            $customers = $userQuery->Verified()->with($with)->where($condition)->orderBy('id', 'DESC')->paginate($limit);
         }
         $customer_types = CustomerType::get();
         $states = State::with('lgas')->get();
@@ -135,7 +138,7 @@ class CustomersController extends Controller
             }
         }
         if ($user->hasRole('sales_rep')) {
-            $customers = $userQuery->Prospective()->with([
+            $customers = $userQuery->Unverified()->with([
                 'customerContacts',
                 'customerType', /*'tier', 'subRegion', 'region',*/ 'registrar', 'assignedOfficer',
 
@@ -148,7 +151,7 @@ class CustomersController extends Controller
         } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
             // $sales_reps_ids is in array form
             list($sales_reps, $sales_reps_ids) = $this->teamMembers();
-            $customers = $userQuery->Prospective()->with([
+            $customers = $userQuery->Unverified()->with([
                 'customerContacts',
                 'customerType', /*'tier', 'subRegion', 'region',*/ 'registrar', 'assignedOfficer',
 
@@ -160,7 +163,7 @@ class CustomersController extends Controller
             return response()->json(compact('customers'), 200);
         } else {
             // admin and super admin only
-            $customers = $userQuery->Prospective()->with([
+            $customers = $userQuery->Unverified()->with([
                 'customerContacts',
                 'customerType', /*'tier', 'subRegion', 'region',*/ 'registrar', 'assignedOfficer',
 
@@ -282,7 +285,7 @@ class CustomersController extends Controller
         ])->where($condition)->orderBy('id', 'DESC')->paginate(50);
         return response()->json(compact('customers'), 200);
     }
-    private function saveCustomersDetails($unsaved_customer, $status = 'Prospective')
+    private function saveCustomersDetails($unsaved_customer, $status = 'Unverified')
     {
 
         $user = $this->getUser();
@@ -333,8 +336,8 @@ class CustomersController extends Controller
                 }
 
                 // $customer_list[] = $this->show($customer);
-                if ($status == 'Prospective') {
-                    $title = "Prospective Customer Added";
+                if ($status == 'Unverified') {
+                    $title = "Unverified Customer Added";
                     $description = "New prospective customer, $customer->business_name, was added by " . $user->name;
                     $this->logUserActivity($title, $description, $user);
                 }
@@ -427,7 +430,7 @@ class CustomersController extends Controller
 
                 $request->customer_contacts = [['name' => $contact_name, 'phone1' => $contact_no, 'phone2' => NULL, 'role' => NULL]];
 
-                $this->saveCustomersDetails($request, 'Confirmed');
+                $this->saveCustomersDetails($request, 'Verified');
             } catch (\Throwable $th) {
 
                 $unsaved_customers[] = $data;
@@ -527,6 +530,11 @@ class CustomersController extends Controller
         $customer_verification->customer_id = $customer->id;
         $customer_verification->date = $today;
         $customer_verification->save();
+
+        $customer->verified_by = $user->id;
+        $customer->date_verified = $today;
+        $customer->save();
+
         $title = "Customer Verified Successfully";
         $description = $user->name . " successfully verified $customer->business_name on $today";
         $this->logUserActivity($title, $description, $user);
@@ -579,7 +587,7 @@ class CustomersController extends Controller
     {
         $user = $this->getUser();
         $today  = date('Y-m-d', strtotime('now'));
-        $customer->status = 'Confirmed';
+        $customer->status = 'Verified';
         $customer->save();
 
         $title = "Customer Confirmation Successful";

@@ -5,7 +5,7 @@
         <div class="vx-col lg:w-3/4 w-full">
           <div class="flex items-end px-3">
             <feather-icon svg-classes="w-6 h-6" icon="UsersIcon" class="mr-2" />
-            <span class="font-medium text-lg">List of Customers</span>
+            <span class="font-medium text-lg">List of Verified Customers</span>
           </div>
           <vs-divider />
         </div>
@@ -74,7 +74,7 @@
           <el-col :xs="24" :sm="12" :md="12">
             <el-input
               v-model="query.keyword"
-              placeholder="Search User"
+              placeholder="Search Customer"
               style="width: 200px"
               class="filter-item"
               @input="handleFilter"
@@ -82,6 +82,7 @@
           </el-col>
         </el-row>
       </div>
+      <el-alert type="success">These customers have been verified at least once</el-alert>
       <v-client-table
         v-model="list"
         :columns="columns"
@@ -89,10 +90,24 @@
       >
 
         <template slot="assigned_officer.name" slot-scope="props">
-          <span>{{ props.row.assigned_officer.name }}</span>
+          <el-select
+            v-if="checkPermission(['assign-field-staff'])"
+            v-model="props.row.assigned_officer.id"
+            placeholder="Select Rep"
+            filterable
+            @input="assignOfficer($event, props.row.id)"
+          >
+            <el-option
+              v-for="(rep, index) in sales_reps"
+              :key="index"
+              :label="rep.name"
+              :value="rep.id"
+            />
+          </el-select>
+          <span v-else>{{ props.row.assigned_officer.name }}</span>
         </template>
         <template slot="visits" slot-scope="scope">
-          <span>{{ (scope.row.visits.length > 0) ? moment(scope.row.visits[0].visit_date).format('ll') : '' }}</span>
+          <span>{{ (scope.row.visits.length > 0) ? moment(scope.row.visits[0].visit_date).format('ll') : 'Not visited' }}</span>
         </template>
         <template slot="created_at" slot-scope="scope">
           <span>{{ moment(scope.row.created_at).format('ll') }}</span>
@@ -408,10 +423,9 @@ export default {
           this.load_table = false;
         });
     },
-    assignOfficer() {
+    assignOfficer(staffId, customer_id) {
       const app = this;
-      const staffId = app.assignRep.relating_officer;
-      const customer_ids = app.assignRep.customer_ids;
+      const customer_ids = [customer_id];
       const assignOfficerResource = new Resource('customers/assign-field-staff');
       assignOfficerResource
         .update(staffId, { customer_ids: customer_ids })

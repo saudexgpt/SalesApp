@@ -199,7 +199,21 @@ class VisitsController extends Controller
         $purposes = json_decode(json_encode($unsaved_visit->purposes));
         $purpose = implode(',', $purposes);
         $customer_contact_id = $unsaved_visit->contact_id;
-        $visit_type = ($visit->rep_latitude != '') ? 'on site' : 'off site';
+
+        $visit_type = 'off site';
+        if ($visit->rep_latitude != '') {
+
+            $distance = haversineGreatCircleDistanceBetweenTwoPoints(
+                $visit->customer->latitude,
+                $visit->customer->longitude,
+                $visit->rep_latitude,
+                $visit->rep_longitude,
+            );
+            // we are giving 100 meter allowance
+            if ($distance < 100) {
+                $visit_type = 'on site';
+            }
+        }
         $purpose = $purpose;
         $description = $unsaved_visit->description;
 

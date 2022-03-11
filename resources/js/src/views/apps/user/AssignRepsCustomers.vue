@@ -5,7 +5,7 @@
         <div class="vx-col lg:w-3/4 w-full">
           <div class="flex items-end px-3">
             <feather-icon svg-classes="w-6 h-6" icon="UsersIcon" class="mr-2" />
-            <span class="font-medium text-lg">List of Sales Reps</span>
+            <span class="font-medium text-lg">Assign Sales Rep Customers</span>
           </div>
           <vs-divider />
         </div>
@@ -54,7 +54,7 @@
                 />
               </el-select>
 
-              <el-select
+              <!-- <el-select
                 v-model="assignRep.customer_ids"
                 placeholder="Select Customers (Multiple Allowed)"
                 multiple
@@ -65,13 +65,13 @@
                 <el-option
                   v-for="(customer, customer_index) in customer_list"
                   :key="customer_index"
-                  :label="customer.business_name"
+                  :label="customer.business_name + ' at ' + customer.area"
                   :value="customer.id"
                 >
                   <span style="float: left">{{ '('+ customer.id + ') ' + customer.business_name }}</span>
                   <span style="float: right; color: #8492a6; font-size: 13px">{{ ' at ' + customer.area }}</span>
                 </el-option>
-              </el-select>
+              </el-select> -->
               <el-button
                 :disabled="customer_list.length < 1"
                 type="primary"
@@ -93,44 +93,80 @@
           </el-tag>
         </el-row>
       </div>
-      <v-client-table
-        v-model="sales_reps"
-        :columns="columns"
-        :options="options"
-      >
-
-        <template slot="photo" slot-scope="props">
-          <img :src="props.row.photo" width="100">
-        </template>
-        <template slot="customers" slot-scope="props">
-          <span>{{ props.row.customers.length }}</span>
-        </template>
-        <template slot="visits" slot-scope="scope">
-          <span>{{ (scope.row.visits.length > 0) ? moment(scope.row.visits[0].visit_date).format('ll') : '' }}</span>
-        </template>
-        <template slot="created_at" slot-scope="scope">
-          <span>{{ moment(scope.row.created_at).format('ll') }}</span>
-        </template>
-        <template slot="date_verified" slot-scope="scope">
-          <span>{{ (scope.row.date_verified) ? moment(scope.row.date_verified).format('ll') : '' }}</span>
-        </template>
-        <template slot="action" slot-scope="{row}">
-          <el-tooltip
-            class="item"
-            effect="dark"
-            content="View Rep Details"
-            placement="top-start"
+      <el-row>
+        <el-col :xs="24" :sm="24" :md="24">
+          <h3>Selected LGA Customers
+            <el-checkbox v-if="customer_list.length > 0" :indeterminate="isIndeterminate" v-model="checkAll" @change="handleCheckAllChange">Check all</el-checkbox>
+          </h3>
+          <v-client-table
+            v-model="customer_list"
+            :columns="['select','business_name', 'address', 'area']"
+            :options="{}"
           >
-            <el-button
-              round
-              type="success"
-              size="small"
-              icon="el-icon-view"
-              @click="showRepDetails(row)"
-            />
-          </el-tooltip>
-        </template>
-      </v-client-table>
+
+            <template slot="select" slot-scope="{row}">
+              <el-checkbox v-model="assignRep.customer_ids" :label="row.id" />
+            </template>
+            <template slot="action" slot-scope="{row}">
+              <el-tooltip
+                class="item"
+                effect="dark"
+                content="View Rep Details"
+                placement="top-start"
+              >
+                <el-button
+                  round
+                  type="success"
+                  size="small"
+                  icon="el-icon-view"
+                  @click="showRepDetails(row)"
+                />
+              </el-tooltip>
+            </template>
+          </v-client-table>
+        </el-col>
+        <el-col :xs="24" :sm="24" :md="24">
+          <h3>LIST OF SALES REPS</h3>
+          <v-client-table
+            v-model="sales_reps"
+            :columns="columns"
+            :options="options"
+          >
+
+            <template slot="photo" slot-scope="props">
+              <img :src="props.row.photo" width="100">
+            </template>
+            <template slot="customers" slot-scope="props">
+              <span>{{ props.row.customers.length }}</span>
+            </template>
+            <template slot="visits" slot-scope="scope">
+              <span>{{ (scope.row.visits.length > 0) ? moment(scope.row.visits[0].visit_date).format('ll') : '' }}</span>
+            </template>
+            <template slot="created_at" slot-scope="scope">
+              <span>{{ moment(scope.row.created_at).format('ll') }}</span>
+            </template>
+            <template slot="date_verified" slot-scope="scope">
+              <span>{{ (scope.row.date_verified) ? moment(scope.row.date_verified).format('ll') : '' }}</span>
+            </template>
+            <template slot="action" slot-scope="{row}">
+              <el-tooltip
+                class="item"
+                effect="dark"
+                content="View Rep Details"
+                placement="top-start"
+              >
+                <el-button
+                  round
+                  type="success"
+                  size="small"
+                  icon="el-icon-view"
+                  @click="showRepDetails(row)"
+                />
+              </el-tooltip>
+            </template>
+          </v-client-table>
+        </el-col>
+      </el-row>
     </vx-card>
     <vx-card v-if="page==='details'">
       <div class="vx-row">
@@ -213,6 +249,7 @@ export default {
       selected_lga: '',
       customer_list: [],
       selectedRep: null,
+      isIndeterminate: false,
     };
   },
   created() {
@@ -222,6 +259,14 @@ export default {
   methods: {
     moment,
     checkPermission,
+    handleCheckAllChange(val) {
+      const all_customers = [];
+      this.customer_list.forEach(element => {
+        all_customers.push(element.id);
+      });
+      this.assignRep.customer_ids = val ? all_customers : [];
+      this.isIndeterminate = false;
+    },
     showRepDetails(rep) {
       this.selectedRep = rep;
       this.page = 'details';

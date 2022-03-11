@@ -48,6 +48,7 @@
           </el-col>
         </el-row>
       </div>
+      <el-alert type="error">These customers have NOT been verified for once</el-alert>
       <v-client-table
         v-model="list"
         :columns="columns"
@@ -101,16 +102,16 @@
           <el-tooltip
             class="item"
             effect="dark"
-            content="Confirm Customer"
+            content="Verify Customer"
             placement="top-start"
           >
             <el-button
-              v-permission="['confirm-customers']"
+              v-permission="['verify-customers']"
               round
               type="success"
               size="small"
               icon="el-icon-check"
-              @click="confirmCustomer(scope.index, scope.row.id, scope.row.business_name)"
+              @click="verifyCustomer(scope.index, scope.row.id, scope.row.business_name)"
             />
           </el-tooltip>
         </template>
@@ -270,22 +271,44 @@ export default {
       app.selected_customer = selectedCustomer;
       app.page = 'details';
     },
-    confirmCustomer(index, id, business_name) {
+    verifyCustomer(index, id, business_name) {
       const app = this;
-      const confirmResource = new Resource('customers/confirm');
-      app.$confirm('Are you sure you want to confirm ' + business_name + '?', 'Warning', {
-        confirmButtonText: 'Yes',
+      const storeResource = new Resource('customers/verify');
+      app.$confirm('Are you sure you want to verify ' + business_name + '?', 'Warning', {
+        confirmButtonText: 'OK',
         cancelButtonText: 'Cancel',
         type: 'warning',
       }).then(() => {
         app.load_table = true;
-        confirmResource.update(id)
+        storeResource.update(id)
           .then(() => {
+            app.$message('Action Successful');
+            // app.customer = response.customer;
             app.list.splice(index - 1, 1);
             app.load_table = false;
           });
-      }).catch(() => {});
+      }).catch(() => {
+        app.load_table = false;
+      });
     },
+    // confirmCustomer(index, id, business_name) {
+    //   const app = this;
+    //   const confirmResource = new Resource('customers/confirm');
+    //   app.$confirm('Are you sure you want to confirm ' + business_name + '?', 'Warning', {
+    //     confirmButtonText: 'Yes',
+    //     cancelButtonText: 'Cancel',
+    //     type: 'warning',
+    //   }).then(() => {
+    //     app.load_table = true;
+    //     confirmResource.update(id)
+    //       .then(() => {
+    //         app.list.splice(index - 1, 1);
+    //         app.load_table = false;
+    //       });
+    //   }).catch(() => {
+    //     app.load_table = false;
+    //   });
+    // },
     handleFilter() {
       this.query.page = 1;
       this.getList();
