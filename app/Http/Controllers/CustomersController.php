@@ -289,8 +289,14 @@ class CustomersController extends Controller
     {
 
         $user = $this->getUser();
-        $lat = $unsaved_customer->customer_latitude;
-        $long = $unsaved_customer->customer_longitude;
+        if (isset($unsaved_customer->customer_latitude, $unsaved_customer->customer_longitude)) {
+            $lat = $unsaved_customer->customer_latitude;
+            $long = $unsaved_customer->customer_longitude;
+        } else {
+            $lat = $unsaved_customer->registrar_lat;
+            $long = $unsaved_customer->registrar_lng;
+        }
+
         $customer = Customer::where(['business_name' => $unsaved_customer->business_name, 'latitude' => $lat, 'longitude' => $long])->first();
 
 
@@ -315,12 +321,12 @@ class CustomersController extends Controller
             $customer->tier_id = $unsaved_customer->tier_id;
             $customer->lga_id = $unsaved_customer->lga_id;
             $customer->state_id = $unsaved_customer->state_id;
-            $customer->lga_text = $unsaved_customer->lga_text;
+            $customer->lga_text = (isset($unsaved_customer->lga_text)) ? $unsaved_customer->lga_text : NULL;
             $customer->business_name = $unsaved_customer->business_name;
-            $customer->email = $unsaved_customer->email;
+            // $customer->email = $unsaved_customer->email;
             // $customer->phone1 = $unsaved_customer->phone1;
             $customer->photo = $this->uploadPhoto($unsaved_customer->avatar);
-            $customer->base64_encoded_image = $unsaved_customer->avatar;
+            // $customer->base64_encoded_image = $unsaved_customer->avatar;
             $customer->address = $formatted_address;
             $customer->street = $street;
             $customer->area = $area;
