@@ -285,7 +285,7 @@ class CustomersController extends Controller
         ])->where($condition)->orderBy('business_name')->paginate(100);
         return response()->json(compact('customers'), 200);
     }
-    private function saveCustomersDetails($unsaved_customer, $status = 'Unverified')
+    private function saveCustomersDetails($unsaved_customer, $status = 'Prospective')
     {
 
         $user = $this->getUser();
@@ -438,7 +438,7 @@ class CustomersController extends Controller
 
                 $request->customer_contacts = [['name' => $contact_name, 'phone1' => $contact_no, 'phone2' => NULL, 'role' => NULL]];
 
-                $this->saveCustomersDetails($request, 'Verified');
+                $this->saveCustomersDetails($request, 'Confirmed');
             } catch (\Throwable $th) {
 
                 $unsaved_customers[] = $data;
