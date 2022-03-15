@@ -5,7 +5,7 @@
         <div class="vx-col lg:w-3/4 w-full">
           <div class="flex items-end px-3">
             <feather-icon svg-classes="w-6 h-6" icon="UsersIcon" class="mr-2" />
-            <span class="font-medium text-lg">List of Prospective Customers</span>
+            <span class="font-medium text-lg">List of Unverified Customers</span>
           </div>
           <vs-divider />
         </div>
@@ -54,6 +54,23 @@
         :columns="columns"
         :options="options"
       >
+        <template slot="assigned_officer.name" slot-scope="props">
+          <el-select
+            v-if="checkPermission(['assign-field-staff'])"
+            v-model="props.row.assigned_officer.id"
+            placeholder="Select Rep"
+            filterable
+            @input="assignOfficer($event, props.row.id)"
+          >
+            <el-option
+              v-for="(rep, index) in sales_reps"
+              :key="index"
+              :label="rep.name"
+              :value="rep.id"
+            />
+          </el-select>
+          <span v-else>{{ props.row.assigned_officer.name }}</span>
+        </template>
         <template slot="visits" slot-scope="scope">
           <span>{{ (scope.row.visits.length > 0) ? moment(scope.row.visits[0].visit_date).format('ll') : '' }}</span>
         </template>
@@ -187,17 +204,17 @@ export default {
   directives: { permission },
   data() {
     return {
+      sales_reps: [],
       list: [],
       columns: [
         'business_name',
         'customer_type.name',
+        'address',
         'area',
         'visits',
         'registrar.name',
         'assigned_officer.name',
-        'verifier.name',
         'created_at',
-        'date_verified',
         'action',
       ],
 
@@ -206,7 +223,7 @@ export default {
           business_name: 'Name',
           'customer_type.name': 'Type',
           'visits': 'Last Visit',
-          'registrar.name': 'Created By',
+          'registrar.name': 'Registered By',
           'assigned_officer.name': 'Field Staff',
           'verifier.name': 'Verified By',
         },
@@ -241,11 +258,24 @@ export default {
     };
   },
   created() {
+    this.fetchSalesRep();
     this.getList();
   },
   methods: {
     moment,
     checkPermission,
+    fetchSalesRep() {
+      const app = this;
+      const salesRepResource = new Resource('users/fetch-sales-reps');
+      salesRepResource
+        .list()
+        .then((response) => {
+          app.sales_reps = response.sales_reps;
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    },
     getList() {
       const { limit, page } = this.query;
       this.options.perPage = limit;
@@ -264,6 +294,24 @@ export default {
         .catch((error) => {
           console.log(error);
           this.load_table = false;
+        });
+    },
+    assignOfficer(staffId, customer_id) {
+      const app = this;
+      const customer_ids = [customer_id];
+      const assignOfficerResource = new Resource('customers/assign-field-staff');
+      assignOfficerResource
+        .update(staffId, { customer_ids: customer_ids })
+        .then(() => {
+          app.assignRep = {
+            relating_officer: '',
+            customer_ids: [],
+          };
+          app.$message('Officer Assigned Successfully');
+          app.getList();
+        })
+        .catch((error) => {
+          console.log(error);
         });
     },
     showCustomerDetails(selectedCustomer){

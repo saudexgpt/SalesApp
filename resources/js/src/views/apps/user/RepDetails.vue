@@ -55,6 +55,17 @@
             <div class="flex items-end px-3">
               <feather-icon svg-classes="w-6 h-6" icon="ThumbsUpIcon" class="mr-2" />
               <span class="font-medium text-lg leading-none">Assigned Cutomers</span>
+              <span class="pull-right">
+                <el-button
+                  :loading="downloading"
+                  round
+                  size="small"
+                  class="filter-item"
+                  type="primary"
+                  icon="el-icon-download"
+                  @click="exportToExcel()"
+                >Export</el-button>
+              </span>
             </div>
             <vs-divider />
             <div class="block overflow-x-auto">
@@ -142,12 +153,38 @@ export default {
   data() {
     return {
       showFullPhoto: false,
+      downloading: false,
 
     };
   },
   methods: {
     moment,
     checkPermission,
+    exportToExcel() {
+      this.downloading = true;
+      import('@/vendor/Export2Excel').then((excel) => {
+        const tHeader = [
+          'BUSINESS NAME', 'ADDRESS', 'AREA'
+        ];
+        const filterVal = [
+          'business_name', 'address', 'area',
+        ];
+        const data = this.formatJson(filterVal, this.selectedRep.customers);
+        excel.export_json_to_excel({
+          header: tHeader,
+          data,
+          filename: 'My Customers',
+        });
+        this.downloading = false;
+      });
+    },
+    formatJson(filterVal, jsonData) {
+      return jsonData.map((v) =>
+        filterVal.map((j) => {
+          return v[j];
+        }),
+      );
+    },
   },
 };
 

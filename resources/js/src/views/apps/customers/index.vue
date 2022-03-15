@@ -310,7 +310,7 @@ export default {
           business_name: 'Name',
           'customer_type.name': 'Type',
           'visits': 'Last Visit',
-          'registrar.name': 'Created By',
+          'registrar.name': 'Registered By',
           'assigned_officer.name': 'Field Staff',
           'verifier.name': 'Verified By',
         },
