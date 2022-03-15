@@ -282,7 +282,7 @@ class CustomersController extends Controller
             'schedules' => function ($query) use ($user, $today) {
                 $query->where('schedule_date', '>=', $today)->orWhere('repeat_schedule', 'yes')->where('rep', $user->id)->orderBy('day_num');
             }
-        ])->where($condition)->orderBy('id', 'DESC')->paginate(200);
+        ])->where($condition)->orderBy('id', 'DESC')->paginate(100);
         return response()->json(compact('customers'), 200);
     }
     private function saveCustomersDetails($unsaved_customer, $status = 'Unverified')
