@@ -289,23 +289,25 @@ class CustomersController extends Controller
     {
 
         $user = $this->getUser();
+        $lat = $long = $reg_lat = $reg_lng = NULL;
+        if (isset($unsaved_customer->registrar_lat, $unsaved_customer->registrar_lng)) {
+            $reg_lat = $unsaved_customer->registrar_lat;
+            $reg_lng = $unsaved_customer->registrar_lng;
+        }
         if (isset($unsaved_customer->customer_latitude, $unsaved_customer->customer_longitude)) {
             $lat = $unsaved_customer->customer_latitude;
             $long = $unsaved_customer->customer_longitude;
         } else {
-            $lat = $unsaved_customer->registrar_lat;
-            $long = $unsaved_customer->registrar_lng;
+            $lat = $reg_lat;
+            $long = $reg_lng;
         }
+        $formatted_address = $unsaved_customer->address;
 
         $customer = Customer::where(['business_name' => $unsaved_customer->business_name, 'latitude' => $lat, 'longitude' => $long])->first();
 
 
         if (!$customer) {
 
-
-            $reg_lat = $unsaved_customer->registrar_lat;
-            $reg_lng = $unsaved_customer->registrar_lng;
-            $formatted_address = $unsaved_customer->address;
             $street = $unsaved_customer->street;
             $area = $unsaved_customer->area;
             // try {
