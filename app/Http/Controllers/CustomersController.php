@@ -289,7 +289,7 @@ class CustomersController extends Controller
     {
 
         $user = $this->getUser();
-        $lat = $long = $reg_lat = $reg_lng = NULL;
+        $lat = $long = $reg_lat = $reg_lng = $street = $area = NULL;
         if (isset($unsaved_customer->registrar_lat, $unsaved_customer->registrar_lng)) {
             $reg_lat = $unsaved_customer->registrar_lat;
             $reg_lng = $unsaved_customer->registrar_lng;
@@ -301,7 +301,6 @@ class CustomersController extends Controller
             $lat = $reg_lat;
             $long = $reg_lng;
         }
-        $formatted_address = $unsaved_customer->address;
 
         $customer = Customer::where(['business_name' => $unsaved_customer->business_name, 'latitude' => $lat, 'longitude' => $long])->first();
 
@@ -310,11 +309,16 @@ class CustomersController extends Controller
 
             $street = $unsaved_customer->street;
             $area = $unsaved_customer->area;
+
+            $formatted_address = $unsaved_customer->address;
             // try {
 
             // we fetch the geo information of the given address
-            if ($lat == '' && $long == '' &&  $area == '') {
-                list($lat, $long, $formatted_address, $street, $area) = $this->getLocationFromAddress($formatted_address);
+            if ($formatted_address !== '') {
+
+                if ($lat == '' && $long == '' &&  $area == '') {
+                    list($lat, $long, $formatted_address, $street, $area) = $this->getLocationFromAddress($formatted_address);
+                }
             }
             $contacts = json_decode(json_encode($unsaved_customer->customer_contacts));
             $customer = new Customer();
