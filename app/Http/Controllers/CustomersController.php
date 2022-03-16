@@ -290,6 +290,7 @@ class CustomersController extends Controller
 
         $user = $this->getUser();
         $lat = $long = $reg_lat = $reg_lng = $street = $area = NULL;
+        $reg_mode = 'offline';
         if (isset($unsaved_customer->registrar_lat, $unsaved_customer->registrar_lng)) {
             $reg_lat = $unsaved_customer->registrar_lat;
             $reg_lng = $unsaved_customer->registrar_lng;
@@ -297,6 +298,7 @@ class CustomersController extends Controller
         if (isset($unsaved_customer->customer_latitude, $unsaved_customer->customer_longitude)) {
             $lat = $unsaved_customer->customer_latitude;
             $long = $unsaved_customer->customer_longitude;
+            $reg_mode = 'online';
         } else {
             $lat = $reg_lat;
             $long = $reg_lng;
@@ -311,7 +313,7 @@ class CustomersController extends Controller
             $area = $unsaved_customer->area;
 
             $formatted_address = $unsaved_customer->address;
-            // try {
+
 
             // we fetch the geo information of the given address
             if ($formatted_address !== '') {
@@ -323,6 +325,7 @@ class CustomersController extends Controller
             $contacts = json_decode(json_encode($unsaved_customer->customer_contacts));
             $customer = new Customer();
             $customer->status = $status;
+            $customer->registration_mode = $reg_mode;
             $customer->customer_type_id = $unsaved_customer->customer_type_id;
             $customer->tier_id = $unsaved_customer->tier_id;
             $customer->lga_id = $unsaved_customer->lga_id;
@@ -353,14 +356,15 @@ class CustomersController extends Controller
                     $description = "New prospective customer, $customer->business_name, was added by " . $user->name;
                     $this->logUserActivity($title, $description, $user);
                 }
+
+                return $customer;
             }
             // Generate notification before returning ///////////////////////
             // Write notification code here////////////////////////////
 
-            // } catch (\Throwable $th) {
-            //     $unsaved_list[] = $unsaved_customer;
-            // }
+
         }
+        return $customer;
     }
     /**
      * Store a newly created resource in storage.
@@ -374,7 +378,12 @@ class CustomersController extends Controller
         $customer_list = [];
         $unsaved_list = [];
         foreach ($unsaved_customers as $unsaved_customer) {
-            $this->saveCustomersDetails($unsaved_customer);
+            try {
+                $customer = $this->saveCustomersDetails($unsaved_customer);
+                $customer_list[] = $this->customerDetails($customer);
+            } catch (\Throwable $th) {
+                $unsaved_list[] =  $unsaved_customer;
+            }
         }
         return response()->json(['customers' => $customer_list, 'unsaved_list' => $unsaved_list, 'message' => 'success'], 200);
     }
