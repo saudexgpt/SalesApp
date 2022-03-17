@@ -5,7 +5,7 @@
         <div class="vx-col lg:w-3/4 w-full">
           <div class="flex items-end px-3">
             <feather-icon svg-classes="w-6 h-6" icon="UsersIcon" class="mr-2" />
-            <span class="font-medium text-lg">List of Verified Customers</span>
+            <span class="font-medium text-lg">List of Customers</span>
           </div>
           <vs-divider />
         </div>
@@ -82,7 +82,12 @@
           </el-col>
         </el-row>
       </div>
-      <el-alert type="success">These customers have been verified at least once</el-alert>
+      <!-- <el-alert type="success">These customers have been verified at least once</el-alert> -->
+      <el-radio-group v-model="query.verify_type" @change="getList()">
+        <el-radio label="verified" border>Verified</el-radio>
+        <el-radio label="unverified" border>Unverified</el-radio>
+        <el-radio label="all" border>All</el-radio>
+      </el-radio-group>
       <v-client-table
         v-model="list"
         :columns="columns"
@@ -126,9 +131,8 @@
               :to="'/customer/details/' + scope.row.id"
             >
               <el-button
-                round
-                type="success"
-                size="small"
+                circle
+                type="info"
                 icon="el-icon-view"
               />
             </router-link>
@@ -143,9 +147,8 @@
               :to="'/report/customer-statement/' + scope.row.id"
             >
               <el-button
-                round
+                circle
                 type="warning"
-                size="small"
                 icon="el-icon-document"
               />
             </router-link>
@@ -158,11 +161,25 @@
           >
             <el-button
               v-permission="['update-customers']"
-              round
+              circle
               type="primary"
-              size="small"
               icon="el-icon-edit"
               @click="setEditCustomerDetails(scope.row)"
+            />
+          </el-tooltip>
+          <el-tooltip
+            class="item"
+            effect="dark"
+            content="Verify Customer"
+            placement="top-start"
+          >
+            <el-button
+              v-permission="['verify-customers']"
+              v-if="scope.row.date_verified === null"
+              circle
+              type="success"
+              icon="el-icon-check"
+              @click="verifyCustomer(scope.index, scope.row.id, scope.row.business_name)"
             />
           </el-tooltip>
         </template>
@@ -314,6 +331,12 @@ export default {
           'assigned_officer.name': 'Field Staff',
           'verifier.name': 'Verified By',
         },
+        rowAttributesCallback(row) {
+          if (row.date_verified === null) {
+            return { style: 'background: #d83b3beb; color: #000000' };
+          }
+          return { style: 'background: #36c15ecf; color: #000000' };
+        },
         pagination: {
           dropdown: true,
           chunk: 100,
@@ -337,6 +360,7 @@ export default {
         limit: 100,
         keyword: '',
         role: '',
+        verify_type: 'verified',
       },
       selectedCustomer: {},
       dialogFormVisible: false,
@@ -459,6 +483,26 @@ export default {
           app.updatingCustomer = false;
           console.log(error);
         });
+    },
+    verifyCustomer(index, id, business_name) {
+      const app = this;
+      const storeResource = new Resource('customers/verify');
+      app.$confirm('Are you sure you want to verify ' + business_name + '?', 'Warning', {
+        confirmButtonText: 'OK',
+        cancelButtonText: 'Cancel',
+        type: 'warning',
+      }).then(() => {
+        app.load_table = true;
+        storeResource.update(id)
+          .then(() => {
+            app.$message('Action Successful');
+            // app.customer = response.customer;
+            app.getList();
+            app.load_table = false;
+          });
+      }).catch(() => {
+        app.load_table = false;
+      });
     },
     showCustomerDetails(selectedCustomer){
       const app = this;

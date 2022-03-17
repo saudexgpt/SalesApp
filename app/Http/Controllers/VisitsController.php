@@ -18,8 +18,11 @@ class VisitsController extends Controller
     public function index()
     {
         $user = $this->getUser();
+        $today = date('Y-m-d', strtotime('now'));
         $visits = $user->visits()->with('customer', 'visitedBy', 'details.contact')->orderBy('id', 'DESC')->get();
-        return response()->json(compact('visits'), 200);
+        $today_visits = $user->visits()->with('customer', 'visitedBy', 'details.contact')
+            ->where('created_at', 'LIKE', '%' . $today . '%')->orderBy('id', 'DESC')->get();
+        return response()->json(compact('visits', 'today_visits'), 200);
     }
 
     public function fetchHospitalVisits(Request $request)
