@@ -96,7 +96,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
 
 
-        // Route::delete('{user}', [UsersController::class, 'destroyCustomer'])->middleware('permission:delete-customers');
+        Route::delete('remove/{customer}', [CustomersController::class, 'destroy'])->middleware('permission:delete-customers');
+        Route::put('report-duplicate/{customer}', [CustomersController::class, 'reportDuplicate']);
     });
     Route::group(['prefix' => 'customer-types'], function () {
         Route::get('fetch', [CustomerTypesController::class, 'fetch']);

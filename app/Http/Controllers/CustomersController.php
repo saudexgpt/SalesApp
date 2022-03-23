@@ -268,6 +268,10 @@ class CustomersController extends Controller
         $today  = date('Y-m-d', strtotime('now'));
         $user = $this->getUser();
         $condition = ['relating_officer' => $user->id];
+        $paginate = $request->paginate;
+        if ($paginate < 1) {
+            $paginate = 100;
+        }
         if (isset($request->customer_type_id)) {
 
             $customer_type_id = $request->customer_type_id;
@@ -288,7 +292,7 @@ class CustomersController extends Controller
             'schedules' => function ($query) use ($user, $today) {
                 $query->where('schedule_date', '>=', $today)->orWhere('repeat_schedule', 'yes')->where('rep', $user->id)->orderBy('day_num');
             }
-        ])->where($condition)->orderBy('business_name')->paginate(100);
+        ])->where($condition)->orderBy('business_name')->paginate($paginate);
         return response()->json(compact('customers'), 200);
     }
     private function saveCustomersDetails($unsaved_customer, $status = 'Prospective')
@@ -386,7 +390,7 @@ class CustomersController extends Controller
         foreach ($unsaved_customers as $unsaved_customer) {
             try {
                 $customer = $this->saveCustomersDetails($unsaved_customer);
-                $customer_list[] = $this->customerDetails($customer);
+                $customer_list[] = $this->show($customer);
             } catch (\Throwable $th) {
                 $unsaved_list[] =  $unsaved_customer;
             }
@@ -527,27 +531,27 @@ class CustomersController extends Controller
      * @param  \App\Models\Customer  $customer
      * @return \Illuminate\Http\Response
      */
-    // public function show(Customer $customer)
-    // {
-    //     $user = $this->getUser();
-    //     $today  = date('Y-m-d', strtotime('now'));
-    //     $customer = $customer::with([
-    //         'customerContacts', 'customerType', 'tier', 'subRegion', 'region', 'registrar', 'state',
-    //         'lga', 'assignedOfficer', 'verifier',
-    //         'payments' => function ($q) {
-    //             $q->orderBy('id', 'DESC');
-    //         },
-    //         'visits' => function ($q) use ($user) {
-    //             $q->where('visitor', $user->id)->orderBy('id', 'DESC');
-    //         },
-    //         'visits.details.contact',
-    //         'payments.confirmer', 'payments.transaction.staff', 'transactions',
-    //         'schedules' => function ($query) use ($user, $today) {
-    //             $query->where('schedule_date', '>=', $today)->orWhere('repeat_schedule', 'yes')->where('rep', $user->id)->orderBy('day_num');
-    //         }
-    //     ])->find($customer->id);
-    //     return $customer;
-    // }
+    public function show(Customer $customer)
+    {
+        $user = $this->getUser();
+        $today  = date('Y-m-d', strtotime('now'));
+        $customer = $customer::with([
+            'customerContacts', 'customerType', 'tier', 'subRegion', 'region', 'registrar', 'state',
+            'lga', 'assignedOfficer', 'verifier',
+            'payments' => function ($q) {
+                $q->orderBy('id', 'DESC');
+            },
+            'visits' => function ($q) use ($user) {
+                $q->where('visitor', $user->id)->orderBy('id', 'DESC');
+            },
+            'visits.details.contact',
+            'payments.confirmer', 'payments.transaction.staff', 'transactions',
+            'schedules' => function ($query) use ($user, $today) {
+                $query->where('schedule_date', '>=', $today)->orWhere('repeat_schedule', 'yes')->where('rep', $user->id)->orderBy('day_num');
+            }
+        ])->find($customer->id);
+        return $customer;
+    }
     public function verify(Customer $customer)
     {
         $user = $this->getUser();
@@ -653,5 +657,18 @@ class CustomersController extends Controller
     public function destroy(Customer $customer)
     {
         //
+        $user = $this->getUser();
+        $title = "Customer Removed";
+        $description = $user->name . " removed $customer->business_name from list of customers";
+        $this->logUserActivity($title, $description, $user);
+        $customer->delete();
+        return response()->json([], 204);
+    }
+    public function reportDuplicate(Customer $customer)
+    {
+        $customer->is_duplicate_entry = 1;
+        $customer->save();
+        return $this->customerDetails($customer);
+        // return response()->json(compact('customer_detail'), 200);
     }
 }
