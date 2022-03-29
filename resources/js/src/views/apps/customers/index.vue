@@ -84,8 +84,8 @@
       </div>
       <!-- <el-alert type="success">These customers have been verified at least once</el-alert> -->
       <el-radio-group v-model="query.verify_type" @change="getList()">
-        <el-radio label="verified" border>Verified</el-radio>
         <el-radio label="unverified" border>Unverified</el-radio>
+        <el-radio label="verified" border>Verified</el-radio>
         <el-radio label="all" border>All</el-radio>
       </el-radio-group>
       <v-client-table
@@ -121,67 +121,84 @@
           <span>{{ (scope.row.date_verified) ? moment(scope.row.date_verified).format('ll') : '' }}</span>
         </template>
         <template slot="action" slot-scope="scope">
-          <el-tooltip
-            class="item"
-            effect="dark"
-            content="View Customer Details"
-            placement="top-start"
-          >
-            <router-link
-              :to="'/customer/details/' + scope.row.id"
+          <span>
+            <el-tooltip
+              class="item"
+              effect="dark"
+              content="View Customer Details"
+              placement="top-start"
+            >
+              <router-link
+                :to="'/customer/details/' + scope.row.id"
+              >
+                <el-button
+                  circle
+                  type="info"
+                  icon="el-icon-view"
+                />
+              </router-link>
+            </el-tooltip>
+            <el-tooltip
+              class="item"
+              effect="dark"
+              content="View Customer Statement"
+              placement="top-start"
+            >
+              <router-link
+                :to="'/report/customer-statement/' + scope.row.id"
+              >
+                <el-button
+                  circle
+                  type="warning"
+                  icon="el-icon-document"
+                />
+              </router-link>
+            </el-tooltip>
+            <el-tooltip
+              class="item"
+              effect="dark"
+              content="Edit Customer"
+              placement="top-start"
             >
               <el-button
+                v-permission="['update-customers']"
                 circle
-                type="info"
-                icon="el-icon-view"
+                type="primary"
+                icon="el-icon-edit"
+                @click="setEditCustomerDetails(scope.row)"
               />
-            </router-link>
-          </el-tooltip>
-          <el-tooltip
-            class="item"
-            effect="dark"
-            content="View Customer Statement"
-            placement="top-start"
-          >
-            <router-link
-              :to="'/report/customer-statement/' + scope.row.id"
+            </el-tooltip>
+            <el-tooltip
+              class="item"
+              effect="dark"
+              content="Verify Customer"
+              placement="top-start"
             >
               <el-button
+                v-permission="['verify-customers']"
+                v-if="scope.row.date_verified === null"
                 circle
-                type="warning"
-                icon="el-icon-document"
+                type="success"
+                icon="el-icon-check"
+                @click="verifyCustomer(scope.index, scope.row.id, scope.row.business_name)"
               />
-            </router-link>
-          </el-tooltip>
-          <el-tooltip
-            class="item"
-            effect="dark"
-            content="Edit Customer"
-            placement="top-start"
-          >
-            <el-button
-              v-permission="['update-customers']"
-              circle
-              type="primary"
-              icon="el-icon-edit"
-              @click="setEditCustomerDetails(scope.row)"
-            />
-          </el-tooltip>
-          <el-tooltip
-            class="item"
-            effect="dark"
-            content="Verify Customer"
-            placement="top-start"
-          >
-            <el-button
-              v-permission="['verify-customers']"
-              v-if="scope.row.date_verified === null"
-              circle
-              type="success"
-              icon="el-icon-check"
-              @click="verifyCustomer(scope.index, scope.row.id, scope.row.business_name)"
-            />
-          </el-tooltip>
+            </el-tooltip>
+            <el-tooltip
+              class="item"
+              effect="dark"
+              content="Remove Customer"
+              placement="top-start"
+            >
+              <el-button
+                v-permission="['delete-customers']"
+                v-if="scope.row.is_duplicate_entry === 1"
+                circle
+                type="danger"
+                icon="el-icon-delete"
+                @click="deleteCustomer(scope.index, scope.row.id, scope.row.business_name)"
+              />
+            </el-tooltip>
+          </span>
         </template>
       </v-client-table>
       <el-row :gutter="20">
@@ -309,6 +326,7 @@ export default {
       sales_reps: [],
       list: [],
       columns: [
+        'action',
         'business_name',
         'customer_type.name',
         'address',
@@ -319,7 +337,6 @@ export default {
         // 'verifier.name',
         'created_at',
         'date_verified',
-        'action',
       ],
 
       options: {
@@ -332,10 +349,10 @@ export default {
           'verifier.name': 'Verified By',
         },
         rowAttributesCallback(row) {
-          if (row.date_verified === null) {
-            return { style: 'background: #d83b3beb; color: #000000' };
+          if (row.is_duplicate_entry === 1) {
+            return { style: 'background: #ffec43f2; color: #000000' };
           }
-          return { style: 'background: #36c15ecf; color: #000000' };
+          // return { style: 'background: #36c15ecf; color: #000000' };
         },
         pagination: {
           dropdown: true,
@@ -360,7 +377,7 @@ export default {
         limit: 100,
         keyword: '',
         role: '',
-        verify_type: 'verified',
+        verify_type: 'unverified',
       },
       selectedCustomer: {},
       dialogFormVisible: false,
@@ -498,6 +515,26 @@ export default {
             app.$message('Action Successful');
             // app.customer = response.customer;
             app.getList();
+            app.load_table = false;
+          });
+      }).catch(() => {
+        app.load_table = false;
+      });
+    },
+    deleteCustomer(index, id, business_name) {
+      const app = this;
+      const storeResource = new Resource('customers/remove');
+      app.$confirm('Are you sure you want to remove ' + business_name + '?', 'Warning', {
+        confirmButtonText: 'OK',
+        cancelButtonText: 'Cancel',
+        type: 'warning',
+      }).then(() => {
+        app.load_table = true;
+        storeResource.destroy(id)
+          .then(() => {
+            app.$message('Customer Removed Successful');
+            // app.customer = response.customer;
+            app.list.splice(index - 1, 1);
             app.load_table = false;
           });
       }).catch(() => {

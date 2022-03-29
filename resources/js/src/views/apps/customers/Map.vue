@@ -42,13 +42,22 @@
                 :key="index"
                 :position="m.position"
                 :icon="icon"
+                @mouseout="showByIndex = null"
                 @click="center=m.position; showDetails(m.detail)"
-              />
+                @mouseover="showByIndex = index;"
+              >
+                <gmap-info-window
+                  :opened="showByIndex === index"
+                >
+                  <strong>Business Name: </strong> {{ m.detail.business_name }}<br>
+                  <strong>Address: </strong> {{ m.detail.address }}<br>
+                  <strong>Area: </strong> {{ m.detail.area }}<br>
+                </gmap-info-window>
+              </gmap-marker>
             </gmap-cluster>
           </gmap-map>
         </div>
       </vx-card>
-
     </div>
   </div>
 </template>
@@ -63,6 +72,7 @@ export default {
   },
   data() {
     return {
+      showByIndex: null,
       // /////////////for map /////////////////
       center: { lat: 3.3792, lng: 6.5244 }, // default to greenlife office
       zoom: 7,
@@ -111,6 +121,11 @@ export default {
         // accept:this.acceptAlert
       });
     },
+    // showDetails(customer){
+    //   this.$alert('<strong>' + customer.business_name + ' (' + customer.status + ')</strong>' + '<br><strong>Address: </strong>' + customer.address, {
+    //     dangerouslyUseHTMLString: true,
+    //   });
+    // },
     randomColor() {
       const colorCodes = ['#fadcb6', '#c9fab6', '#c1fab6', '#b6faef', '#b6d6fa', '#bab6fa', '#e4b6fa', '#fab6b9'];
       const randomColor = colorCodes[Math.floor(Math.random() * colorCodes.length)];

@@ -35,6 +35,7 @@ use App\Http\Controllers\TeamsController;
 
 
 
+Route::get('change-to-base64', [CustomersController::class, 'changeToBase64']);
 Route::group(['prefix' => 'auth'], function () {
     Route::post('login', [AuthController::class, 'login']);
     Route::post('register', [AuthController::class, 'register'])->middleware('permission:create-users');

@@ -32,7 +32,7 @@ class DailyReportController extends Controller
         $visits = Visit::with(['details', 'customer' => function ($q) {
             $q->select('id', 'customer_type_id', 'business_name');
         }, 'customer.customerContacts'])->where('visitor', $user->id)->where('visit_date', $date)->get();
-        $my_customers = Customer::with('customerContacts')->where('relating_officer', $user->id)->get();
+        $my_customers = Customer::with('customerContacts')->where('relating_officer', $user->id)->orderBy('business_name')->get();
         return response()->json(compact('message', 'visits', 'my_customers'), 200);
         // }
         // return response()->json(['message' => 'reported'], 200);

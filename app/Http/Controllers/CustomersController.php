@@ -31,9 +31,9 @@ class CustomersController extends Controller
         } else {
 
             $id = time();
-            $path = "$upload_folder/" . $id . '.jpeg';
+            $path = "$upload_folder/" . $id . '.' . $avatar->format;
 
-            file_put_contents($path, base64_decode($avatar));
+            file_put_contents($path, base64_decode($avatar->base64String));
         }
         $actualpath = "https://sales.3coretechnology.com/$path";
         // $actualpath = "http://localhost:8000/$path";

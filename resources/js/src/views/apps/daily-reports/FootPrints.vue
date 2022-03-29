@@ -86,17 +86,19 @@
                   :key="index"
                   :position="m.position"
                   :icon="icon"
+                  @mouseout="showByIndex = null"
                   @click="center=m.position; showDetails(m.detail)"
-                />
-                <!-- <gmap-cluster :zoom-on-click="true">
-                  <gmap-marker
-                    v-for="(m, index) in markers"
-                    :key="index"
-                    :position="m.position"
-                    :icon="icon"
-                    @click="center=m.position; showDetails(m.detail)"
-                  />
-                </gmap-cluster> -->
+                  @mouseover="showByIndex = index;"
+                >
+                  <gmap-info-window
+                    :opened="showByIndex === index"
+                  >
+                    <strong>Business Name: </strong> {{ m.detail.customer.business_name }}<br>
+                    <strong>Customer Registered Address: </strong> {{ m.detail.customer.address }}<br>
+                    <strong>Visited Pinned Address: </strong> {{ m.detail.address }}<br>
+                    <strong>Date: </strong> {{ moment(m.detail.created_at).format('DD-MM-YYYY hh:mm:ss a') }}<br>
+                  </gmap-info-window>
+                </gmap-marker>
 
                 <gmap-polyline :path.sync="paths" :options="{ strokeColor:'#000000'}" />
               </gmap-map>
@@ -110,6 +112,7 @@
 </template>
 
 <script>
+import moment from 'moment';
 import GmapCluster from 'vue2-google-maps/dist/components/cluster';
 import GmapPolyline from 'vue2-google-maps/dist/components/polyline';
 
@@ -129,6 +132,7 @@ export default {
   },
   data() {
     return {
+      showByIndex: null,
       pickerOptions: {
         disabledDate(time) {
           return time.getTime() > Date.now();
@@ -202,6 +206,7 @@ export default {
     };
   },
   methods: {
+    moment,
     checkPermission,
     checkRole,
     fetchFootprint() {
@@ -235,7 +240,8 @@ export default {
       this.markers = markers;
     },
     showDetails(visit){
-      this.$alert('<strong>Customer Verified Address: </strong>' + visit.customer.address + '<br><strong>Visited Pinned Address: </strong>' + visit.address, visit.customer.business_name, {
+      this.$alert('<strong>Customer Registered Address: </strong>' + visit.customer.address + '<br><strong>Visited Pinned Address: </strong>' + visit.address +
+      '<br><strong>Date: </strong>' + this.moment(visit.created_at).format('DD-MM-YYYY hh:mm:ss a'), visit.customer.business_name, {
         dangerouslyUseHTMLString: true,
       });
     },
