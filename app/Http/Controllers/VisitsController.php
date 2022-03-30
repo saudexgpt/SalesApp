@@ -170,9 +170,10 @@ class VisitsController extends Controller
         foreach ($unsaved_visits as $unsaved_visit) {
             $lat = $unsaved_visit->rep_latitude;
             $long = $unsaved_visit->rep_longitude;
+            $visit_date = $unsaved_visit->visit_date;
             try {
                 $customer_id = $unsaved_visit->customer_id;
-                $date = date('Y-m-d', strtotime('now'));
+                $date = ($visit_date) ? date('Y-m-d', strtotime($visit_date)) : date('Y-m-d', strtotime('now'));
                 $visit = Visit::where(['customer_id' => $customer_id, 'visitor' => $user->id, 'visit_date' => $date])->first();
                 if (!$visit) {
                     $str_response = $this->getLocationFromLatLong($lat, $long);
