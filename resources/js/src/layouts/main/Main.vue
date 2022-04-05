@@ -12,7 +12,7 @@
 
     <vx-tour v-if="!disableThemeTour && (windowWidth >= 1200 && mainLayoutType === 'vertical' && verticalNavMenuWidth == 'default')" :steps="steps" />
 
-    <the-customizer
+    <!-- <the-customizer
       v-if = "!disableCustomizer"
       :footer-type = "footerType"
       :hide-scroll-to-top = "hideScrollToTop"
@@ -23,7 +23,7 @@
       @updateFooter = "updateFooter"
       @updateNavbar = "updateNavbar"
       @updateNavbarColor = "updateNavbarColor"
-      @updateRouterTransition = "updateRouterTransition" />
+      @updateRouterTransition = "updateRouterTransition" /> -->
 
     <v-nav-menu
       :nav-menu-items="navMenuItems"
@@ -131,7 +131,7 @@
 import BackToTop from 'vue-backtotop';
 import HNavMenu from '@/layouts/components/horizontal-nav-menu/HorizontalNavMenu.vue';
 import navMenuItems from '@/layouts/components/vertical-nav-menu/navMenuItems.js';
-import TheCustomizer from '@/layouts/components/customizer/TheCustomizer.vue';
+// import TheCustomizer from '@/layouts/components/customizer/TheCustomizer.vue';
 import TheNavbarHorizontal from '@/layouts/components/navbar/TheNavbarHorizontal.vue';
 import TheNavbarVertical from '@/layouts/components/navbar/TheNavbarVertical.vue';
 import TheFooter from '@/layouts/components/TheFooter.vue';
@@ -145,7 +145,7 @@ export default {
   components: {
     BackToTop,
     HNavMenu,
-    TheCustomizer,
+    // TheCustomizer,
     TheFooter,
     TheNavbarHorizontal,
     TheNavbarVertical,

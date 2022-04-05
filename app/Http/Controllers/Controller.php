@@ -9,8 +9,11 @@ use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\UserResource;
+use App\Models\Customer;
 use App\Models\LocalGovernmentArea;
+use App\Models\ManagerDomain;
 use App\Models\Role;
+use App\Models\State;
 use App\Models\TeamMember;
 use App\Models\User;
 use App\Notifications\AuditTrail;
@@ -51,12 +54,55 @@ class Controller extends BaseController
     {
         return '₦';
     }
+    public function managerTeamMembers()
+    {
+        $user = $this->getUser();
+
+        $all_team_members = [];
+        $all_team_member_ids = [];
+        $manager_domain = ManagerDomain::where('user_id', $user->id)->first();
+        if ($manager_domain) {
+            $domain_ids = $manager_domain->domain_ids;
+            $domain_ids_array = explode('~', $domain_ids);
+            $domain = $manager_domain->domain;
+            $field = $domain . '_id'; // i.e country_id, state_id, lga_id
+            $customers = Customer::groupBy('relating_officer')->whereIn($field, $domain_ids_array)->where('relating_officer', '!=', 1)->get();
+            foreach ($customers as $customer) {
+                $assigned_officer = $customer->assignedOfficer;
+                $all_team_members[] = $assigned_officer;
+                $all_team_member_ids[] = $assigned_officer->id;
+            }
+        }
+        return array($all_team_members, $all_team_member_ids);
+    }
+    public function managersDomain()
+    {
+        $user = $this->getUser();
+
+        $field = '';
+        $domain_ids_array = [];
+        $manager_domain = ManagerDomain::where('user_id', $user->id)->first();
+        if ($manager_domain) {
+            $domain_ids = $manager_domain->domain_ids;
+            $domain_ids_array = explode('~', $domain_ids);
+            $domain = $manager_domain->domain;
+            $field = $domain . '_id'; // i.e country_id, state_id, lga_id
+            // $customers = Customer::whereIn($field, $domain_ids_array)->get();
+            // foreach ($variable as $key => $value) {
+            //     # code...
+            // }
+        }
+        return array($field, $domain_ids_array);
+    }
     public function teamMembers()
     {
         $user = $this->getUser();
-        $team_members = $user->memberOfTeams;
+        if ($user->isManager()) {
+            return $this->managerTeamMembers();
+        }
         $all_team_members = [];
         $all_team_member_ids = [];
+        $team_members = $user->memberOfTeams;
         foreach ($team_members as $team_member) {
             $team_id = $team_member->team_id;
             $my_members = TeamMember::with('user.customers')->where('team_id', $team_id)->where('user_id', '!=', $user->id)->get();
@@ -154,9 +200,10 @@ class Controller extends BaseController
         $user = $this->getUser();
         $all_roles = Role::orderBy('name')->get();
         $default_roles = Role::orderBy('name')->get();
-
+        $states = State::orderBy('name')->get();
+        $lgas = LocalGovernmentArea::with('state')->orderBy('name')->get();
         return response()->json([
-            'params' => compact('all_roles', 'default_roles')
+            'params' => compact('all_roles', 'default_roles', 'states', 'lgas')
         ]);
     }
     public function logUserActivity($title, $description, $user = null)

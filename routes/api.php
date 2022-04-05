@@ -168,6 +168,15 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('/add-members', [TeamsController::class, 'addMembers']);
         Route::delete('/remove-member/{team_member}', [TeamsController::class, 'removeMember']);
         Route::put('/create-team-lead/{team_member}', [TeamsController::class, 'createTeamLead']);
+
+        Route::get('/managers', [TeamsController::class, 'fetchManagers']);
+        Route::get('/fetch-managers-types', [TeamsController::class, 'fetchManagerTypes']);
+
+        Route::post('/manager/set-coverage-domain', [TeamsController::class, 'setCoverageDomain']);
+
+        // Route::post('/add-members', [TeamsController::class, 'addMembers']);
+        // Route::delete('/remove-member/{team_member}', [TeamsController::class, 'removeMember']);
+        // Route::put('/create-team-lead/{team_member}', [TeamsController::class, 'createTeamLead']);
     });
     Route::group(['prefix' => 'tiers'], function () {
         Route::get('fetch', [TiersController::class, 'fetch']);

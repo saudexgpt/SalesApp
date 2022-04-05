@@ -41,6 +41,17 @@ const settingsRoutes = {
       },
     },
     {
+      hidden: false,
+      component: () => import('@/views/apps/teams/Managers'),
+      path: '/settings/managers',
+      name: 'Managers',
+      slug: 'managers',
+      i18n: 'Managers',
+      meta: {
+        permissions: ['manage-managers'],
+      },
+    },
+    {
       path: 'team/members/:team_id(\\d+)',
       component: () => import('@/views/apps/teams/Members'),
       name: 'TeamMembers',

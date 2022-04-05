@@ -159,7 +159,7 @@ export default {
         }],
       },
       form: {
-        date: '',
+        date: new Date(),
         user_id: '',
       },
       // /////////////for map /////////////////

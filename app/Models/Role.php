@@ -16,4 +16,9 @@ class Role extends LaratrustRole
     {
         return $this->name === 'admin';
     }
+
+    public function isManager(): bool
+    {
+        return $this->name === 'manager';
+    }
 }

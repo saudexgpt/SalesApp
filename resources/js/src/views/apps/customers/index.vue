@@ -84,9 +84,9 @@
       </div>
       <!-- <el-alert type="success">These customers have been verified at least once</el-alert> -->
       <el-radio-group v-model="query.verify_type" @change="getList()">
-        <el-radio label="unverified" border>Unverified</el-radio>
-        <el-radio label="verified" border>Verified</el-radio>
         <el-radio label="all" border>All</el-radio>
+        <el-radio label="verified" border>Verified</el-radio>
+        <el-radio label="unverified" border>Unverified</el-radio>
       </el-radio-group>
       <v-client-table
         v-model="list"
@@ -133,12 +133,12 @@
               >
                 <el-button
                   circle
-                  type="info"
+                  type="primary"
                   icon="el-icon-view"
                 />
               </router-link>
             </el-tooltip>
-            <el-tooltip
+            <!-- <el-tooltip
               class="item"
               effect="dark"
               content="View Customer Statement"
@@ -153,8 +153,8 @@
                   icon="el-icon-document"
                 />
               </router-link>
-            </el-tooltip>
-            <el-tooltip
+            </el-tooltip> -->
+            <!-- <el-tooltip
               class="item"
               effect="dark"
               content="Edit Customer"
@@ -167,8 +167,8 @@
                 icon="el-icon-edit"
                 @click="setEditCustomerDetails(scope.row)"
               />
-            </el-tooltip>
-            <el-tooltip
+            </el-tooltip> -->
+            <!-- <el-tooltip
               class="item"
               effect="dark"
               content="Verify Customer"
@@ -182,7 +182,7 @@
                 icon="el-icon-check"
                 @click="verifyCustomer(scope.index, scope.row.id, scope.row.business_name)"
               />
-            </el-tooltip>
+            </el-tooltip> -->
             <el-tooltip
               class="item"
               effect="dark"
@@ -191,7 +191,7 @@
             >
               <el-button
                 v-permission="['delete-customers']"
-                v-if="scope.row.is_duplicate_entry === 1"
+                v-if="scope.row.visits.length < 1"
                 circle
                 type="danger"
                 icon="el-icon-delete"
@@ -377,7 +377,7 @@ export default {
         limit: 100,
         keyword: '',
         role: '',
-        verify_type: 'unverified',
+        verify_type: 'all',
       },
       selectedCustomer: {},
       dialogFormVisible: false,

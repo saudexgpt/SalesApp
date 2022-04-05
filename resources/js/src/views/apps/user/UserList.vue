@@ -206,6 +206,7 @@
               </el-select>
             </div>
           </div>
+          <div class="vx-row"/>
           <!-- <div class="vx-row">
             <div class="vx-col sm:w-1/2 w-full mb-2">
               <vs-input v-validate="'required|min:8'" v-model="newUser.password" name="password" type="password" show-password label-placeholder="Password" class="mt-3 w-full" data-vv-validate-on="blur"/>
@@ -289,6 +290,8 @@ export default {
       },
       roles: [],
       defaultRoles: [],
+      states: [],
+      lgas: [],
       newUser: {
         first_name: '',
         last_name: '',
@@ -298,6 +301,10 @@ export default {
         password: 'password',
         confirmPassword: 'password',
         role: 'admin',
+      },
+      manager_details: {
+        type: '',
+        domain_ids: [],
       },
       dialogFormVisible: false,
       dialogPermissionVisible: false,
@@ -332,6 +339,8 @@ export default {
         // app.roles = response.params.all_roles;
         app.roles = response.params.default_roles;
         app.defaultRoles = response.params.default_roles;
+        app.states = response.params.states;
+        app.lgas = response.params.lgas;
         // if (app.warehouses.length > 0) {
         //   app.form.warehouse_id = app.warehouses[0];
         //   app.form.warehouse_index = 0;
@@ -447,8 +456,10 @@ export default {
       this.$validator.validateAll().then((valid) => {
         if (valid) {
           this.userCreating = true;
+          const param = this.newUser;
+          param.manager_details = this.manager_details;
           userResource
-            .store(this.newUser)
+            .store(param)
             .then((response) => {
               this.userCreating = false;
               this.$message({
@@ -533,6 +544,10 @@ export default {
         password: '',
         confirmPassword: '',
         role: '',
+      };
+      this.manager_details = {
+        type: '',
+        domain_ids: [],
       };
     },
     handleDownload(){

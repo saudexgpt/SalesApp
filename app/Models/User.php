@@ -88,7 +88,15 @@ class User extends Authenticatable
     {
         return $this->hasMany(Schedule::class, 'rep', 'id');
     }
+    public function managerDomain()
+    {
+        return $this->hasOne(ManagerDomain::class, 'user_id', 'id');
+    }
 
+    // public function assignedManagerDomains()
+    // {
+    //     return $this->hasMany(AssignedManagerDomain::class, 'user_id', 'id');
+    // }
     public function isSuperAdmin(): bool
     {
         foreach ($this->roles as $role) {
@@ -104,6 +112,17 @@ class User extends Authenticatable
     {
         foreach ($this->roles as $role) {
             if ($role->isAdmin()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function isManager(): bool
+    {
+        foreach ($this->roles as $role) {
+            if ($role->isManager()) {
                 return true;
             }
         }

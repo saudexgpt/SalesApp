@@ -44,15 +44,14 @@ class DashboardController extends Controller
 
         // $today_orders = Transaction::where('field_staff', $user->id)->with('customer', 'details')->where('created_at', '>=', $today)->orderBy('id', 'DESC')->get();
 
-        // $today_visits = $user->visits()->with('customer', 'visitedBy', 'details')
-        //     ->where('created_at', 'LIKE', '%' . $today . '%')->orderBy('id', 'DESC')->get();
+        $today_visits = $user->visits()/*->with('customer', 'visitedBy', 'details')*/->where('created_at', 'LIKE', '%' . $today . '%')->orderBy('id', 'DESC')->get();
 
         $today_schedule = $user->mySchedules()->with('customer')->where('schedule_date', $today)->orWhere(function ($q) use ($day) {
             $q->where('repeat_schedule', 'yes');
             $q->where('day', $day);
         })->get();
 
-        return response()->json(compact('user', 'customers', 'sales', 'debt', 'overdue', 'currency', /*'today_orders', 'today_visits',*/ 'today_schedule'), 200);
+        return response()->json(compact('user', 'customers', 'sales', 'debt', 'overdue', 'today_visits', 'currency', /*'today_orders', 'today_visits',*/ 'today_schedule'), 200);
     }
 
     public function managerDashboard()

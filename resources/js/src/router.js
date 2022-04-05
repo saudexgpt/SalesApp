@@ -108,10 +108,10 @@ export const asyncRoutes = [
   // MAIN LAYOUT ROUTES
   // =============================================================================
   dashboardRoutes,
-  dailyReportRoutes,
   customersRoutes,
-  // schedulesRoutes,
   transactionsRoutes,
+  dailyReportRoutes,
+  // schedulesRoutes,
   inventoryRoutes,
   // reportsRoutes,
   settingsRoutes,
