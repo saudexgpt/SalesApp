@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ManagerDomain;
+use App\Models\ManagerType;
 use Illuminate\Http\Request;
 use App\Models\Team;
 use App\Models\TeamMember;
@@ -15,7 +16,18 @@ class TeamsController extends Controller
         $teams = Team::with('members.user')->orderBy('name')->get();
         return response()->json(compact('teams'), 200);
     }
+    public function fetchTeamReps(Request $request)
+    {
+        $team_id = $request->team_id;
+        $userQuery = User::query();
 
+        $userQuery->whereHas('roles', function ($q) {
+            $q->where('name', 'sales_rep');
+        });
+        $team_reps = $userQuery->join('team_members', 'team_members.user_id', 'users.id')
+            ->where('team_id', $team_id)->get();
+        return response()->json(compact('team_reps'), 200);
+    }
     public function store(Request $request)
     {
         $name = $request->name;
@@ -62,15 +74,16 @@ class TeamsController extends Controller
         $user_ids = json_decode(json_encode($request->user_ids));
         $team_id = $request->team_id;
         foreach ($user_ids as $user_id) {
-            $team_member = TeamMember::where(['team_id' => $team_id, 'user_id' => $user_id])->first();
+            $team_member = TeamMember::where([/*'team_id' => $team_id, */'user_id' => $user_id])->first();
             if (!$team_member) {
                 $team_member = new TeamMember();
-                $team_member->user_id = $user_id;
-                $team_member->team_id = $team_id;
-                $team_member->save();
             }
+
+            $team_member->user_id = $user_id;
+            $team_member->team_id = $team_id;
+            $team_member->save();
         }
-        return $this->teamMembers($request);
+        // return $this->teamMembers($request);
     }
 
     public function fetchTeamMembers(Request $request)
@@ -88,9 +101,9 @@ class TeamsController extends Controller
      */
     public function removeMember(Request $request, TeamMember $team_member)
     {
-        $request->team_id = $team_member->team_id;
+        // $request->team_id = $team_member->team_id;
         $team_member->delete();
-        return $this->teamMembers($request);
+        // return $this->teamMembers($request);
     }
 
     public function createTeamLead(Request $request, TeamMember $team_member)
@@ -103,7 +116,7 @@ class TeamsController extends Controller
         }
         $team_member->is_lead = '1';
         $team_member->save();
-        return $this->teamMembers($request);
+        // return $this->teamMembers($request);
     }
 
     public function fetchManagers()
@@ -113,7 +126,7 @@ class TeamsController extends Controller
         $userQuery->whereHas('roles', function ($q) {
             $q->where('name', 'manager');
         });
-        $managers = $userQuery->with('managerDomain')->get();
+        $managers = $userQuery->with('memberOfTeam.team', 'managerDomain')->get();
 
 
         return response()->json(compact('managers'), 200);
@@ -122,53 +135,50 @@ class TeamsController extends Controller
     public function setCoverageDomain(Request $request)
     {
         $user_id = $request->user_id;
-        $domain_values_array  = json_decode(json_encode($request->domain_values));
-        $domain_ids_array = [];
-        $domain_names_array = [];
-        foreach ($domain_values_array as $domain_value) {
-            $domain_value_array = explode('|', $domain_value);
-            $domain_ids_array[] = $domain_value_array[0];
-            $domain_names_array[] = $domain_value_array[1];
-        }
-        $domain_ids = implode('~', $domain_ids_array);
-        $domain_names = implode(', ', $domain_names_array);
-        $domain_full_details = implode('~', $domain_values_array);
+        $reps_ids_array  = array_unique(json_decode(json_encode($request->reps_ids)));
+        $downlink_ids_array  = array_unique(json_decode(json_encode($request->downlink_ids)));
+        $reps_ids = implode('~', $reps_ids_array);
+        $downlink_ids = implode('~', $downlink_ids_array);
+        $type = $request->type;
+        $team_id = $request->team_id;
+        $report_to = $request->report_to;
         $manager_domain = ManagerDomain::where('user_id', $user_id)->first();
         if (!$manager_domain) {
             $manager_domain = new ManagerDomain();
         }
         $manager_domain->user_id = $user_id;
-        $manager_domain->domain = $request->domain;
-        $manager_domain->domain_ids = $domain_ids;
-        $manager_domain->domain_names = $domain_names;
-        $manager_domain->domain_full_details = $domain_full_details;
+        $manager_domain->reps_ids = $reps_ids;
+        $manager_domain->downlink_ids = $downlink_ids;
+        $manager_domain->type = $type;
+        $manager_domain->team_id = $team_id;
+        $manager_domain->report_to = $report_to;
         $manager_domain->save();
+        $this->populateUplinkReps($manager_domain);
 
         return response()->json([], 200);
     }
+    private function populateUplinkReps($downlink_detail)
+    {
+        $uplink_detail = ManagerDomain::where('downlink_ids', 'LIKE', '%' . $downlink_detail->id . '%')
+            ->orWhere('downlink_ids', 'LIKE', '%' . $downlink_detail->id . '~%')
+            ->orWhere('downlink_ids', 'LIKE', '%~' . $downlink_detail->id . '~%')
+            ->orWhere('downlink_ids', 'LIKE', '%~' . $downlink_detail->id . '%')
+            ->first();
+        if ($uplink_detail) {
+            $updated_reps = addSingleElementToString($uplink_detail->reps_ids, $downlink_detail->reps_ids);
+            $uplink_detail->reps_ids = $updated_reps;
+            $uplink_detail->save();
+            $this->populateUplinkReps($uplink_detail);
+        }
+    }
 
-    // public function fetchManagers()
-    // {
-    //     $userQuery = User::query();
-
-    //     $userQuery->whereHas('roles', function ($q) {
-    //         $q->where('name', 'manager');
-    //     });
-    //     $managers = $userQuery->with('assignedManagerDomains.managerType', 'assignedManagerDomains.managerDomain.country', 'assignedManagerDomains.managerDomain.state', 'assignedManagerDomains.managerDomain.lga.state')->get();
+    public function fetchManagerTypes()
+    {
+        $manager_types = ManagerType::with('downlinks.user')->get();
 
 
-    //     return response()->json(compact('managers'), 200);
-    // }
-
-    // public function fetchManagerTypes()
-    // {
-    //     $manager_types = ManagerType::with([
-    //         'managerDomains.country', 'managerDomains.state', 'managerDomains.lga.state'
-    //     ])->get();
-
-
-    //     return response()->json(compact('manager_types'), 200);
-    // }
+        return response()->json(compact('manager_types'), 200);
+    }
 
     // public function setCoverageDomain(Request $request)
     // {

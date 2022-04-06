@@ -62,16 +62,9 @@ class Controller extends BaseController
         $all_team_member_ids = [];
         $manager_domain = ManagerDomain::where('user_id', $user->id)->first();
         if ($manager_domain) {
-            $domain_ids = $manager_domain->domain_ids;
-            $domain_ids_array = explode('~', $domain_ids);
-            $domain = $manager_domain->domain;
-            $field = $domain . '_id'; // i.e country_id, state_id, lga_id
-            $customers = Customer::groupBy('relating_officer')->whereIn($field, $domain_ids_array)->where('relating_officer', '!=', 1)->get();
-            foreach ($customers as $customer) {
-                $assigned_officer = $customer->assignedOfficer;
-                $all_team_members[] = $assigned_officer;
-                $all_team_member_ids[] = $assigned_officer->id;
-            }
+            $reps_ids = $manager_domain->reps_ids;
+            $all_team_member_ids = explode('~', $reps_ids);
+            $all_team_members = User::whereIn('id', $all_team_member_ids)->get();
         }
         return array($all_team_members, $all_team_member_ids);
     }
@@ -102,15 +95,15 @@ class Controller extends BaseController
         }
         $all_team_members = [];
         $all_team_member_ids = [];
-        $team_members = $user->memberOfTeams;
-        foreach ($team_members as $team_member) {
-            $team_id = $team_member->team_id;
-            $my_members = TeamMember::with('user.customers')->where('team_id', $team_id)->where('user_id', '!=', $user->id)->get();
-            foreach ($my_members as $my_member) {
-                $all_team_members[] = $my_member->user;
-                $all_team_member_ids[] = $my_member->user->id;
-            }
+        $team_member = $user->memberOfTeam;
+        // foreach ($team_members as $team_member) {
+        $team_id = $team_member->team_id;
+        $my_members = TeamMember::with('user.customers')->where('team_id', $team_id)->where('user_id', '!=', $user->id)->get();
+        foreach ($my_members as $my_member) {
+            $all_team_members[] = $my_member->user;
+            $all_team_member_ids[] = $my_member->user->id;
         }
+        // }
         return array($all_team_members, $all_team_member_ids);
     }
 

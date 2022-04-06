@@ -171,6 +171,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         Route::get('/managers', [TeamsController::class, 'fetchManagers']);
         Route::get('/fetch-managers-types', [TeamsController::class, 'fetchManagerTypes']);
+        Route::get('/fetch-reps', [TeamsController::class, 'fetchTeamReps']);
+
 
         Route::post('/manager/set-coverage-domain', [TeamsController::class, 'setCoverageDomain']);
 

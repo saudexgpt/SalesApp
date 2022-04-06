@@ -154,7 +154,7 @@
                 />
               </router-link>
             </el-tooltip> -->
-            <!-- <el-tooltip
+            <el-tooltip
               class="item"
               effect="dark"
               content="Edit Customer"
@@ -167,7 +167,7 @@
                 icon="el-icon-edit"
                 @click="setEditCustomerDetails(scope.row)"
               />
-            </el-tooltip> -->
+            </el-tooltip>
             <!-- <el-tooltip
               class="item"
               effect="dark"

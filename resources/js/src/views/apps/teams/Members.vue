@@ -122,7 +122,7 @@ export default {
         // app.loading = true;
         teamMembersResource.destroy(member.id, param)
           .then(response => {
-            app.team_members = response.team_members;
+            app.fetchMembers();
           // app.loading = false;
           }).catch((error) => {
           // app.loading = false;

@@ -12,10 +12,14 @@ class ManagerDomain extends Model
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
     }
-    // public function managerType()
-    // {
-    //     return $this->belongsTo(ManagerType::class, 'manager_type_id', 'id');
-    // }
+    public function cordinator()
+    {
+        return $this->belongsTo(ManagerType::class, 'report_to', 'slug');
+    }
+    public function team()
+    {
+        return $this->belongsTo(Team::class, 'team_id', 'id');
+    }
     // public function assignedManagerDomain()
     // {
     //     return $this->hasMany(AssignedManagerDomain::class, 'manager_domain_id', 'id');

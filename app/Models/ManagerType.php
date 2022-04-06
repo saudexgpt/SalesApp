@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class ManagerType extends Model
 {
     use HasFactory;
-    public function managerDomains()
+    public function downlinks()
     {
-        return $this->hasMany(ManagerDomain::class, 'manager_type_id', 'id');
+        return $this->hasMany(ManagerDomain::class, 'report_to', 'slug');
     }
     // public function assignedManagerDomain()
     // {

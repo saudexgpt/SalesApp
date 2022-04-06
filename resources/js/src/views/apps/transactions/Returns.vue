@@ -125,9 +125,9 @@ export default {
         },
         pagination: {
           dropdown: true,
-          chunk: 10,
+          chunk: 100,
         },
-        perPage: 25,
+        perPage: 100,
         filterByColumn: true,
         // texts: {
         //   filter: 'Search:',
