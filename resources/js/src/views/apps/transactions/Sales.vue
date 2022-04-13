@@ -181,10 +181,19 @@ export default {
     };
   },
   created() {
+    this.fetchCustomers();
     this.fetchSales();
   },
   methods: {
     moment,
+    fetchCustomers() {
+      const app = this;
+      const customerResource = new Resource('customers/all');
+      customerResource.list()
+        .then(response => {
+          app.customers = response.customers;
+        });
+    },
     format(date) {
       var month = date.toLocaleString('en-US', { month: 'short' });
       return month + ' ' + date.getDate() + ', ' + date.getFullYear();

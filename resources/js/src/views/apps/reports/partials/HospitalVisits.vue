@@ -2,8 +2,8 @@
 
   <div v-loading="load">
     <div slot="header" class="clearfix">
-      <feather-icon svg-classes="w-6 h-6" icon="ShoppingBagIcon" class="mr-2" />
-      <strong class="font-medium text-lg">Returned Products {{ sub_title }}</strong>
+      <feather-icon svg-classes="w-6 h-6" icon="HomeIcon" class="mr-2" />
+      <strong class="font-medium text-lg">Hospital Visits Report {{ sub_title }}</strong>
       <span style="float: right">
         <el-button
           :loading="downloadLoading"
@@ -19,7 +19,7 @@
     <el-row :gutter="10">
       <el-col :lg="12" :md="12" :sm="12" :xs="24">
         <label for="">Select Customer</label>
-        <el-select v-model="form.customer_id" style="width: 100%" @input="fetchReturnedProducts">
+        <el-select v-model="form.customer_id" style="width: 100%" @input="fetchReports">
           <el-option
             label="All"
             value="all" />
@@ -44,32 +44,18 @@
             :future="future"
             @update="setDateRange"
           />
-          <el-button id="pick_date3" slot="reference" type="primary">
+          <el-button id="pick_date6" slot="reference" type="primary">
             <i class="el-icon-date" /> Pick Date Range
           </el-button>
         </el-popover>
       </el-col>
     </el-row>
     <el-row :gutter="10">
-      <v-client-table v-model="returns" :columns="returns_columns" :options="returns_options">
+      <v-client-table v-model="hospital_reports" :columns="hospital_reports_columns" :options="hospital_reports_options">
         <div
-          slot="quantity"
+          slot="follow_up_schedule"
           slot-scope="props"
-        >{{ props.row.quantity + ' ' + props.row.item.package_type }}</div>
-        <div
-          slot="amount"
-          slot-scope="props"
-          class="alert alert-success"
-        >{{ currency + Number(props.row.amount).toLocaleString() }}</div>
-        <div
-          slot="rate"
-          slot-scope="props"
-          class="alert alert-success"
-        >{{ currency + Number(props.row.rate).toLocaleString() }}</div>
-        <div
-          slot="expiry_date"
-          slot-scope="props"
-        >{{ moment(props.row.expiry_date).format('ll') }}</div>
+        >{{ moment(props.row.follow_up_schedule).format('lll') }}</div>
         <div
           slot="created_at"
           slot-scope="props"
@@ -82,7 +68,7 @@
         :total="total"
         :page.sync="form.page"
         :limit.sync="form.limit"
-        @pagination="fetchReturnedProducts"
+        @pagination="fetchReports"
       />
     </el-row>
   </div>
@@ -91,6 +77,7 @@
 import moment from 'moment';
 import Pagination from '@/components/Pagination';
 import Resource from '@/api/resource';
+import checkPermission from '@/utils/permission'; // Permission checking
 export default {
   components: { Pagination },
   props: {
@@ -101,27 +88,21 @@ export default {
   },
   data() {
     return {
-      returns: [],
-      returns_columns: [
+      hospital_reports: [],
+      hospital_reports_columns: [
         'customer.business_name',
-        'item.name',
-        'quantity',
-        'rate',
-        'amount',
-        'batch_no',
-        'expiry_date',
-        'reason',
-        'rep.name', // field staff
+        'marketed_products',
+        'follow_up_schedule',
+        'personnel_contacted',
+        'market_feedback',
+        'daily_report.reporter.name',
         'created_at',
       ],
 
-      returns_options: {
+      hospital_reports_options: {
         headings: {
           'customer.business_name': 'Customer',
-          'item.name': 'Product',
-          'rep.name': 'Field Staff',
-          'created_at': 'Created at',
-          batch_no: 'Batch',
+          'daily_report.reporter.name': 'Relating Officer',
         },
         pagination: {
           dropdown: true,
@@ -133,8 +114,8 @@ export default {
         //   filter: 'Search:',
         // },
         // editableColumns:['name', 'category.name', 'sku'],
-        sortable: ['item.name', 'customer.business_name', 'expiry_date', 'created_at', 'rep.name,'],
-        filterable: ['item.name', 'customer.business_name', 'expiry_date', 'created_at', 'rep.name'],
+        sortable: ['created_at'],
+        filterable: ['customer.business_name'],
       },
       load: false,
       total: 0,
@@ -145,7 +126,7 @@ export default {
         panel: '',
         status: 'pending',
         page: 1,
-        limit: 25,
+        limit: 10,
         customer_id: 'all',
       },
       sub_title: '',
@@ -158,26 +139,18 @@ export default {
     };
   },
   created() {
-    this.fetchReturnedProducts();
-    this.fetchCustomers();
+    this.fetchReports();
   },
   methods: {
     moment,
-    fetchCustomers() {
-      const app = this;
-      const customerResource = new Resource('customers/all');
-      customerResource.list()
-        .then(response => {
-          app.customers = response.customers;
-        });
-    },
+    checkPermission,
     format(date) {
       var month = date.toLocaleString('en-US', { month: 'short' });
       return month + ' ' + date.getDate() + ', ' + date.getFullYear();
     },
     setDateRange(values) {
       const app = this;
-      document.getElementById('pick_date3').click();
+      document.getElementById('pick_date6').click();
       app.show_calendar = false;
       let panel = app.panel;
       let from = app.week_start;
@@ -190,51 +163,46 @@ export default {
       app.form.from = from;
       app.form.to = to;
       app.form.panel = panel;
-      app.fetchReturnedProducts();
+      app.fetchReports();
     },
-    fetchReturnedProducts() {
+    fetchReports() {
       const app = this;
       const { limit, page } = app.form;
-      app.returns_options.perPage = limit;
-      const returnsResource = new Resource('reports/fetch-returned-products');
+      app.hospital_reports_options.perPage = limit;
+      const hospital_reportsResource = new Resource('visits/fetch-hospital-visits');
       const param = app.form;
-      app.load = true;
-      returnsResource.list(param)
+      hospital_reportsResource.list(param)
         .then(response => {
-          app.returns = response.returns.data;
+          app.hospital_reports = response.hospital_reports.data;
           app.currency = response.currency;
           app.sub_title = ' from ' + response.date_from + ' to ' + response.date_to;
-          app.returns.forEach((element, index) => {
+          this.hospital_reports.forEach((element, index) => {
             element['index'] = (page - 1) * limit + index + 1;
           });
-          this.total = response.returns.total;
-          app.load = false;
+          this.total = response.hospital_reports.total;
         });
     },
     handleDownload() {
       this.downloadLoading = true;
       import('@/vendor/Export2Excel').then(excel => {
-        const multiHeader = [['Product Returned ' + this.sub_title, '', '', '', '', '', '', '', '', '']];
+        const multiHeader = [['Collections ' + this.sub_title, '', '', '', '', '', '', '']];
         const tHeader = [
           'CUSTOMER',
-          'PRODUCT',
-          'QUANTITY',
-          'RATE',
-          'AMOUNT',
-          'BATCH NO.',
-          'EXPIRY DATE',
-          'REASON',
-          'FIELD STAFF',
+          'MARKETED PRODUCTS',
+          'FOLLOW-UP SCHEDULE',
+          'PERSONNEL CONTACTED',
+          'FEEDBACK',
+          'RELATING OFFICER',
           'CREATED AT',
         ];
-        const filterVal = this.returns_columns;
-        const list = this.returns;
+        const filterVal = this.hospital_reports_columns;
+        const list = this.hospital_reports;
         const data = this.formatJson(filterVal, list);
         excel.export_json_to_excel({
           multiHeader,
           header: tHeader,
           data,
-          filename: 'Returned Products',
+          filename: 'Hospital Visit Report',
           autoWidth: true,
           bookType: 'csv',
         });
@@ -244,20 +212,14 @@ export default {
     formatJson(filterVal, jsonData) {
       return jsonData.map(v =>
         filterVal.map(j => {
-          if (j === 'expiry_date') {
-            return (v[j]) ? moment(v[j]).format('lll') : '';
-          }
           if (j === 'created_at') {
             return (v[j]) ? moment(v[j]).format('lll') : '';
           }
           if (j === 'customer.business_name') {
             return v['customer']['business_name'];
           }
-          if (j === 'rep.name') {
-            return v['rep']['name'];
-          }
-          if (j === 'quantity') {
-            return v['quantity'] + ' ' + v['item']['package_type'];
+          if (j === 'daily_report.reporter.name') {
+            return v['daily_report']['reporter']['name'];
           }
           return v[j];
         }),

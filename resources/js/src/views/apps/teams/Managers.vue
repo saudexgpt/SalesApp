@@ -175,7 +175,7 @@
             <div v-if="type !=='' && type !== 'asm'">
 
               <el-alert
-                v-if=" downlinks.length < 1"
+                v-if="downlinks.length < 1"
                 :title="'There are no ' + selected_subordinate.toUpperCase() + 's for ' + selected_name"
                 type="error"
                 effect="dark"/>

@@ -10,38 +10,48 @@ const reportsRoutes = {
   },
   children: [
     // //////////////////Settings///////////////////////////
-
     {
       hidden: false,
-      component: () => import('@/views/apps/user/index.vue'),
-      path: '/reports/downloadables',
-      name: 'Downloadables',
-      slug: 'downloadables',
-      i18n: 'Downloadables',
-      meta: {
-        permissions: ['create-users', 'read-users', 'update-users', 'delete-users'],
-      },
+      path: '/reports/inventory',
+      name: 'InventoryReport',
+      slug: 'inventory',
+      i18n: 'Inventory',
+      component: () => import('@/views/apps/reports/Inventory'),
+    //   meta: {
+    //     permissions: ['read-inventories'],
+    //   },
     },
     {
       hidden: false,
-      component: () => import('@/views/pages/ComingSoon.vue'),
-      path: '/reports/analysis',
-      name: 'Analysis',
-      slug: 'analysis',
-      i18n: 'Analysis',
-      meta: {
-        roles: ['admin'],
-      },
+      path: '/reports/visits',
+      name: 'Visits',
+      slug: 'visits',
+      i18n: 'Visits',
+      component: () => import('@/views/apps/reports/Visits'),
+    //   meta: {
+    //     permissions: ['read-inventories'],
+    //   },
     },
     {
       hidden: false,
-      component: () => import('@/views/pages/ComingSoon.vue'),
+      path: '/reports/schedules',
+      name: 'Schedules',
+      slug: 'schedules',
+      i18n: 'Schedules',
+      component: () => import('@/views/apps/reports/Schedules'),
+    //   meta: {
+    //     permissions: ['read-inventories'],
+    //   },
+    },
+    {
+      hidden: false,
+      component: () => import('@/views/apps/Notifications'),
       path: '/reports/audit-trail',
       name: 'AuditTrail',
       slug: 'audit-trail',
       i18n: 'Audit Trail',
       meta: {
-        roles: ['super'],
+        // roles: ['super'],
       },
 
     },

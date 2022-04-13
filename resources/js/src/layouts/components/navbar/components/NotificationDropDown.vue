@@ -116,7 +116,7 @@ export default {
   },
   created() {
     this.fetchUserNotifications();
-    this.listenForChanges;
+    // this.listenForChanges;
   },
   methods: {
     moment,

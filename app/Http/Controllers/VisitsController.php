@@ -15,11 +15,17 @@ class VisitsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
+
         $user = $this->getUser();
         $today = date('Y-m-d', strtotime('now'));
-        $visits = $user->visits()->with('customer', 'visitedBy', 'details.contact')->orderBy('id', 'DESC')->get();
+        if (isset($request->date) && $request->date !== '') {
+            $date = date('Y-m-d', strtotime($request->date));
+            $visits = $user->visits()->with('customer', 'visitedBy', 'details.contact')->orderBy('id', 'DESC')->where('created_at', 'LIKE', '%' . $date . '%')->get();
+        } else {
+            $visits = $user->visits()->with('customer', 'visitedBy', 'details.contact')->orderBy('id', 'DESC')->where('created_at', 'NOT LIKE', '%' . $today . '%')->take(50)->get();
+        }
         $today_visits = $user->visits()->with('customer', 'visitedBy', 'details.contact')
             ->where('created_at', 'LIKE', '%' . $today . '%')->orderBy('id', 'DESC')->get();
         return response()->json(compact('visits', 'today_visits'), 200);
@@ -194,7 +200,7 @@ class VisitsController extends Controller
                 $unsaved_list[] = $unsaved_visit;
             }
         }
-        $visits = $user->visits()->with('customer', 'visitedBy', 'details.contact')->orderBy('id', 'DESC')->take(10)->get();
+        $visits = $user->visits()->with('customer', 'visitedBy', 'details.contact')->orderBy('id', 'DESC')->take(100)->get();
         return response()->json(compact('visits', 'unsaved_list'), 200);
     }
     private function saveVisitDetails($unsaved_visit, $visit)

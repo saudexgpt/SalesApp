@@ -18,19 +18,11 @@
                 <el-button
                   round
                   class="filter-item"
-                  type="default"
+                  type="danger"
                   icon="el-icon-map-location"
                 >Map
                 </el-button>
               </router-link>
-              <el-button
-                :loading="downloading"
-                round
-                class="filter-item"
-                type="primary"
-                icon="el-icon-download"
-                @click="handleDownload"
-              >Export</el-button>
             </span>
           </div>
         </div>
@@ -80,65 +72,77 @@
               @input="handleFilter"
             />
           </el-col>
+          <el-col :xs="24" :sm="12" :md="12">
+
+            <!-- <el-alert type="success">These customers have been verified at least once</el-alert> -->
+            <el-radio-group v-model="query.verify_type" @change="getList()">
+              <el-radio label="all" border>All</el-radio>
+              <el-radio label="verified" border>Verified</el-radio>
+              <el-radio label="unverified" border>Unverified</el-radio>
+            </el-radio-group>
+          </el-col>
         </el-row>
       </div>
-      <!-- <el-alert type="success">These customers have been verified at least once</el-alert> -->
-      <el-radio-group v-model="query.verify_type" @change="getList()">
-        <el-radio label="all" border>All</el-radio>
-        <el-radio label="verified" border>Verified</el-radio>
-        <el-radio label="unverified" border>Unverified</el-radio>
-      </el-radio-group>
-      <v-client-table
-        v-model="list"
-        :columns="columns"
-        :options="options"
-      >
+      <div>
+        <el-button
+          :loading="downloading"
+          round
+          class="filter-item"
+          type="primary"
+          icon="el-icon-download"
+          @click="handleDownload"
+        >Export</el-button>
+        <v-client-table
+          v-model="list"
+          :columns="columns"
+          :options="options"
+        >
 
-        <template slot="assigned_officer.name" slot-scope="props">
-          <el-select
-            v-if="checkPermission(['assign-field-staff'])"
-            v-model="props.row.assigned_officer.id"
-            placeholder="Select Rep"
-            filterable
-            @input="assignOfficer($event, props.row.id)"
-          >
-            <el-option
-              v-for="(rep, index) in sales_reps"
-              :key="index"
-              :label="rep.name"
-              :value="rep.id"
-            />
-          </el-select>
-          <span v-else>{{ props.row.assigned_officer.name }}</span>
-        </template>
-        <template slot="visits" slot-scope="scope">
-          <span>{{ (scope.row.visits.length > 0) ? moment(scope.row.visits[0].visit_date).format('ll') : 'Not visited' }}</span>
-        </template>
-        <template slot="created_at" slot-scope="scope">
-          <span>{{ moment(scope.row.created_at).format('ll') }}</span>
-        </template>
-        <template slot="date_verified" slot-scope="scope">
-          <span>{{ (scope.row.date_verified) ? moment(scope.row.date_verified).format('ll') : '' }}</span>
-        </template>
-        <template slot="action" slot-scope="scope">
-          <span>
-            <el-tooltip
-              class="item"
-              effect="dark"
-              content="View Customer Details"
-              placement="top-start"
+          <template slot="assigned_officer.name" slot-scope="props">
+            <el-select
+              v-if="checkPermission(['assign-field-staff'])"
+              v-model="props.row.assigned_officer.id"
+              placeholder="Select Rep"
+              filterable
+              @input="assignOfficer($event, props.row.id)"
             >
-              <router-link
-                :to="'/customer/details/' + scope.row.id"
+              <el-option
+                v-for="(rep, index) in sales_reps"
+                :key="index"
+                :label="rep.name"
+                :value="rep.id"
+              />
+            </el-select>
+            <span v-else>{{ props.row.assigned_officer.name }}</span>
+          </template>
+          <template slot="visits" slot-scope="scope">
+            <span>{{ (scope.row.visits.length > 0) ? moment(scope.row.visits[0].visit_date).format('ll') : 'Not visited' }}</span>
+          </template>
+          <template slot="created_at" slot-scope="scope">
+            <span>{{ moment(scope.row.created_at).format('ll') }}</span>
+          </template>
+          <template slot="date_verified" slot-scope="scope">
+            <span>{{ (scope.row.date_verified) ? moment(scope.row.date_verified).format('ll') : '' }}</span>
+          </template>
+          <template slot="action" slot-scope="scope">
+            <span>
+              <el-tooltip
+                class="item"
+                effect="dark"
+                content="View Customer Details"
+                placement="top-start"
               >
-                <el-button
-                  circle
-                  type="primary"
-                  icon="el-icon-view"
-                />
-              </router-link>
-            </el-tooltip>
-            <!-- <el-tooltip
+                <router-link
+                  :to="'/customer/details/' + scope.row.id"
+                >
+                  <el-button
+                    circle
+                    type="primary"
+                    icon="el-icon-view"
+                  />
+                </router-link>
+              </el-tooltip>
+              <!-- <el-tooltip
               class="item"
               effect="dark"
               content="View Customer Statement"
@@ -154,21 +158,21 @@
                 />
               </router-link>
             </el-tooltip> -->
-            <el-tooltip
-              class="item"
-              effect="dark"
-              content="Edit Customer"
-              placement="top-start"
-            >
-              <el-button
-                v-permission="['update-customers']"
-                circle
-                type="primary"
-                icon="el-icon-edit"
-                @click="setEditCustomerDetails(scope.row)"
-              />
-            </el-tooltip>
-            <!-- <el-tooltip
+              <el-tooltip
+                class="item"
+                effect="dark"
+                content="Edit Customer"
+                placement="top-start"
+              >
+                <el-button
+                  v-permission="['update-customers']"
+                  circle
+                  type="info"
+                  icon="el-icon-edit"
+                  @click="setEditCustomerDetails(scope.row)"
+                />
+              </el-tooltip>
+              <!-- <el-tooltip
               class="item"
               effect="dark"
               content="Verify Customer"
@@ -183,24 +187,25 @@
                 @click="verifyCustomer(scope.index, scope.row.id, scope.row.business_name)"
               />
             </el-tooltip> -->
-            <el-tooltip
-              class="item"
-              effect="dark"
-              content="Remove Customer"
-              placement="top-start"
-            >
-              <el-button
-                v-permission="['delete-customers']"
-                v-if="scope.row.visits.length < 1"
-                circle
-                type="danger"
-                icon="el-icon-delete"
-                @click="deleteCustomer(scope.index, scope.row.id, scope.row.business_name)"
-              />
-            </el-tooltip>
-          </span>
-        </template>
-      </v-client-table>
+              <el-tooltip
+                class="item"
+                effect="dark"
+                content="Remove Customer"
+                placement="top-start"
+              >
+                <el-button
+                  v-permission="['delete-customers']"
+                  v-if="scope.row.visits.length < 1"
+                  circle
+                  type="danger"
+                  icon="el-icon-delete"
+                  @click="deleteCustomer(scope.index, scope.row.id, scope.row.business_name)"
+                />
+              </el-tooltip>
+            </span>
+          </template>
+        </v-client-table>
+      </div>
       <el-row :gutter="20">
         <pagination
           v-show="total > 0"
@@ -329,14 +334,14 @@ export default {
         'action',
         'business_name',
         'customer_type.name',
-        'address',
-        'area',
+        // 'area',
         'visits',
         'registrar.name',
         'assigned_officer.name',
+        'address',
         // 'verifier.name',
         'created_at',
-        'date_verified',
+        // 'date_verified',
       ],
 
       options: {
@@ -364,8 +369,8 @@ export default {
         //   filter: 'Search:',
         // },
         // editableColumns:['name', 'category.name', 'sku'],
-        sortable: ['business_name', 'customer_type.name', 'area', 'created_at', 'date_verified'],
-        filterable: ['business_name', 'customer_type.name', 'area', 'registrar.name', 'assigned_officer.name'],
+        sortable: ['business_name', 'customer_type.name', 'created_at', 'date_verified'],
+        filterable: ['business_name', 'customer_type.name', 'registrar.name', 'assigned_officer.name'],
       },
       total: 0,
       loading: false,
@@ -558,35 +563,44 @@ export default {
       this.getList();
     },
     handleDownload(){
+      if (confirm('You can only export the current view')) {
+        this.export(this.list);
+      }
       // fetch all data for export
-      this.query.limit = this.total;
-      this.downloading = true;
-      customersResource.list(this.query)
-        .then(response => {
-          this.export(response.data);
+    //   this.query.limit = this.total;
+    //   this.downloading = true;
+    //   customersResource.list(this.query)
+    //     .then(response => {
+    //       this.export(this.customers.data);
 
-          this.downloading = false;
-        });
+    //       this.downloading = false;
+    //     });
     },
     export(export_data) {
       import('@/vendor/Export2Excel').then((excel) => {
         const tHeader = [
-          'name',
-          'email',
-          'phone',
-          'address',
+          'BUSINESS NAME',
+          'TYPE',
+          'ADDRESS',
+          'REGISTERED BY',
+          'FIELD STAFF',
+          'DATE REGISTERED',
+          'LAST VERIFIED DATE',
         ];
         const filterVal = [
-          'name',
-          'email',
-          'phone',
+          'business_name',
+          'customer_type.name',
           'address',
+          'registrar.name',
+          'assigned_officer.name',
+          'created_at',
+          'date_verified',
         ];
         const data = this.formatJson(filterVal, export_data);
         excel.export_json_to_excel({
           header: tHeader,
           data,
-          filename: 'user-list',
+          filename: 'customer-list',
         });
         this.downloading = false;
       });
@@ -594,8 +608,14 @@ export default {
     formatJson(filterVal, jsonData) {
       return jsonData.map((v) =>
         filterVal.map((j) => {
-          if (j === 'role') {
-            return v['roles'].join(', ');
+          if (j === 'customer_type.name') {
+            return v['customer_type']['name'];
+          }
+          if (j === 'registrar.name') {
+            return v['registrar']['name'];
+          }
+          if (j === 'assigned_officer.name') {
+            return v['assigned_officer']['name'];
           }
           return v[j];
         }),

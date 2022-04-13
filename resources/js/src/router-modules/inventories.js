@@ -8,20 +8,9 @@ const inventoryRoutes = {
   slug: 'inventory',
   redirect: '/inventory/view',
   meta: {
-    // roles: ['admin', 'super'],
+    roles: ['sales_rep'],
   },
   children: [
-    {
-      hidden: false,
-      path: '/inventory/view',
-      name: 'ViewInventory',
-      slug: 'view-inventory',
-      i18n: 'View Inventory',
-      component: () => import('@/views/apps/inventories'),
-      meta: {
-        permissions: ['read-inventories'],
-      },
-    },
     {
       hidden: false,
       path: '/my-inventory',

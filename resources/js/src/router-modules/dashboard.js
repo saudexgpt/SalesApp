@@ -7,7 +7,6 @@ const adminRoutes = {
   i18n: 'Dashboard',
   slug: 'dashboard',
   redirect: '/dashboard',
-  roles: ['admin', 'super'],
   children: [
     {
       hidden: true,

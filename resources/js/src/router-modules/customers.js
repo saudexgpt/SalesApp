@@ -7,7 +7,7 @@ const customersRoutes = {
   i18n: 'Customers',
   slug: 'customers',
   redirect: '/customers/index',
-  permissions: ['read-customers'],
+  // permissions: ['read-customers'],
   children: [
     // {
     //   hidden: false,
@@ -18,7 +18,7 @@ const customersRoutes = {
     //   component: () => import('@/views/apps/customers/BulkUpload.vue'),
     // },
     {
-      hidden: false,
+      hidden: true,
       path: '/customers/index',
       name: 'ViewCustomer',
       slug: 'view-customer',
@@ -42,7 +42,7 @@ const customersRoutes = {
     //   component: () => import('@/views/apps/customers/Sample'),
     // },
     {
-      hidden: false,
+      hidden: true,
       component: () => import('@/views/apps/customers/Map'),
       path: '/customers/map',
       name: 'CustomersMap',

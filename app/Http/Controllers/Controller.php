@@ -68,25 +68,25 @@ class Controller extends BaseController
         }
         return array($all_team_members, $all_team_member_ids);
     }
-    public function managersDomain()
-    {
-        $user = $this->getUser();
+    // public function managersDomain()
+    // {
+    //     $user = $this->getUser();
 
-        $field = '';
-        $domain_ids_array = [];
-        $manager_domain = ManagerDomain::where('user_id', $user->id)->first();
-        if ($manager_domain) {
-            $domain_ids = $manager_domain->domain_ids;
-            $domain_ids_array = explode('~', $domain_ids);
-            $domain = $manager_domain->domain;
-            $field = $domain . '_id'; // i.e country_id, state_id, lga_id
-            // $customers = Customer::whereIn($field, $domain_ids_array)->get();
-            // foreach ($variable as $key => $value) {
-            //     # code...
-            // }
-        }
-        return array($field, $domain_ids_array);
-    }
+    //     $field = '';
+    //     $domain_ids_array = [];
+    //     $manager_domain = ManagerDomain::where('user_id', $user->id)->first();
+    //     if ($manager_domain) {
+    //         $domain_ids = $manager_domain->reps_ids;
+    //         $domain_ids_array = explode('~', $domain_ids);
+    //         $domain = $manager_domain->domain;
+    //         $field = $domain . '_id'; // i.e country_id, state_id, lga_id
+    //         // $customers = Customer::whereIn($field, $domain_ids_array)->get();
+    //         // foreach ($variable as $key => $value) {
+    //         //     # code...
+    //         // }
+    //     }
+    //     return array($field, $domain_ids_array);
+    // }
     public function teamMembers()
     {
         $user = $this->getUser();
@@ -208,12 +208,13 @@ class Controller extends BaseController
         // return $user->notify(new AuditTrail($title, $description));
         // send notification to admin at all times
         $users = User::whereHas('roles', function ($query) {
-            $query->where('name', '=', 'super')->orWhere('name', '=', 'admin'); // this is the role id inside of this callback
+            $query->where('name', '=', 'super')
+                ->orWhere('name', '=', 'admin'); // this is the role id inside of this callback
         })->get();
 
-        if ($user != null) {
-            $users = $users->push($user);
-        }
+        // if ($user != null) {
+        //     $users = $users->push($user);
+        // }
         // $others = User::whereHas('roles', function ($query) use ($roles) {
         //     $query->whereIn('name', $roles); // this is the role id inside of this callback
         // })->get();

@@ -11,8 +11,53 @@ const transactionsRoutes = {
   },
   children: [
     // //////////////////transactions///////////////////////////
+
     {
       hidden: false,
+      component: () => import('@/views/apps/transactions/Sales'),
+      path: '/transactions/sales',
+      name: 'Sales',
+      slug: 'sales',
+      i18n: 'Sales',
+      meta: {
+        // permissions: [],
+      },
+    },
+    {
+      hidden: false,
+      component: () => import('@/views/apps/transactions/Payments'),
+      path: '/transactions/collections',
+      name: 'Collections',
+      slug: 'collections',
+      i18n: 'Collections',
+      meta: {
+        // permissions: [],
+      },
+    },
+    {
+      hidden: false,
+      component: () => import('@/views/apps/transactions/Debts'),
+      path: '/transactions/debts',
+      name: 'Debts',
+      slug: 'debts',
+      i18n: 'Debts',
+      meta: {
+        // permissions: [],
+      },
+    },
+    // {
+    //   hidden: false,
+    //   component: () => import('@/views/apps/transactions/Returns'),
+    //   path: '/transactions/returns',
+    //   name: 'Returns',
+    //   slug: 'returns',
+    //   i18n: 'Returns',
+    //   meta: {
+    //     // permissions: [],
+    //   },
+    // },
+    {
+      hidden: true,
       component: () => import('@/views/apps/transactions/index'),
       path: '/transactions/index',
       name: 'AllTransactions',
@@ -22,28 +67,6 @@ const transactionsRoutes = {
         // permissions: [],
       },
     },
-    // {
-    //   hidden: false,
-    //   component: () => import('@/views/apps/transactions/Sales'),
-    //   path: '/transactions/sales',
-    //   name: 'Sales',
-    //   slug: 'sales',
-    //   i18n: 'Sales',
-    //   meta: {
-    //     // permissions: [],
-    //   },
-    // },
-    // {
-    //   hidden: false,
-    //   component: () => import('@/views/apps/transactions/Payments'),
-    //   path: '/transactions/payments',
-    //   name: 'Payments',
-    //   slug: 'payments',
-    //   i18n: 'Payments',
-    //   meta: {
-    //     // permissions: [],
-    //   },
-    // },
   ],
 
 };

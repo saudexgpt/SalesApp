@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
     <div class="block">
-      <legend>Notifications</legend>
+      <legend>Audit Trail Notifications</legend>
       <el-timeline v-loading="listLoading" style="height: 400px; overflow:auto;">
         <el-timeline-item v-for="(activity_log, index) in notifications" :key="index" :timestamp="moment(activity_log.created_at).fromNow()" placement="top">
           <el-card>
