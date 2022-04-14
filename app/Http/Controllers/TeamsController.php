@@ -25,7 +25,7 @@ class TeamsController extends Controller
             $q->where('name', 'sales_rep');
         });
         $team_reps = $userQuery->join('team_members', 'team_members.user_id', 'users.id')
-            ->where('team_id', $team_id)->selectRaw('*', 'team_members.user_id as id')->get();
+            ->where('team_id', $team_id)->select('users.*')->get();
         return response()->json(compact('team_reps'), 200);
     }
     public function store(Request $request)
