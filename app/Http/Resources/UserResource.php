@@ -42,6 +42,7 @@ class UserResource extends JsonResource
             'email' => $this->email,
             'phone' => $this->phone,
             'username' => $this->username,
+            'product_type' => $this->product_type,
             // 'address' => $this->staff->address,
             'notifications' => [],
             // 'activity_logs' => $this->notifications()->orderBy('created_at', 'DESC')->get(),

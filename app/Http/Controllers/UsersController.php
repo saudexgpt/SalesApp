@@ -368,4 +368,10 @@ class UsersController extends Controller
             ->where('created_at', 'LIKE', '%' . $today . '%')->get();
         return response()->json(compact('locations'), 200);
     }
+
+    public function setUserProductDealingType(Request $request, User $user)
+    {
+        $user->product_type = $request->product_type;
+        $user->save();
+    }
 }

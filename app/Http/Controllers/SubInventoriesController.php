@@ -163,7 +163,7 @@ class SubInventoriesController extends Controller
     public function showWarehouseStock()
     {
         $user_id = $this->getUser()->id;
-        $warehouse_stocks = WarehouseStock::with('item')->where('user_id', $user_id)->whereRaw('(quantity_supplied - quantity_approved) > 0')->get();
+        $warehouse_stocks = WarehouseStock::with('item.price')->where('user_id', $user_id)->whereRaw('(quantity_supplied - quantity_approved) > 0')->get();
         return response()->json(compact('warehouse_stocks'), 200);
     }
 
@@ -210,13 +210,13 @@ class SubInventoriesController extends Controller
                 }
             }
         }
-        $inventories = SubInventory::with('item')
+        $inventories = SubInventory::with('item.price')
             ->groupBy('item_id')
             ->where('staff_id', $user->id)
             ->where('balance', '>', 0)
             ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(moved_to_van) as van_quantity'), \DB::raw('SUM(balance) as total_balance'))
             ->get();
-        $sub_inventories = VanInventory::with('item')
+        $sub_inventories = VanInventory::with('item.price')
             ->groupBy('item_id')
             ->where('staff_id', $user->id)
             ->where('balance', '>', 0)

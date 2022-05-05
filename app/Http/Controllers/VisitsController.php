@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\HospitalReport;
+use App\Models\Prescription;
+use App\Models\Schedule;
 use App\Models\Visit;
 use App\Models\VisitDetail;
 use Illuminate\Http\Request;
@@ -22,11 +25,11 @@ class VisitsController extends Controller
         $today = date('Y-m-d', strtotime('now'));
         if (isset($request->date) && $request->date !== '') {
             $date = date('Y-m-d', strtotime($request->date));
-            $visits = $user->visits()->with('customer', 'visitedBy', 'details.contact')->orderBy('id', 'DESC')->where('created_at', 'LIKE', '%' . $date . '%')->get();
+            $visits = $user->visits()->with('customer', 'visitedBy', 'contact', 'details.contact')->orderBy('id', 'DESC')->where('created_at', 'LIKE', '%' . $date . '%')->get();
         } else {
-            $visits = $user->visits()->with('customer', 'visitedBy', 'details.contact')->orderBy('id', 'DESC')->where('created_at', 'NOT LIKE', '%' . $today . '%')->take(50)->get();
+            $visits = $user->visits()->with('customer', 'visitedBy', 'contact', 'details.contact')->orderBy('id', 'DESC')->where('created_at', 'NOT LIKE', '%' . $today . '%')->take(50)->get();
         }
-        $today_visits = $user->visits()->with('customer', 'visitedBy', 'details.contact')
+        $today_visits = $user->visits()->with('customer', 'visitedBy', 'contact', 'details.contact')
             ->where('created_at', 'LIKE', '%' . $today . '%')->orderBy('id', 'DESC')->get();
         return response()->json(compact('visits', 'today_visits'), 200);
     }
@@ -105,28 +108,25 @@ class VisitsController extends Controller
 
         if ($user->hasRole('sales_rep')) {
 
-            $visit_details = VisitDetail::with('visit.visitedBy', 'visit.customer', 'contact')
-                ->join('visits', 'visits.id', 'visit_details.visit_id')
-                ->where('visits.visitor',  $user->id)
-                ->where('visit_details.created_at', '<=',  $date_to)
-                ->where('visit_details.created_at', '>=',  $date_from)
+            $visit_details = Visit::with('visitedBy', 'customer', 'contact', 'details')
+                ->where('visitor',  $user->id)
+                ->where('created_at', '<=',  $date_to)
+                ->where('created_at', '>=',  $date_from)
                 ->where($condition)
                 ->paginate(10);
         } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
             // $sales_reps_ids is in array form
             list($sales_reps, $sales_reps_ids) = $this->teamMembers();
-            $visit_details = VisitDetail::with('visit.visitedBy', 'visit.customer', 'contact')
-                ->join('visits', 'visits.id', 'visit_details.visit_id')
-                ->where('visit_details.created_at', '<=',  $date_to)
-                ->where('visit_details.created_at', '>=',  $date_from)
+            $visit_details = Visit::with('visitedBy', 'customer', 'contact', 'details')
+                ->where('created_at', '<=',  $date_to)
+                ->where('created_at', '>=',  $date_from)
                 ->where($condition)
                 ->whereIn('visits.visitor', $sales_reps_ids)
                 ->paginate(10);
         } else {
-            $visit_details = VisitDetail::with('visit.visitedBy', 'visit.customer', 'contact')
-                ->join('visits', 'visits.id', 'visit_details.visit_id')
-                ->where('visit_details.created_at', '<=',  $date_to)
-                ->where('visit_details.created_at', '>=',  $date_from)
+            $visit_details = Visit::with('visitedBy', 'customer', 'contact', 'details')
+                ->where('created_at', '<=',  $date_to)
+                ->where('created_at', '>=',  $date_from)
                 ->where($condition)
                 ->paginate(10);
         }
@@ -136,6 +136,55 @@ class VisitsController extends Controller
         return response()->json(compact('visit_details', 'currency', 'date_from', 'date_to'), 200);
     }
 
+    // public function fetchGeneralVisits(Request $request)
+    // {
+    //     $user = $this->getUser();
+    //     $date_from = Carbon::now()->startOfQuarter();
+    //     $date_to = Carbon::now()->endOfQuarter();
+    //     $panel = 'quarter';
+    //     $currency = $this->currency();
+    //     if (isset($request->from, $request->to, $request->panel)) {
+    //         $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
+    //         $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
+    //         $panel = $request->panel;
+    //     }
+    //     $condition = [];
+    //     if (isset($request->customer_id) && $request->customer_id != 'all') {
+    //         $condition = ['customer_id' => $request->customer_id];
+    //     }
+
+    //     if ($user->hasRole('sales_rep')) {
+
+    //         $visit_details = VisitDetail::with('visit.visitedBy', 'visit.customer', 'contact')
+    //             ->join('visits', 'visits.id', 'visit_details.visit_id')
+    //             ->where('visits.visitor',  $user->id)
+    //             ->where('visit_details.created_at', '<=',  $date_to)
+    //             ->where('visit_details.created_at', '>=',  $date_from)
+    //             ->where($condition)
+    //             ->paginate(10);
+    //     } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+    //         // $sales_reps_ids is in array form
+    //         list($sales_reps, $sales_reps_ids) = $this->teamMembers();
+    //         $visit_details = VisitDetail::with('visit.visitedBy', 'visit.customer', 'contact')
+    //             ->join('visits', 'visits.id', 'visit_details.visit_id')
+    //             ->where('visit_details.created_at', '<=',  $date_to)
+    //             ->where('visit_details.created_at', '>=',  $date_from)
+    //             ->where($condition)
+    //             ->whereIn('visits.visitor', $sales_reps_ids)
+    //             ->paginate(10);
+    //     } else {
+    //         $visit_details = VisitDetail::with('visit.visitedBy', 'visit.customer', 'contact')
+    //             ->join('visits', 'visits.id', 'visit_details.visit_id')
+    //             ->where('visit_details.created_at', '<=',  $date_to)
+    //             ->where('visit_details.created_at', '>=',  $date_from)
+    //             ->where($condition)
+    //             ->paginate(10);
+    //     }
+
+    //     $date_from = getDateFormatWords($date_from);
+    //     $date_to = getDateFormatWords($date_to);
+    //     return response()->json(compact('visit_details', 'currency', 'date_from', 'date_to'), 200);
+    // }
     public function fetchFootPrints(Request $request)
     {
         $user = $this->getUser();
@@ -173,29 +222,66 @@ class VisitsController extends Controller
         $unsaved_visits = json_decode(json_encode($request->unsaved_visits));
         $visit_list = [];
         $unsaved_list = [];
+
         foreach ($unsaved_visits as $unsaved_visit) {
+
+            $customer_id = $unsaved_visit->customer_id;
+            $customer = Customer::find($customer_id);
             $lat = $unsaved_visit->rep_latitude;
             $long = $unsaved_visit->rep_longitude;
             $visit_date = $unsaved_visit->visit_date;
+            $customer_contact_id = $unsaved_visit->contact_id;
+
+            $purposes = json_decode(json_encode($unsaved_visit->purposes));
+            $purpose = implode(',', $purposes);
+            $visit_type = 'off site';
+            if ($lat != '') {
+
+                $distance = haversineGreatCircleDistanceBetweenTwoPoints(
+                    $customer->latitude,
+                    $customer->longitude,
+                    $lat,
+                    $long,
+                );
+                // we are giving 100 meter allowance
+                if ($distance < 100) {
+                    $visit_type = 'on site';
+                }
+            }
             try {
-                $customer_id = $unsaved_visit->customer_id;
                 $date = ($visit_date) ? date('Y-m-d', strtotime($visit_date)) : date('Y-m-d', strtotime('now'));
                 $visit = Visit::where(['customer_id' => $customer_id, 'visitor' => $user->id, 'visit_date' => $date])->first();
+
                 if (!$visit) {
-                    $str_response = $this->getLocationFromLatLong($lat, $long);
-                    $json = json_decode($str_response);
-                    $formatted_address = $json->{'results'}[0]->{'formatted_address'};
+                    // $str_response = $this->getLocationFromLatLong($lat, $long);
+                    // $json = json_decode($str_response);
+                    // $formatted_address = $json->{'results'}[0]->{'formatted_address'};
                     $visit = new Visit();
                     $visit->customer_id = $customer_id;
                     $visit->visitor = $user->id;
                     $visit->visit_date = $date;
                     $visit->rep_latitude = $lat;
                     $visit->rep_longitude = $long;
-                    $visit->address = $formatted_address;
+                    // $visit->address = $formatted_address;
                     $visit->accuracy = $unsaved_visit->accuracy;
+                    $visit->visiting_partner = (isset($unsaved_visit->visiting_partner)) ? $unsaved_visit->visiting_partner : NULL;
+                    $visit->partner_position = (isset($unsaved_visit->partner_position)) ? $unsaved_visit->partner_position : NULL;
+                    $visit->customer_contact_id = $customer_contact_id;
+                    $visit->visit_type = $visit_type;
+                    $visit->purpose = $purpose;
+                    $visit->description = $unsaved_visit->description;
                     $visit->save();
                 }
-                $this->saveVisitDetails($unsaved_visit, $visit);
+                // $this->saveVisitDetails($unsaved_visit, $visit);
+
+                if (isset($unsaved_visit->hospital_follow_up_schedule) && $unsaved_visit->hospital_follow_up_schedule != null) {
+
+                    $this->saveSchedule($customer_id, $unsaved_visit->hospital_follow_up_schedule);
+                }
+
+                if (isset($unsaved_visit->prescriptions) && !empty($unsaved_visit->prescriptions)) {
+                    $this->savePrescriptions($unsaved_visit, $visit);
+                }
             } catch (\Throwable $th) {
                 $unsaved_list[] = $unsaved_visit;
             }
@@ -203,45 +289,81 @@ class VisitsController extends Controller
         $visits = $user->visits()->with('customer', 'visitedBy', 'details.contact')->orderBy('id', 'DESC')->take(100)->get();
         return response()->json(compact('visits', 'unsaved_list'), 200);
     }
-    private function saveVisitDetails($unsaved_visit, $visit)
+    private function savePrescriptions($unsaved_visit, $visit)
     {
-        $user = $this->getUser();
-        $purposes = json_decode(json_encode($unsaved_visit->purposes));
-        $purpose = implode(',', $purposes);
-        $customer_contact_id = $unsaved_visit->contact_id;
-
-        $visit_type = 'off site';
-        if ($visit->rep_latitude != '') {
-
-            $distance = haversineGreatCircleDistanceBetweenTwoPoints(
-                $visit->customer->latitude,
-                $visit->customer->longitude,
-                $visit->rep_latitude,
-                $visit->rep_longitude,
-            );
-            // we are giving 100 meter allowance
-            if ($distance < 100) {
-                $visit_type = 'on site';
-            }
-        }
-        $purpose = $purpose;
-        $description = $unsaved_visit->description;
-
-        $visit_detail = VisitDetail::where(['visit_id' => $visit->id, 'customer_contact_id' => $customer_contact_id, 'visit_type' => $visit_type, 'purpose' => $purpose, 'description' => $description])->first();
-        if (!$visit_detail) {
-            $visit_detail = new VisitDetail();
-            $visit_detail->visit_id = $visit->id;
-            $visit_detail->customer_contact_id = $customer_contact_id;
-            $visit_detail->visit_type = $visit_type;
-            $visit_detail->purpose = $purpose;
-            $visit_detail->description = $description;
-            $visit_detail->save();
-
-            $title = "New customer visit made";
-            $description = $user->name . " made a new visit to " . $visit->customer->business_name;
-            $this->logUserActivity($title, $description, $user);
+        $new_prescriptions = $unsaved_visit->prescriptions;
+        foreach ($new_prescriptions as $new_prescription) {
+            $prescription = new Prescription();
+            $prescription->visit_id = $visit->id;
+            $prescription->item_id = $new_prescription->product_id;
+            $prescription->quantity = $new_prescription->quantity;
+            $prescription->type = $new_prescription->type;
+            $prescription->save();
         }
     }
+    private function saveSchedule($customer_id, $schedule_date)
+    {
+        $user = $this->getUser();
+
+        $schedule_time = date('H:i:s', strtotime($schedule_date));
+        $schedule_date = date('Y-m-d', strtotime($schedule_date));
+        $rep = $user->id;
+        $note = 'Appointment Schedule';
+        $day = date('l', strtotime($schedule_date)); // returns 'Monday' or 'Tuesday' , etc
+        $day_num = workingDaysStr($day);
+        $schedule = Schedule::where(['customer_id' => $customer_id, 'rep' => $rep, 'schedule_date' => $schedule_date])->first();
+        if (!$schedule) {
+            $schedule = new Schedule();
+            $schedule->day = $day;
+            $schedule->day_num = $day_num;
+            $schedule->schedule_date = $schedule_date;
+            $schedule->schedule_time = $schedule_time;
+            $schedule->customer_id = $customer_id;
+            $schedule->rep = $rep;
+            $schedule->note = $note;
+            $schedule->scheduled_by = $user->id;
+            $schedule->save();
+        }
+    }
+    // private function saveVisitDetails($unsaved_visit, $visit)
+    // {
+    //     $user = $this->getUser();
+    //     $purposes = json_decode(json_encode($unsaved_visit->purposes));
+    //     $purpose = implode(',', $purposes);
+    //     $customer_contact_id = $unsaved_visit->contact_id;
+
+    //     $visit_type = 'off site';
+    //     if ($visit->rep_latitude != '') {
+
+    //         $distance = haversineGreatCircleDistanceBetweenTwoPoints(
+    //             $visit->customer->latitude,
+    //             $visit->customer->longitude,
+    //             $visit->rep_latitude,
+    //             $visit->rep_longitude,
+    //         );
+    //         // we are giving 100 meter allowance
+    //         if ($distance < 100) {
+    //             $visit_type = 'on site';
+    //         }
+    //     }
+    //     $purpose = $purpose;
+    //     $description = $unsaved_visit->description;
+
+    //     $visit_detail = VisitDetail::where(['visit_id' => $visit->id, 'customer_contact_id' => $customer_contact_id, 'visit_type' => $visit_type, 'purpose' => $purpose, 'description' => $description])->first();
+    //     if (!$visit_detail) {
+    //         $visit_detail = new VisitDetail();
+    //         $visit_detail->visit_id = $visit->id;
+    //         $visit_detail->customer_contact_id = $customer_contact_id;
+    //         $visit_detail->visit_type = $visit_type;
+    //         $visit_detail->purpose = $purpose;
+    //         $visit_detail->description = $description;
+    //         $visit_detail->save();
+
+    //         $title = "New customer visit made";
+    //         $description = $user->name . " made a new visit to " . $visit->customer->business_name;
+    //         $this->logUserActivity($title, $description, $user);
+    //     }
+    // }
 
     /**
      * Display the specified resource.

@@ -20,4 +20,12 @@ class Visit extends Model
     {
         return $this->hasMany(VisitDetail::class, 'visit_id', 'id');
     }
+    public function prescriptions()
+    {
+        return $this->hasMany(Prescription::class, 'visit_id', 'id');
+    }
+    public function contact()
+    {
+        return $this->belongsTo(CustomerContact::class, 'customer_contact_id', 'id');
+    }
 }

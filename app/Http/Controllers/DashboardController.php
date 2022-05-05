@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Payment;
 use App\Models\Schedule;
 use App\Models\Transaction;
 use App\Models\Visit;
@@ -29,6 +30,20 @@ class DashboardController extends Controller
 
         $all_overdue = Transaction::where('field_staff', $user->id)->where('payment_status', 'unpaid')->where('due_date', '<=', $today)->select(\DB::raw('SUM(amount_due - amount_paid) as amount_due'))->first();
 
+
+
+        $today_sales = Transaction::where('field_staff', $user->id)
+            ->where('created_at', 'LIKE', '%' . $today . '%')
+            ->select(\DB::raw('SUM(amount_due) as amount_due'))
+            ->first();
+
+        $today_collections = Payment::where('received_by', $user->id)
+            ->where('created_at', 'LIKE', '%' . $today . '%')
+            ->select(\DB::raw('SUM(amount) as amount_paid'))
+            ->first();
+
+        $today_debt = Transaction::where('field_staff', $user->id)->where('payment_status', 'unpaid')->where('due_date', '<=', $today)->select(\DB::raw('SUM(amount_due - amount_paid) as amount_due'))->first();
+
         $overdue = 0;
         $debt = 0;
         $sales = 0;
@@ -51,7 +66,7 @@ class DashboardController extends Controller
             $q->where('day', $day);
         })->get();
 
-        return response()->json(compact('user', 'customers', 'sales', 'debt', 'overdue', 'today_visits', 'currency', /*'today_orders', 'today_visits',*/ 'today_schedule'), 200);
+        return response()->json(compact('user', 'customers', 'sales', 'debt', 'overdue', 'today_visits', 'currency', 'today_sales', 'today_collections', /*'today_orders',*/ 'today_schedule'), 200);
     }
 
     public function managerDashboard()

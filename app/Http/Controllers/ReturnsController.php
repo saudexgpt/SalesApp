@@ -65,4 +65,31 @@ class ReturnsController extends Controller
         $date_to = getDateFormatWords($date_to);
         return response()->json(compact('returns', 'currency', 'date_from', 'date_to'), 200);
     }
+    public function store(Request $request)
+    {
+        $user = $this->getUser();
+        $unsaved_returns = json_decode(json_encode($request->unsaved_returns));
+        foreach ($unsaved_returns as $unsaved_return) {
+            if (isset($unsaved_return->returns) && $unsaved_return->returns !== '') {
+
+                $details = json_decode(json_encode($unsaved_return->returns));
+                foreach ($details as $detail) {
+
+                    $return = new ReturnedProduct();
+                    $return->customer_id = $unsaved_return->customer_id;
+                    $return->item_id = $detail->product_id;
+                    $return->expiry_date = date('Y-m-d', strtotime($detail->expiry_date));
+                    $return->stocked_by = $user->id;
+                    $return->quantity = $detail->quantity_returned;
+                    $return->rate = $detail->rate;
+                    $return->batch_no = $detail->batch_no;
+                    $return->amount = $detail->amount;
+                    $return->reason = $detail->reason;
+                    $return->date = date('Y-m-d', strtotime('now'));
+                    $return->save();
+                }
+            }
+        }
+        return response()->json(['unsaved_list' => [], 'message' => 'success'], 200);
+    }
 }

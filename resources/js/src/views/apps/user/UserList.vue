@@ -63,6 +63,25 @@
         <template slot="role" slot-scope="scope">
           <span :id="scope.row.id">{{ scope.row.roles.join(', ') }}</span>
         </template>
+
+        <template slot="product_dealing" slot-scope="{ row }">
+          <el-select
+            v-if="row.roles.includes('sales_rep')"
+            v-model="row.product_type"
+            class="filter-item"
+            placeholder="Please select product category"
+            @change="setUserProductDealingType(row, $event)"
+          >
+            <el-option
+              label="Mass Moving Products"
+              value="mass_moving_products"
+            />
+            <el-option
+              label="Pharmaceutical Products"
+              value="pharmaceutical_products"
+            />
+          </el-select>
+        </template>
         <template slot="assign_role" slot-scope="{ row }">
           <el-select
             v-if="!row.roles.includes('super')"
@@ -259,6 +278,7 @@ export default {
         'phone',
         'role',
         'assign_role',
+        'product_dealing',
         'action',
       ],
 
@@ -497,6 +517,19 @@ export default {
           return false;
         }
       });
+    },
+
+    setUserProductDealingType(user, type) {
+      const app = this;
+      const setUserProductTypeResource = new Resource('users/set-product-type');
+      setUserProductTypeResource
+        .update(user.id, { product_type: type })
+        .then(() => {
+          app.$message({
+            type: 'success',
+            message: 'Action Successful',
+          });
+        });
     },
     assignUserRole(user, role) {
       this.$confirm(

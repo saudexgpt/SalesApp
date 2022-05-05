@@ -133,6 +133,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     });
     Route::group(['prefix' => 'payments'], function () {
         Route::get('/', [PaymentsController::class, 'index']);
+        Route::post('/store', [PaymentsController::class, 'store']);
         Route::put('/confirm/{payment}', [PaymentsController::class, 'confirm']);
     });
     Route::group(['prefix' => 'products'], function () {
@@ -142,6 +143,9 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     });
     Route::group(['prefix' => 'regions'], function () {
         Route::get('index', [RegionsController::class, 'index']);
+    });
+    Route::group(['prefix' => 'returns'], function () {
+        Route::post('store', [ReturnsController::class, 'store']);
     });
     Route::group(['prefix' => 'sales'], function () {
         Route::get('orders', [TransactionsController::class, 'orders']);
@@ -204,6 +208,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         Route::post('set-current-location', [UsersController::class, 'setCurrentLocation']);
         Route::post('fetch-reps-details', [UsersController::class, 'fetchWarehouseRepDetails']);
+        Route::put('set-product-type/{user}', [UsersController::class, 'setUserProductDealingType']);
     });
     Route::group(['prefix' => 'visits'], function () {
         Route::get('fetch', [VisitsController::class, 'index']);
