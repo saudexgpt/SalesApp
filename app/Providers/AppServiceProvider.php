@@ -28,4 +28,3 @@ class AppServiceProvider extends ServiceProvider
             return base_path() . '/../../sales.3coretechnology.com';
         });
     }
-}
