@@ -170,6 +170,14 @@
                   :label="'(' + team_rep.id + ') ' + team_rep.name"
                 />
               </el-select>
+              <br>
+              <el-button
+                :disabled="manager_details.reps_ids.length < 1"
+                type="primary"
+                @click="submit()"
+              >
+                Submit
+              </el-button>
             </div>
             <br>
             <div v-if="type !=='' && type !== 'asm'">
@@ -200,14 +208,15 @@
                   />
                 </el-select>
               </div>
+              <br>
+              <el-button
+                :disabled="downlinks.length < 1"
+                type="primary"
+                @click="submit()"
+              >
+                Submit
+              </el-button>
             </div>
-            <br>
-            <el-button
-              type="primary"
-              @click="submit()"
-            >
-              Submit
-            </el-button>
           </el-row>
         </div>
       </template>

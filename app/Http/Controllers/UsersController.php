@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\UserResource;
+use App\Models\ManagerDomain;
 use App\Models\Role;
 use App\Models\TeamMember;
 use App\Models\User;

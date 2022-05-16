@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Item;
 use App\Models\ItemPrice;
 use App\Models\ItemTax;
+use App\Models\TeamProduct;
 use App\Models\VanInventory;
 use App\Models\WarehouseStock;
 use Illuminate\Http\Request;
@@ -25,13 +26,26 @@ class ItemsController extends Controller
         return response()->json(compact('items'));
     }
 
+    public function teamProducts()
+    {
+        $user = $this->getUser();
+        $team_member = $user->memberOfTeam;
+        $team_products = [];
+        if ($team_member) {
+            $team_id = $team_member->team_id;
+
+            $team_products = Item::with('price')->join('team_products', 'items.id', 'team_products.item_id')->where('team_products.team_id', $team_id)->orderBy('items.name')->get();
+        }
+        return $team_products;
+    }
+
     public function myProducts()
     {
         //
         $user = $this->getUser();
         $my_products = VanInventory::with(['item.price'])->groupBy('item_id')->where('staff_id', $user->id)->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(sold) as total_sold'), \DB::raw('SUM(balance) as total_balance'))->get();
 
-        $all_products = Item::with(['category', 'price'])->orderBy('name')->get();
+        $all_products = $this->teamProducts(); //Item::with(['category', 'price'])->orderBy('name')->get();
 
         return response()->json(compact('my_products', 'all_products'));
     }
@@ -123,10 +137,25 @@ class ItemsController extends Controller
                 // $description = "$stock->quantity_supplied $item->package_type  of $item->name with Batch No.  $stock->batch_no was sent from warehouse";
                 // $this->logUserActivity($title, $description, $user);
             }
+            // add item to team products
+            $team_member = $user->memberOfTeam;
+            if ($team_member) {
+                $team_id = $team_member->team_id;
+                $this->addTeamroducts($team_id, $item->id);
+            }
         }
     }
 
-
+    private function addTeamroducts($team_id, $item_id)
+    {
+        $team_product = TeamProduct::where(['team_id' => $team_id, 'item_id' => $item_id])->first();
+        if (!$team_product) {
+            $team_product = new TeamProduct();
+            $team_product->team_id = $team_id;
+            $team_product->item_id = $item_id;
+            $team_product->save();
+        }
+    }
     /**
      * Display the specified resource.
      *

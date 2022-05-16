@@ -386,7 +386,8 @@ class TransactionsController extends Controller
             }
 
             $transaction_detail->save();
-            $this->deductFromVanInventory($item_id, $quantity_for_supply);
+            $van_inventory_obj = new VanInventory();
+            $van_inventory_obj->deductFromVanInventory($item_id, $quantity_for_supply);
 
             $title = "Product Supplied";
             $description = $user->name . " supplied $quantity $packaging of $product to $customer->business_name";
@@ -411,27 +412,7 @@ class TransactionsController extends Controller
         $balance = VanInventory::where(['staff_id' => $user->id, 'item_id' => $item_id])->sum('balance');
         return $balance;
     }
-    private function deductFromVanInventory($item_id, $quantity)
-    {
-        $user = $this->getUser();
-        $van_inventories = VanInventory::where(['staff_id' => $user->id, 'item_id' => $item_id])->where('balance', '>', 0)->get();
-        $to_supply = $quantity;
-        foreach ($van_inventories as $van_inventory) {
-            $stock_balance = $van_inventory->balance;
-            if ($to_supply <= $stock_balance) {
-                $van_inventory->sold += $to_supply;
-                $van_inventory->balance -= $to_supply;
-                $van_inventory->save();
-                $to_supply = 0;
-                break;
-            } else {
-                $van_inventory->sold += $stock_balance;
-                $van_inventory->balance = 0;
-                $van_inventory->save();
-                $to_supply -= $stock_balance;
-            }
-        }
-    }
+
 
     public function customerStatement(Request $request)
     {

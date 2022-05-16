@@ -6,7 +6,7 @@ const reportsRoutes = {
   icon: 'BarChart2Icon',
   i18n: 'Reports',
   meta: {
-    roles: ['super', 'admin'],
+    roles: ['super', 'admin', 'manager'],
   },
   children: [
     // //////////////////Settings///////////////////////////
@@ -32,6 +32,17 @@ const reportsRoutes = {
     //     permissions: ['read-inventories'],
     //   },
     },
+    // {
+    //   hidden: false,
+    //   path: '/reports/footprints',
+    //   name: 'FootPrints',
+    //   slug: 'foot-prints',
+    //   i18n: 'FootPrints',
+    //   component: () => import('@/views/apps/reports/FootPrints'),
+    // //   meta: {
+    // //     permissions: ['read-inventories'],
+    // //   },
+    // },
     {
       hidden: false,
       path: '/reports/schedules',

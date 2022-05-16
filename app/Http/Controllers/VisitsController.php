@@ -3,16 +3,33 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\CustomerProductSample;
+use App\Models\CustomerStockBalance;
 use App\Models\HospitalReport;
 use App\Models\Prescription;
 use App\Models\Schedule;
+use App\Models\VanInventory;
 use App\Models\Visit;
 use App\Models\VisitDetail;
+use App\Models\VisitDetailedProduct;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class VisitsController extends Controller
 {
+    // public function test()
+    // {
+    //     $x = 3;
+    //     $y = $this->foo($x);
+
+    //     return $x . $y;
+    // }
+    // private function foo(&$args)
+    // {
+    //     $z = $args;
+    //     $args += 1;
+    //     return $z;
+    // }
     /**
      * Display a listing of the resource.
      *
@@ -25,11 +42,11 @@ class VisitsController extends Controller
         $today = date('Y-m-d', strtotime('now'));
         if (isset($request->date) && $request->date !== '') {
             $date = date('Y-m-d', strtotime($request->date));
-            $visits = $user->visits()->with('customer', 'visitedBy', 'contact', 'details.contact')->orderBy('id', 'DESC')->where('created_at', 'LIKE', '%' . $date . '%')->get();
+            $visits = $user->visits()->with('customer', 'visitedBy', 'contact', 'details.contact', 'detailings', 'customerStockBalances', 'customerSamples')->orderBy('id', 'DESC')->where('created_at', 'LIKE', '%' . $date . '%')->get();
         } else {
-            $visits = $user->visits()->with('customer', 'visitedBy', 'contact', 'details.contact')->orderBy('id', 'DESC')->where('created_at', 'NOT LIKE', '%' . $today . '%')->take(50)->get();
+            $visits = $user->visits()->with('customer', 'visitedBy', 'contact', 'details.contact', 'detailings', 'customerStockBalances', 'customerSamples')->orderBy('id', 'DESC')->where('created_at', 'NOT LIKE', '%' . $today . '%')->take(50)->get();
         }
-        $today_visits = $user->visits()->with('customer', 'visitedBy', 'contact', 'details.contact')
+        $today_visits = $user->visits()->with('customer', 'visitedBy', 'contact', 'details.contact', 'detailings', 'customerStockBalances', 'customerSamples')
             ->where('created_at', 'LIKE', '%' . $today . '%')->orderBy('id', 'DESC')->get();
         return response()->json(compact('visits', 'today_visits'), 200);
     }
@@ -103,12 +120,15 @@ class VisitsController extends Controller
         }
         $condition = [];
         if (isset($request->customer_id) && $request->customer_id != 'all') {
-            $condition = ['customer_id' => $request->customer_id];
+            $condition['customer_id'] = $request->customer_id;
+        }
+        if (isset($request->rep_id) && $request->rep_id != 'all') {
+            $condition['visitor'] = $request->rep_id;
         }
 
         if ($user->hasRole('sales_rep')) {
 
-            $visit_details = Visit::with('visitedBy', 'customer', 'contact', 'details')
+            $visits = Visit::with('visitedBy', 'visitPartner', 'customer', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
                 ->where('visitor',  $user->id)
                 ->where('created_at', '<=',  $date_to)
                 ->where('created_at', '>=',  $date_from)
@@ -117,14 +137,14 @@ class VisitsController extends Controller
         } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
             // $sales_reps_ids is in array form
             list($sales_reps, $sales_reps_ids) = $this->teamMembers();
-            $visit_details = Visit::with('visitedBy', 'customer', 'contact', 'details')
+            $visits = Visit::with('visitedBy', 'visitPartner', 'customer', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
                 ->where('created_at', '<=',  $date_to)
                 ->where('created_at', '>=',  $date_from)
                 ->where($condition)
                 ->whereIn('visits.visitor', $sales_reps_ids)
                 ->paginate(10);
         } else {
-            $visit_details = Visit::with('visitedBy', 'customer', 'contact', 'details')
+            $visits = Visit::with('visitedBy', 'visitPartner', 'customer', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
                 ->where('created_at', '<=',  $date_to)
                 ->where('created_at', '>=',  $date_from)
                 ->where($condition)
@@ -133,7 +153,7 @@ class VisitsController extends Controller
 
         $date_from = getDateFormatWords($date_from);
         $date_to = getDateFormatWords($date_to);
-        return response()->json(compact('visit_details', 'currency', 'date_from', 'date_to'), 200);
+        return response()->json(compact('visits', 'currency', 'date_from', 'date_to'), 200);
     }
 
     // public function fetchGeneralVisits(Request $request)
@@ -264,12 +284,13 @@ class VisitsController extends Controller
                     $visit->rep_longitude = $long;
                     // $visit->address = $formatted_address;
                     $visit->accuracy = $unsaved_visit->accuracy;
-                    $visit->visiting_partner = (isset($unsaved_visit->visiting_partner)) ? $unsaved_visit->visiting_partner : NULL;
-                    $visit->partner_position = (isset($unsaved_visit->partner_position)) ? $unsaved_visit->partner_position : NULL;
+                    $visit->visiting_partner_id = (isset($unsaved_visit->visiting_partner_id)) ? $unsaved_visit->visiting_partner_id : NULL;
                     $visit->customer_contact_id = $customer_contact_id;
                     $visit->visit_type = $visit_type;
                     $visit->purpose = $purpose;
                     $visit->description = $unsaved_visit->description;
+                    $visit->visit_duration = $unsaved_visit->visit_duration;
+                    $visit->next_appointment_date = date('Y-m-d H:i:s', strtotime($unsaved_visit->hospital_follow_up_schedule));
                     $visit->save();
                 }
                 // $this->saveVisitDetails($unsaved_visit, $visit);
@@ -282,12 +303,67 @@ class VisitsController extends Controller
                 if (isset($unsaved_visit->prescriptions) && !empty($unsaved_visit->prescriptions)) {
                     $this->savePrescriptions($unsaved_visit, $visit);
                 }
+                if (isset($unsaved_visit->detailed_products) && !empty($unsaved_visit->detailed_products)) {
+                    $this->saveDetailedProducts($unsaved_visit, $visit);
+                }
+                if (isset($unsaved_visit->stock_balances) && !empty($unsaved_visit->stock_balances)) {
+                    $this->saveStockBalances($unsaved_visit, $visit);
+                }
+                if (isset($unsaved_visit->samples) && !empty($unsaved_visit->samples)) {
+                    $this->saveSamples($unsaved_visit, $visit);
+                }
             } catch (\Throwable $th) {
                 $unsaved_list[] = $unsaved_visit;
             }
         }
         $visits = $user->visits()->with('customer', 'visitedBy', 'details.contact')->orderBy('id', 'DESC')->take(100)->get();
         return response()->json(compact('visits', 'unsaved_list'), 200);
+    }
+    private function saveDetailedProducts($unsaved_visit, $visit)
+    {
+        $detailed_products = $unsaved_visit->detailed_products;
+        foreach ($detailed_products as $detailed_product) {
+            $detailing = new VisitDetailedProduct();
+            $detailing->visit_id = $visit->id;
+            $detailing->customer_id = $visit->customer_id;
+            $detailing->product_id = $detailed_product->product_id;
+            $detailing->ratings = $detailed_product->ratings;
+            $detailing->save();
+        }
+    }
+    private function saveStockBalances($unsaved_visit, $visit)
+    {
+        $stock_balances = $unsaved_visit->stock_balances;
+        foreach ($stock_balances as $stock_balance) {
+            $new_stock = new CustomerStockBalance();
+            $new_stock->visit_id = $visit->id;
+            $new_stock->customer_id = $visit->customer_id;
+            $new_stock->product_id = $stock_balance->product_id;
+            $new_stock->quantity = $stock_balance->quantity;
+            $new_stock->save();
+        }
+    }
+    private function saveSamples($unsaved_visit, $visit)
+    {
+        $samples = $unsaved_visit->samples;
+        foreach ($samples as $sample) {
+            $new_sample = new CustomerProductSample();
+            $new_sample->visit_id = $visit->id;
+            $new_sample->customer_id = $visit->customer_id;
+            $new_sample->product_id = $sample->product_id;
+            $new_sample->quantity = $sample->quantity;
+            $new_sample->rate = $sample->rate;
+            $new_sample->packaging = $sample->type;
+            $new_sample->batch_no = $sample->batch_no;
+            $new_sample->expiry_date = $sample->expiry_date;
+            $new_sample->amount = $sample->amount;
+            $new_sample->save();
+            if ($new_sample->save()) {
+
+                $van_inventory_obj = new VanInventory();
+                $van_inventory_obj->deductFromVanInventory($new_sample->product_id, $new_sample->quantity);
+            }
+        }
     }
     private function savePrescriptions($unsaved_visit, $visit)
     {

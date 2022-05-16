@@ -3,7 +3,7 @@
   <div v-loading="load">
     <div slot="header" class="clearfix">
       <feather-icon svg-classes="w-6 h-6" icon="UsersIcon" class="mr-2" />
-      <strong class="font-medium text-lg">General Customer Visits Report {{ sub_title }}</strong>
+      <strong class="font-medium text-lg">Customer Visits Report {{ sub_title }}</strong>
       <span style="float: right">
         <el-button
           :loading="downloadLoading"
@@ -19,7 +19,7 @@
     <el-row :gutter="10">
       <el-col :lg="12" :md="12" :sm="12" :xs="24">
         <label for="">Select Customer</label>
-        <el-select v-model="form.customer_id" style="width: 100%" @input="fetchGeneralVisitReports">
+        <el-select v-model="form.customer_id" filterable style="width: 100%" @input="fetchVisitReports">
           <el-option
             label="All"
             value="all" />
@@ -51,7 +51,7 @@
       </el-col>
     </el-row>
     <el-row :gutter="10">
-      <v-client-table v-model="visit_details" :columns="visit_details_columns" :options="visit_details_options">
+      <v-client-table v-model="visits" :columns="visits_columns" :options="visits_options">
         <div
           slot="created_at"
           slot-scope="props"
@@ -64,7 +64,7 @@
         :total="total"
         :page.sync="form.page"
         :limit.sync="form.limit"
-        @pagination="fetchGeneralVisitReports"
+        @pagination="fetchVisitReports"
       />
     </el-row>
   </div>
@@ -84,8 +84,8 @@ export default {
   },
   data() {
     return {
-      visit_details: [],
-      visit_details_columns: [
+      visits: [],
+      visits_columns: [
         'visit.customer.business_name',
         'contact.name',
         'visit_type',
@@ -95,7 +95,7 @@ export default {
         'created_at',
       ],
 
-      visit_details_options: {
+      visits_options: {
         headings: {
           'visit.customer.business_name': 'Customer',
           'contact.name': 'Personnel Contacted',
@@ -136,7 +136,7 @@ export default {
     };
   },
   created() {
-    this.fetchGeneralVisitReports();
+    this.fetchVisitReports();
   },
   methods: {
     moment,
@@ -160,23 +160,23 @@ export default {
       app.form.from = from;
       app.form.to = to;
       app.form.panel = panel;
-      app.fetchGeneralVisitReports();
+      app.fetchVisitReports();
     },
-    fetchGeneralVisitReports() {
+    fetchVisitReports() {
       const app = this;
       const { limit, page } = app.form;
-      app.visit_details_options.perPage = limit;
-      const visit_detailsResource = new Resource('visits/fetch-general-visits');
+      app.visits_options.perPage = limit;
+      const visitsResource = new Resource('visits/fetch-general-visits');
       const param = app.form;
-      visit_detailsResource.list(param)
+      visitsResource.list(param)
         .then(response => {
-          app.visit_details = response.visit_details.data;
+          app.visits = response.visits.data;
           app.currency = response.currency;
           app.sub_title = ' from ' + response.date_from + ' to ' + response.date_to;
-          this.visit_details.forEach((element, index) => {
+          this.visits.forEach((element, index) => {
             element['index'] = (page - 1) * limit + index + 1;
           });
-          this.total = response.visit_details.total;
+          this.total = response.visits.total;
         });
     },
     handleDownload() {
@@ -192,8 +192,8 @@ export default {
           'RELATING OFFICER',
           'CREATED AT',
         ];
-        const filterVal = this.visit_details_columns;
-        const list = this.visit_details;
+        const filterVal = this.visits_columns;
+        const list = this.visits;
         const data = this.formatJson(filterVal, list);
         excel.export_json_to_excel({
           multiHeader,

@@ -211,6 +211,12 @@ class CustomersController extends Controller
             return response()->json(compact('customers'), 200);
         }
     }
+    public function repCustomers(Request $request)
+    {
+        $rep_id = $request->rep_id;
+        $customers = Customer::where(['relating_officer' => $rep_id])->get();
+        return response()->json(compact('customers'), 200);
+    }
 
     // public function schedules(Customer $customer)
     // {
@@ -481,6 +487,8 @@ class CustomersController extends Controller
                 $new_contact->phone1 = $contact->phone1;
                 $new_contact->phone2 = $contact->phone2;
                 $new_contact->role = $contact->role;
+                $new_contact->dob = date('Y-m-d', strtotime($contact->dob));
+                $new_contact->gender = $contact->gender;
                 $new_contact->save();
             }
         }

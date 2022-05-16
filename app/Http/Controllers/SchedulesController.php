@@ -16,7 +16,37 @@ class SchedulesController extends Controller
     {
         $user = $this->getUser();
         $today = date('Y-m-d', strtotime('now'));
-        $schedules = Schedule::with(['scheduledBy', 'rep', 'customer'])->where('schedule_date', '>=', $today)->orWhere('repeat_schedule', 'yes')->where('rep', $user->id)->orderBy('day_num')->get()->groupBy('day');
+        $schedules = Schedule::with(['scheduledBy', 'rep', 'customer'])
+            ->where(function ($q) use ($today) {
+                $q->where('schedule_date', '>=', $today);
+                $q->orWhere('repeat_schedule', 'yes');
+            })
+            ->where('rep', $user->id)->orderBy('day_num')->get()->groupBy('day');
+        return response()->json(compact('schedules'), 200);
+    }
+
+    public function fetchRepsSchedules(Request $request)
+    {
+        $today = date('Y-m-d', strtotime('now'));
+        if (isset($request->rep_id) && $request->rep_id !== 'all') {
+
+            $schedules = Schedule::with(['scheduledBy', 'rep', 'customer'])
+                ->where(function ($q) use ($today) {
+                    $q->where('schedule_date', '>=', $today);
+                    $q->orWhere('repeat_schedule', 'yes');
+                })
+                ->where('rep', $request->rep_id)
+                ->orderBy('day_num')
+                ->get();
+        } else {
+            $schedules = Schedule::with(['scheduledBy', 'rep', 'customer'])
+                ->where(function ($q) use ($today) {
+                    $q->where('schedule_date', '>=', $today);
+                    $q->orWhere('repeat_schedule', 'yes');
+                })
+                ->orderBy('day_num')
+                ->get();
+        }
         return response()->json(compact('schedules'), 200);
     }
 
