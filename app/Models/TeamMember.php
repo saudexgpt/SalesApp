@@ -16,4 +16,8 @@ class TeamMember extends Model
     {
         return $this->belongsTo(User::class);
     }
+    public function products()
+    {
+        return $this->hasManyThrough(Item::class, Team::class);
+    }
 }

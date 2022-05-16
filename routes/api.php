@@ -36,6 +36,10 @@ use App\Http\Controllers\TeamsController;
 
 
 Route::get('change-to-base64', [CustomersController::class, 'changeToBase64']);
+// Route::get('test', [VisitsController::class, 'test']);
+
+Route::get('contact-specialties', [Controller::class, 'contactSpecialties']);
+
 Route::group(['prefix' => 'auth'], function () {
     Route::post('login', [AuthController::class, 'login']);
     Route::post('register', [AuthController::class, 'register'])->middleware('permission:create-users');
@@ -90,6 +94,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('details/{customer}', [CustomersController::class, 'customerDetails']);
 
         Route::get('fetch', [CustomersController::class, 'myCustomers'])->middleware('permission:read-customers');
+        Route::get('rep-customers', [CustomersController::class, 'repCustomers']);
+
         Route::put('verify/{customer}', [CustomersController::class, 'verify'])->middleware('permission:verify-customers');
         Route::put('confirm/{customer}', [CustomersController::class, 'confirmCustomer'])->middleware('permission:confirm-customers');
 
@@ -160,6 +166,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     });
     Route::group(['prefix' => 'schedules'], function () {
         Route::get('fetch', [SchedulesController::class, 'index']);
+        Route::get('fetch-reps', [SchedulesController::class, 'fetchRepsSchedules']);
+
         Route::post('store', [SchedulesController::class, 'store']); //->middleware('permission:create-sales');
     });
     Route::group(['prefix' => 'teams'], function () {
@@ -179,6 +187,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
 
         Route::post('/manager/set-coverage-domain', [TeamsController::class, 'setCoverageDomain']);
+
+        Route::get('rep-managers', [TeamsController::class, 'repsManagers']);
 
         // Route::post('/add-members', [TeamsController::class, 'addMembers']);
         // Route::delete('/remove-member/{team_member}', [TeamsController::class, 'removeMember']);
@@ -213,7 +223,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix' => 'visits'], function () {
         Route::get('fetch', [VisitsController::class, 'index']);
         Route::post('store', [VisitsController::class, 'store']);
-        Route::get('fetch-hospital-visits', [VisitsController::class, 'fetchHospitalVisits']);
+        // Route::get('fetch-hospital-visits', [VisitsController::class, 'fetchHospitalVisits']);
         Route::get('fetch-general-visits', [VisitsController::class, 'fetchGeneralVisits']);
         Route::get('fetch-footprints', [VisitsController::class, 'fetchFootPrints']);
     });

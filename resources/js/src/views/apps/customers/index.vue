@@ -125,84 +125,72 @@
             <span>{{ (scope.row.date_verified) ? moment(scope.row.date_verified).format('ll') : '' }}</span>
           </template>
           <template slot="action" slot-scope="scope">
-            <span>
-              <el-tooltip
-                class="item"
-                effect="dark"
-                content="View Customer Details"
-                placement="top-start"
-              >
-                <router-link
-                  :to="'/customer/details/' + scope.row.id"
+            <el-dropdown>
+              <el-button type="primary">
+                Action<i class="el-icon-arrow-down el-icon--right"/>
+              </el-button>
+              <el-dropdown-menu slot="dropdown">
+                <el-dropdown-item>
+                  <router-link
+                    :to="'/customer/details/' + scope.row.id"
+                  >
+                    <el-button
+                      icon="el-icon-document"
+                    >
+                      View Details
+                    </el-button>
+                  </router-link>
+                </el-dropdown-item>
+                <el-dropdown-item
+                  v-permission="['update-customers']"
+                  divided
+                >
+
+                  <el-button
+                    icon="el-icon-edit"
+                    @click="setEditCustomerDetails(scope.row)"
+                  >
+                    Edit Customer
+                  </el-button>
+                </el-dropdown-item>
+                <el-dropdown-item divided>
+                  <router-link
+                    :to="'/report/customer-statement/' + scope.row.id"
+                  >
+                    <el-button
+                      icon="el-icon-document"
+                    >
+                      View Statement
+                    </el-button>
+                  </router-link>
+                </el-dropdown-item>
+                <el-dropdown-item
+                  v-permission="['verify-customers']"
+                  v-if="scope.row.date_verified === null"
+                  divided
+                >
+
+                  <el-button
+                    icon="el-icon-check"
+                    @click="verifyCustomer(scope.index, scope.row.id, scope.row.business_name)"
+                  >
+                    Verify Customer
+                  </el-button>
+                </el-dropdown-item>
+                <el-dropdown-item
+                  v-permission="['delete-customers']"
+                  v-if="scope.row.date_verified === null"
+                  divided
                 >
                   <el-button
-                    circle
-                    type="primary"
-                    icon="el-icon-view"
-                  />
-                </router-link>
-              </el-tooltip>
-              <!-- <el-tooltip
-              class="item"
-              effect="dark"
-              content="View Customer Statement"
-              placement="top-start"
-            >
-              <router-link
-                :to="'/report/customer-statement/' + scope.row.id"
-              >
-                <el-button
-                  circle
-                  type="warning"
-                  icon="el-icon-document"
-                />
-              </router-link>
-            </el-tooltip> -->
-              <el-tooltip
-                class="item"
-                effect="dark"
-                content="Edit Customer"
-                placement="top-start"
-              >
-                <el-button
-                  v-permission="['update-customers']"
-                  circle
-                  type="info"
-                  icon="el-icon-edit"
-                  @click="setEditCustomerDetails(scope.row)"
-                />
-              </el-tooltip>
-              <!-- <el-tooltip
-              class="item"
-              effect="dark"
-              content="Verify Customer"
-              placement="top-start"
-            >
-              <el-button
-                v-permission="['verify-customers']"
-                v-if="scope.row.date_verified === null"
-                circle
-                type="success"
-                icon="el-icon-check"
-                @click="verifyCustomer(scope.index, scope.row.id, scope.row.business_name)"
-              />
-            </el-tooltip> -->
-              <el-tooltip
-                class="item"
-                effect="dark"
-                content="Remove Customer"
-                placement="top-start"
-              >
-                <el-button
-                  v-permission="['delete-customers']"
-                  v-if="scope.row.visits.length < 1"
-                  circle
-                  type="danger"
-                  icon="el-icon-delete"
-                  @click="deleteCustomer(scope.index, scope.row.id, scope.row.business_name)"
-                />
-              </el-tooltip>
-            </span>
+                    icon="el-icon-delete"
+                    @click="deleteCustomer(scope.index, scope.row.id, scope.row.business_name)"
+                  >
+                    Remove Customer
+                  </el-button>
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </el-dropdown>
           </template>
         </v-client-table>
       </div>

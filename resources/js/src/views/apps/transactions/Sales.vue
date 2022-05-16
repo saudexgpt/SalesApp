@@ -1,25 +1,33 @@
 <template>
-
-  <div v-loading="load">
-    <div slot="header" class="clearfix">
-      <feather-icon svg-classes="w-6 h-6" icon="ShoppingBagIcon" class="mr-2" />
-      <strong class="font-medium text-lg">Sales {{ sub_title }}</strong>
-      <span style="float: right">
-        <el-button
-          :loading="downloadLoading"
-          round
-          style="margin:0 0 20px 20px;"
-          type="success"
-          icon="el-icon-download"
-          size="small"
-          @click="handleDownload"
-        >Export Excel</el-button>
-      </span>
+  <vx-card v-loading="load">
+    <div class="vx-row">
+      <div class="vx-col lg:w-3/4 w-full">
+        <div class="flex items-end px-3">
+          <feather-icon svg-classes="w-6 h-6" icon="ShoppingBagIcon" class="mr-2" />
+          <span class="font-medium text-lg">Sales {{ sub_title }}</span>
+        </div>
+        <vs-divider />
+      </div>
+      <div class="vx-col lg:w-1/4 w-full">
+        <div class="flex items-end px-3">
+          <span class="pull-right">
+            <el-button
+              :loading="downloadLoading"
+              round
+              style="margin:0 0 20px 20px;"
+              type="success"
+              icon="el-icon-download"
+              size="small"
+              @click="handleDownload"
+            >Export Excel</el-button>
+          </span>
+        </div>
+      </div>
     </div>
     <el-row :gutter="10">
       <el-col :lg="12" :md="12" :sm="12" :xs="24">
         <label for="">Select Customer</label>
-        <el-select v-model="form.customer_id" style="width: 100%" @input="fetchSales">
+        <el-select v-model="form.customer_id" filterable style="width: 100%" @input="fetchSales">
           <el-option
             label="All"
             value="all" />
@@ -100,7 +108,7 @@
         @pagination="fetchSales"
       />
     </el-row>
-  </div>
+  </vx-card>
 </template>
 <script>
 import moment from 'moment';
@@ -108,12 +116,6 @@ import Pagination from '@/components/Pagination';
 import Resource from '@/api/resource';
 export default {
   components: { Pagination },
-  props: {
-    customers: {
-      type: Array,
-      default: () => [],
-    },
-  },
   data() {
     return {
       sales: [],
@@ -178,6 +180,7 @@ export default {
       panels: ['range', 'week', 'month', 'quarter', 'year'],
       show_calendar: false,
       downloadLoading: false,
+      customers: [],
     };
   },
   created() {

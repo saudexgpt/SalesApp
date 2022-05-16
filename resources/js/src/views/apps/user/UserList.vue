@@ -73,8 +73,8 @@
             @change="setUserProductDealingType(row, $event)"
           >
             <el-option
-              label="Mass Moving Products"
-              value="mass_moving_products"
+              label="Fast Moving Products"
+              value="fast_moving_products"
             />
             <el-option
               label="Pharmaceutical Products"

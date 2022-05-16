@@ -132,6 +132,22 @@ class TeamsController extends Controller
         return response()->json(compact('managers'), 200);
     }
 
+    public function repsManagers()
+    {
+        $user = $this->getUser();
+        $user_id = $user->id;
+        $managerQuery = ManagerDomain::query();
+        $managerQuery->where(function ($q) use ($user_id) {
+            $q->where('reps_ids', 'LIKE', '%' . $user_id . '%');
+            $q->orWhere('reps_ids', 'LIKE', '%' . $user_id . '~%');
+            $q->orWhere('reps_ids', 'LIKE', '%~' . $user_id . '~%');
+            $q->orWhere('reps_ids', 'LIKE', '%~' . $user_id . '%');
+        });
+        $managers = $managerQuery->with('user')->get();
+
+        return response()->json(compact('managers'), 200);
+    }
+
     public function setCoverageDomain(Request $request)
     {
         $user_id = $request->user_id;

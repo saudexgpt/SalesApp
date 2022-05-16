@@ -5,11 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class SampleCustomer extends Model
+class TeamProduct extends Model
 {
     use HasFactory;
+    public function team()
+    {
+        return $this->belongsTo(Team::class);
+    }
     public function item()
     {
-        return $this->belongsTo(Item::class, 'product_id', 'id');
+        return $this->belongsTo(Item::class);
     }
 }

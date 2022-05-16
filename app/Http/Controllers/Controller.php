@@ -199,6 +199,12 @@ class Controller extends BaseController
             'params' => compact('all_roles', 'default_roles', 'states', 'lgas')
         ]);
     }
+    public function contactSpecialties()
+    {
+        $specialties = ['Cardiologist', 'Dentist', 'Dermatologist', 'Endocrinologist', 'Pharmacist', 'Gynaecologist and Obstetrician', 'Optometrist', 'Neorologist', 'Surgeon', 'Pediatrician', 'Nurse', 'Mid-Wife'];
+
+        return response()->json(compact('specialties'), 200);
+    }
     public function logUserActivity($title, $description, $user = null)
     {
         // $user = $this->getUser();

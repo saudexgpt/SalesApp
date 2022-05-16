@@ -24,10 +24,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
 
-        $this->app->bind('path.public', function () {
-            return base_path() . '/../../sales.3coretechnology.com';
-        });
-        //
         // $this->app->bind('path.public', function () {
         //     return base_path() . '/../../sales.3coretechnology.com';
         // });

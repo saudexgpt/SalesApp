@@ -52,7 +52,7 @@ class PaymentsController extends Controller
                 ->where($condition)
                 ->whereIn('received_by', $sales_reps_ids)
                 ->orderBy('id', 'DESC')
-                ->select('*', \DB::raw('SUM(amount) as amount'))
+                ->select('*', \DB::raw('SUM(amount) as total_amount'))
                 ->paginate(10);
         } else {
             $payments = Payment::groupBy('payment_date', 'customer_id')
@@ -61,7 +61,7 @@ class PaymentsController extends Controller
                 ->where('payment_date', '>=',  $date_from)
                 ->where($condition)
                 ->orderBy('id', 'DESC')
-                ->select('*', \DB::raw('SUM(amount) as amount'))
+                ->select('*', \DB::raw('SUM(amount) as total_amount'))
                 ->paginate(10);
         }
 
