@@ -99,8 +99,8 @@ class ItemsController extends Controller
 
         // Open the file using the HTTP headers set above
         // DOCS: https://www.php.net/manual/en/function.file-get-contents.php
-        $products =  file_get_contents('https://gpl.3coretechnology.com/api/rep-stock', false, $context);
-        // $products =  file_get_contents('http://localhost:8001/api/rep-stock', false, $context);
+        // $products =  file_get_contents('https://gpl.3coretechnology.com/api/rep-stock', false, $context);
+        $products =  file_get_contents('http://localhost:8001/api/rep-stock', false, $context);
         $products_in_json =  json_decode($products);
         $items = $products_in_json->items;
         $this->storeWarehouseStock($user->id, $items);
@@ -115,6 +115,8 @@ class ItemsController extends Controller
         foreach ($items as $warehouse_item) {
             $id = $warehouse_item->id;
             $waybill_item_id = $warehouse_item->waybill_item_id;
+            $waybill_no = $warehouse_item->waybill_item->waybill->waybill_no;
+            $invoice_no = $warehouse_item->waybill_item->invoice->invoice_number;
             $item_stock_sub_batch_id = $warehouse_item->item_stock_sub_batch_id;
             $stock = WarehouseStock::where(['dispatched_product_id' => $id, 'waybill_item_id' => $waybill_item_id, 'item_stock_sub_batch_id' => $item_stock_sub_batch_id])->first();
             $item = Item::find($warehouse_item->item_stock->item_id);
@@ -123,6 +125,8 @@ class ItemsController extends Controller
                 $stock->dispatched_product_id = $id;
                 $stock->waybill_item_id = $waybill_item_id;
                 $stock->item_stock_sub_batch_id = $item_stock_sub_batch_id;
+                $stock->waybill_no = $waybill_no;
+                $stock->invoice_no = $invoice_no;
 
                 $stock->user_id = $user_id;
                 $stock->item_id = $warehouse_item->item_stock->item_id;

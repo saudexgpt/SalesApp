@@ -148,6 +148,7 @@ class SubInventoriesController extends Controller
         $sub_inventory->item_id = $warehouse_stock->item_id;
         $sub_inventory->quantity_stocked = $request->quantity;
         $sub_inventory->balance = $request->quantity;
+        $sub_inventory->warehouse_stock_id = $warehouse_stock->id;
         $sub_inventory->batch_no = $warehouse_stock->batch_no;
         $sub_inventory->expiry_date = $warehouse_stock->expiry_date;
         $sub_inventory->stocked_by = $user->name;
