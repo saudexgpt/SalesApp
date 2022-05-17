@@ -99,8 +99,8 @@ class ItemsController extends Controller
 
         // Open the file using the HTTP headers set above
         // DOCS: https://www.php.net/manual/en/function.file-get-contents.php
-        // $products =  file_get_contents('https://gpl.3coretechnology.com/api/rep-stock', false, $context);
-        $products =  file_get_contents('http://localhost:8001/api/rep-stock', false, $context);
+        $products =  file_get_contents('https://gpl.3coretechnology.com/api/rep-stock', false, $context);
+        // $products =  file_get_contents('http://localhost:8001/api/rep-stock', false, $context);
         $products_in_json =  json_decode($products);
         $items = $products_in_json->items;
         $this->storeWarehouseStock($user->id, $items);
