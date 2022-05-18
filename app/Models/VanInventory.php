@@ -21,7 +21,7 @@ class VanInventory extends Model
         return $this->belongsTo(SubInventory::class, 'sub_inventory_id', 'id');
     }
 
-    private function deductFromVanInventory($item_id, $quantity)
+    public function deductFromVanInventory($item_id, $quantity)
     {
         $user = $this->getUser();
         $van_inventories = VanInventory::where(['staff_id' => $user->id, 'item_id' => $item_id])->where('balance', '>', 0)->get();
