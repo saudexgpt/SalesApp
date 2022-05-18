@@ -345,6 +345,7 @@ class VisitsController extends Controller
     }
     private function saveSamples($unsaved_visit, $visit)
     {
+        $user = $this->getUser();
         $samples = $unsaved_visit->samples;
         foreach ($samples as $sample) {
             $new_sample = new CustomerProductSample();
@@ -361,7 +362,7 @@ class VisitsController extends Controller
             if ($new_sample->save()) {
 
                 $van_inventory_obj = new VanInventory();
-                $van_inventory_obj->deductFromVanInventory($new_sample->product_id, $new_sample->quantity);
+                $van_inventory_obj->deductFromVanInventory($new_sample->product_id, $new_sample->quantity, $user);
             }
         }
     }
