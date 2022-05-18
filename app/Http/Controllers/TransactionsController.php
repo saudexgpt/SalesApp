@@ -387,7 +387,7 @@ class TransactionsController extends Controller
 
             $transaction_detail->save();
             $van_inventory_obj = new VanInventory();
-            $van_inventory_obj->deductFromVanInventory($item_id, $quantity_for_supply);
+            $van_inventory_obj->deductFromVanInventory($item_id, $quantity_for_supply, $user);
 
             $title = "Product Supplied";
             $description = $user->name . " supplied $quantity $packaging of $product to $customer->business_name";

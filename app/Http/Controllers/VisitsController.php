@@ -268,53 +268,53 @@ class VisitsController extends Controller
                     $visit_type = 'on site';
                 }
             }
-            // try {
-            $date = ($visit_date) ? date('Y-m-d', strtotime($visit_date)) : date('Y-m-d', strtotime('now'));
-            $visit = Visit::where(['customer_id' => $customer_id, 'visitor' => $user->id, 'visit_date' => $date])->first();
+            try {
+                $date = ($visit_date) ? date('Y-m-d', strtotime($visit_date)) : date('Y-m-d', strtotime('now'));
+                $visit = Visit::where(['customer_id' => $customer_id, 'visitor' => $user->id, 'visit_date' => $date])->first();
 
-            if (!$visit) {
-                // $str_response = $this->getLocationFromLatLong($lat, $long);
-                // $json = json_decode($str_response);
-                // $formatted_address = $json->{'results'}[0]->{'formatted_address'};
-                $visit = new Visit();
-                $visit->customer_id = $customer_id;
-                $visit->visitor = $user->id;
-                $visit->visit_date = $date;
-                $visit->rep_latitude = $lat;
-                $visit->rep_longitude = $long;
-                // $visit->address = $formatted_address;
-                $visit->accuracy = $unsaved_visit->accuracy;
-                $visit->visiting_partner_id = (isset($unsaved_visit->visiting_partner_id)) ? $unsaved_visit->visiting_partner_id : NULL;
-                $visit->customer_contact_id = $customer_contact_id;
-                $visit->visit_type = $visit_type;
-                $visit->purpose = $purpose;
-                $visit->description = $unsaved_visit->description;
-                $visit->visit_duration = $unsaved_visit->visit_duration;
-                $visit->next_appointment_date = date('Y-m-d H:i:s', strtotime($unsaved_visit->hospital_follow_up_schedule));
-                $visit->save();
-            }
-            // $this->saveVisitDetails($unsaved_visit, $visit);
+                if (!$visit) {
+                    // $str_response = $this->getLocationFromLatLong($lat, $long);
+                    // $json = json_decode($str_response);
+                    // $formatted_address = $json->{'results'}[0]->{'formatted_address'};
+                    $visit = new Visit();
+                    $visit->customer_id = $customer_id;
+                    $visit->visitor = $user->id;
+                    $visit->visit_date = $date;
+                    $visit->rep_latitude = $lat;
+                    $visit->rep_longitude = $long;
+                    // $visit->address = $formatted_address;
+                    $visit->accuracy = $unsaved_visit->accuracy;
+                    $visit->visiting_partner_id = (isset($unsaved_visit->visiting_partner_id)) ? $unsaved_visit->visiting_partner_id : NULL;
+                    $visit->customer_contact_id = $customer_contact_id;
+                    $visit->visit_type = $visit_type;
+                    $visit->purpose = $purpose;
+                    $visit->description = $unsaved_visit->description;
+                    $visit->visit_duration = $unsaved_visit->visit_duration;
+                    $visit->next_appointment_date = date('Y-m-d H:i:s', strtotime($unsaved_visit->hospital_follow_up_schedule));
+                    $visit->save();
+                }
+                // $this->saveVisitDetails($unsaved_visit, $visit);
 
-            if (isset($unsaved_visit->hospital_follow_up_schedule) && $unsaved_visit->hospital_follow_up_schedule != null) {
+                if (isset($unsaved_visit->hospital_follow_up_schedule) && $unsaved_visit->hospital_follow_up_schedule != null) {
 
-                $this->saveSchedule($customer_id, $unsaved_visit->hospital_follow_up_schedule);
-            }
+                    $this->saveSchedule($customer_id, $unsaved_visit->hospital_follow_up_schedule);
+                }
 
-            if (isset($unsaved_visit->prescriptions) && !empty($unsaved_visit->prescriptions)) {
-                $this->savePrescriptions($unsaved_visit, $visit);
+                if (isset($unsaved_visit->prescriptions) && !empty($unsaved_visit->prescriptions)) {
+                    $this->savePrescriptions($unsaved_visit, $visit);
+                }
+                if (isset($unsaved_visit->detailed_products) && !empty($unsaved_visit->detailed_products)) {
+                    $this->saveDetailedProducts($unsaved_visit, $visit);
+                }
+                if (isset($unsaved_visit->stock_balances) && !empty($unsaved_visit->stock_balances)) {
+                    $this->saveStockBalances($unsaved_visit, $visit);
+                }
+                if (isset($unsaved_visit->samples) && !empty($unsaved_visit->samples)) {
+                    $this->saveSamples($unsaved_visit, $visit);
+                }
+            } catch (\Throwable $th) {
+                $unsaved_list[] = $unsaved_visit;
             }
-            if (isset($unsaved_visit->detailed_products) && !empty($unsaved_visit->detailed_products)) {
-                $this->saveDetailedProducts($unsaved_visit, $visit);
-            }
-            if (isset($unsaved_visit->stock_balances) && !empty($unsaved_visit->stock_balances)) {
-                $this->saveStockBalances($unsaved_visit, $visit);
-            }
-            if (isset($unsaved_visit->samples) && !empty($unsaved_visit->samples)) {
-                $this->saveSamples($unsaved_visit, $visit);
-            }
-            // } catch (\Throwable $th) {
-            //     $unsaved_list[] = $unsaved_visit;
-            // }
         }
         $visits = $user->visits()->with('customer', 'visitedBy', 'details.contact')->orderBy('id', 'DESC')->take(100)->get();
         return response()->json(compact('visits', 'unsaved_list'), 200);
