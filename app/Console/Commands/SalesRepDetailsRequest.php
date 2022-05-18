@@ -70,7 +70,7 @@ class SalesRepDetailsRequest extends Command
             $email = $repUser->email;
             $name_array = explode(' ', $repUser->name);
             $last_name = $name_array[0];
-            $first_name = $name_array[1];
+            $first_name = (isset($name_array[1])) ? $name_array[1] : NULL;
             $user = User::where('email', $email)->first();
             if (!$user) {
                 $user = new User();
