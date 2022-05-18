@@ -197,7 +197,7 @@ class TransactionsController extends Controller
         foreach ($unsaved_orders as $unsaved_order) {
             try {
                 $date = $unsaved_order->due_date;
-                $invoice_items = json_decode(json_encode($unsaved_order->invoice_items));
+                $invoice_items = $unsaved_order->invoice_items;
 
                 $invoice = new Transaction();
                 $customer = Customer::find($unsaved_order->customer_id);
