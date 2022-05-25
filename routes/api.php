@@ -180,6 +180,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::put('/update/{team}', [TeamsController::class, 'update']);
         Route::delete('/delete/{team}', [TeamsController::class, 'destroy']);
 
+        Route::get('/members', [TeamsController::class, 'fetchTeamMembers']);
         Route::get('/rep-team-members', [TeamsController::class, 'repTeamMembers']);
         Route::post('/add-members', [TeamsController::class, 'addMembers']);
         Route::delete('/remove-member/{team_member}', [TeamsController::class, 'removeMember']);
