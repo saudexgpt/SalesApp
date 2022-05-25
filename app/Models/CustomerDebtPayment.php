@@ -5,19 +5,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Payment extends Model
+class CustomerDebtPayment extends Model
 {
     use HasFactory;
     public function customer()
     {
         return $this->belongsTo(Customer::class);
     }
-    public function debtPayment()
+    public function debt()
     {
-        return $this->hasMany(CustomerDebtPayment::class, 'payment_id', 'id');
+        return $this->belongsTo(CustomerDebt::class, 'debt_id', 'id');
     }
-    public function confirmer()
+
+    public function payment()
     {
-        return $this->belongsTo(User::class, 'confirmed_by', 'id');
+        return $this->belongsTo(Payment::class, 'payment_id', 'id');
     }
 }

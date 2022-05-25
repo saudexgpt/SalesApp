@@ -19,7 +19,7 @@ class CustomerDebt extends Model
 
     public function payments()
     {
-        return $this->hasMany(Payment::class, 'debt_id', 'id');
+        return $this->hasMany(CustomerDebtPayment::class, 'debt_id', 'id');
     }
     public function staff()
     {

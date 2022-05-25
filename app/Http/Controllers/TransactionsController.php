@@ -69,7 +69,7 @@ class TransactionsController extends Controller
                     'customer.assignedOfficer',
                     'payments' => function ($q) {
                         $q->orderBy('id', 'DESC');
-                    }, 'payments.confirmer'
+                    },
                 ])
                 ->whereRaw('amount - paid > 0')
                 ->where('created_at', '<=',  $date_to)
@@ -90,7 +90,7 @@ class TransactionsController extends Controller
                     'customer.assignedOfficer',
                     'payments' => function ($q) {
                         $q->orderBy('id', 'DESC');
-                    }, 'payments.confirmer'
+                    },
                 ])
                 ->whereRaw('amount - paid > 0')
                 ->where('created_at', '<=',  $date_to)
@@ -106,7 +106,7 @@ class TransactionsController extends Controller
                     'customer.assignedOfficer',
                     'payments' => function ($q) {
                         $q->orderBy('id', 'DESC');
-                    }, 'payments.confirmer'
+                    },
                 ])
                 ->whereRaw('amount - paid > 0')
                 ->where('created_at', '<=',  $date_to)
