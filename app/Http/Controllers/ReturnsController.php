@@ -9,6 +9,17 @@ use Carbon\Carbon;
 class ReturnsController extends Controller
 {
     //
+    public function repsDailyReturns()
+    {
+        $user = $this->getUser();
+        $today = date('Y-m-d', strtotime('now'));
+        $returns = ReturnedProduct::with('customer', 'rep', 'item')
+            ->where('stocked_by', $user->id)
+            ->where('created_at', 'LIKE', '%' . $today . '%')
+            ->orderBy('id', 'DESC')
+            ->get();
+        return response()->json(compact('returns'), 200);
+    }
     public function fetchReturnedProducts(Request $request)
     {
         $user = $this->getUser();

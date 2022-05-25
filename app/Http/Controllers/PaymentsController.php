@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\CustomerDebt;
 use App\Models\Payment;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
@@ -10,6 +11,19 @@ use Carbon\Carbon;
 
 class PaymentsController extends Controller
 {
+    public function repsDailyCollections()
+    {
+        $user = $this->getUser();
+        $today = date('Y-m-d', strtotime('now'));
+        $payments = Payment::groupBy(['payment_date', 'customer_id'])
+            ->with(['customer', 'confirmer'])
+            ->where('received_by', $user->id)
+            ->where('payment_date', 'LIKE', '%' . $today . '%')
+            ->orderBy('id', 'DESC')
+            ->select('*', \DB::raw('SUM(amount) as total_amount'))
+            ->get();
+        return response()->json(compact('payments'), 200);
+    }
     /**
      * Display a listing of the resource.
      *
@@ -22,7 +36,7 @@ class PaymentsController extends Controller
         $date_to = Carbon::now()->endOfQuarter();
         $panel = 'quarter';
         $currency = $this->currency();
-        if (isset($request->from, $request->to, $request->panel)) {
+        if (isset($request->from, $request->to)) {
             $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
             $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
             $panel = $request->panel;
@@ -96,18 +110,19 @@ class PaymentsController extends Controller
             $customer_id = $collection->customer_id;
 
             $date = date('Y-m-d', strtotime('now'));
-            $customer_transactions = Transaction::where('customer_id', $customer_id)->whereRaw('amount_due - amount_paid > 0')->orderBy('id')->get();
-            foreach ($customer_transactions as $customer_transaction) {
-                $debt = $customer_transaction->amount_due - $customer_transaction->amount_paid;
+            $customer_debts = CustomerDebt::where('customer_id', $customer_id)->whereRaw('amount - paid > 0')->orderBy('id')->get();
+
+            foreach ($customer_debts as $customer_debt) {
+                $debt = $customer_debt->amount - $customer_debt->paid;
                 if ($debt <= $amount) {
 
-                    $customer_transaction->amount_paid += $debt;
-                    $customer_transaction->payment_status = 'paid';
-                    $customer_transaction->save();
+                    $customer_debt->paid += $debt;
+                    $customer_debt->payment_status = 'paid';
+                    $customer_debt->save();
 
                     $payment = new Payment();
-                    $payment->transaction_id = $customer_transaction->id;
-                    $payment->customer_id = $customer_transaction->customer_id;
+                    $payment->debt_id = $customer_debt->id;
+                    $payment->customer_id = $customer_debt->customer_id;
                     $payment->amount = $debt;
                     $payment->payment_date = $date;
                     $payment->payment_type = $collection->payment_mode;
@@ -116,12 +131,12 @@ class PaymentsController extends Controller
 
                     $amount -= $debt;
                 } else {
-                    $customer_transaction->amount_paid += $amount;
-                    $customer_transaction->save();
+                    $customer_debt->paid += $amount;
+                    $customer_debt->save();
 
                     $payment = new Payment();
-                    $payment->transaction_id = $customer_transaction->id;
-                    $payment->customer_id = $customer_transaction->customer_id;
+                    $payment->debt_id = $customer_debt->id;
+                    $payment->customer_id = $customer_debt->customer_id;
                     $payment->amount = $amount;
                     $payment->payment_date = $date;
                     $payment->payment_type = $collection->payment_mode;
@@ -131,16 +146,16 @@ class PaymentsController extends Controller
                     break;
                 }
             }
-            if ($amount > 0) {
-                $payment = new Payment();
-                // $payment->transaction_id = $customer_transaction->id;
-                $payment->customer_id = $customer_id;
-                $payment->amount = $amount;
-                $payment->payment_date = $date;
-                $payment->payment_type = $collection->payment_mode;
-                $payment->received_by = $user->id;
-                $payment->save();
-            }
+            // if ($amount > 0) {
+            //     $payment = new Payment();
+            //     // $payment->transaction_id = $customer_debt->id;
+            //     $payment->customer_id = $customer_id;
+            //     $payment->amount = $amount;
+            //     $payment->payment_date = $date;
+            //     $payment->payment_type = $collection->payment_mode;
+            //     $payment->received_by = $user->id;
+            //     $payment->save();
+            // }
             $title = "Payment Received";
             $description = $user->name . " successfully received ₦$original_amount from $collection->business_name";
             $this->logUserActivity($title, $description, $user);

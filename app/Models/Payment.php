@@ -12,9 +12,9 @@ class Payment extends Model
     {
         return $this->belongsTo(Customer::class);
     }
-    public function transaction()
+    public function debt()
     {
-        return $this->belongsTo(Transaction::class);
+        return $this->belongsTo(CustomerDebt::class, 'debt_id', 'id');
     }
     public function confirmer()
     {

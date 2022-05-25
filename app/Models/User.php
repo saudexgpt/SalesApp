@@ -65,6 +65,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(Transaction::class, 'field_staff', 'id');
     }
+    public function debts()
+    {
+        return $this->hasMany(CustomerDebt::class, 'field_staff', 'id');
+    }
     public function customerPayments()
     {
         return $this->hasManyThrough(

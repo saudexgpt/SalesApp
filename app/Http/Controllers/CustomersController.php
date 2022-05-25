@@ -294,7 +294,7 @@ class CustomersController extends Controller
                 $q->where('visitor', $user->id)->orderBy('id', 'DESC');
             },
             'visits.details.contact',
-            'payments.confirmer', 'payments.transaction.staff', 'transactions',
+            'payments.confirmer', 'debts', 'transactions',
             'schedules' => function ($query) use ($user, $today) {
                 $query->where('schedule_date', '>=', $today)->orWhere('repeat_schedule', 'yes')->where('rep', $user->id)->orderBy('day_num');
             }
@@ -480,16 +480,25 @@ class CustomersController extends Controller
     {
         foreach ($contacts as $contact) {
             if ($contact->name !== NULL && $contact->phone1 !== NULL) {
-
-                $new_contact = new CustomerContact();
-                $new_contact->customer_id = $customer_id;
-                $new_contact->name = $contact->name;
-                $new_contact->phone1 = $contact->phone1;
-                $new_contact->phone2 = $contact->phone2;
-                $new_contact->role = $contact->role;
-                $new_contact->dob = date('Y-m-d', strtotime($contact->dob));
-                $new_contact->gender = $contact->gender;
-                $new_contact->save();
+                $phone1 = $contact->phone1;
+                $phone2 = $contact->phone2;
+                $new_contact = CustomerContact::where(function ($q) use ($phone1, $phone2) {
+                    $q->where('phone1', $phone1);
+                    $q->orWhere('phone2', $phone2);
+                    $q->orWhere('phone1', $phone2);
+                    $q->orWhere('phone2', $phone1);
+                })->where('customer_id', $customer_id)->first();
+                if (!$new_contact) {
+                    $new_contact = new CustomerContact();
+                    $new_contact->customer_id = $customer_id;
+                    $new_contact->name = $contact->name;
+                    $new_contact->phone1 = $contact->phone1;
+                    $new_contact->phone2 = $contact->phone2;
+                    $new_contact->role = $contact->role;
+                    $new_contact->dob = date('Y-m-d', strtotime($contact->dob));
+                    $new_contact->gender = $contact->gender;
+                    $new_contact->save();
+                }
             }
         }
     }

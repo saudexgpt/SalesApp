@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\CustomerDebt;
 use App\Models\Payment;
 use App\Models\Schedule;
 use App\Models\Transaction;
@@ -26,9 +27,9 @@ class DashboardController extends Controller
         /// $sales = Transaction::where('payment_status', 'paid')->count();
         $all_sales = Transaction::where('field_staff', $user->id)->select(\DB::raw('SUM(amount_due) as amount_due'))->first();
         // $payment = Transaction::where('payment_status', 'paid')->select(\DB::raw('SUM(amount_due) as amount_due'))->first();
-        $all_debt = Transaction::where('field_staff', $user->id)->where('payment_status', 'unpaid')->select(\DB::raw('SUM(amount_due - amount_paid) as amount_due'))->first();
+        $all_debt = CustomerDebt::where('field_staff', $user->id)->where('payment_status', 'unpaid')->select(\DB::raw('SUM(amount - paid) as amount_due'))->first();
 
-        $all_overdue = Transaction::where('field_staff', $user->id)->where('payment_status', 'unpaid')->where('due_date', '<=', $today)->select(\DB::raw('SUM(amount_due - amount_paid) as amount_due'))->first();
+        $all_overdue = CustomerDebt::where('field_staff', $user->id)->where('payment_status', 'unpaid')->where('due_date', '<=', $today)->select(\DB::raw('SUM(amount - paid) as amount_due'))->first();
 
 
 
@@ -42,7 +43,7 @@ class DashboardController extends Controller
             ->select(\DB::raw('SUM(amount) as amount_paid'))
             ->first();
 
-        $today_debt = Transaction::where('field_staff', $user->id)->where('payment_status', 'unpaid')->where('due_date', '<=', $today)->select(\DB::raw('SUM(amount_due - amount_paid) as amount_due'))->first();
+        $today_debt = CustomerDebt::where('field_staff', $user->id)->where('payment_status', 'unpaid')->where('due_date', '<=', $today)->select(\DB::raw('SUM(amount - paid) as amount_due'))->first();
 
         $overdue = 0;
         $debt = 0;
@@ -83,9 +84,9 @@ class DashboardController extends Controller
         /// $sales = Transaction::where('payment_status', 'paid')->count();
         $all_sales = Transaction::whereIn('field_staff', $sales_reps_ids)->select(\DB::raw('SUM(amount_due) as amount_due'))->first();
         // $payment = Transaction::where('payment_status', 'paid')->select(\DB::raw('SUM(amount_due) as amount_due'))->first();
-        $all_debt = Transaction::whereIn('field_staff', $sales_reps_ids)->where('payment_status', 'unpaid')->select(\DB::raw('SUM(amount_due - amount_paid) as amount_due'))->first();
+        $all_debt = CustomerDebt::whereIn('field_staff', $sales_reps_ids)->where('payment_status', 'unpaid')->select(\DB::raw('SUM(amount - paid) as amount_due'))->first();
 
-        $all_overdue = Transaction::whereIn('field_staff', $sales_reps_ids)->where('payment_status', 'unpaid')->where('due_date', '<=', $today)->select(\DB::raw('SUM(amount_due - amount_paid) as amount_due'))->first();
+        $all_overdue = CustomerDebt::whereIn('field_staff', $sales_reps_ids)->where('payment_status', 'unpaid')->where('due_date', '<=', $today)->select(\DB::raw('SUM(amount - paid) as amount_due'))->first();
 
         $overdue = 0;
         $debt = 0;
@@ -120,9 +121,9 @@ class DashboardController extends Controller
         /// $sales = Transaction::where('payment_status', 'paid')->count();
         $all_sales = Transaction::select(\DB::raw('SUM(amount_due) as amount_due'))->first();
         // $payment = Transaction::where('payment_status', 'paid')->select(\DB::raw('SUM(amount_due) as amount_due'))->first();
-        $all_debt = Transaction::where('payment_status', 'unpaid')->select(\DB::raw('SUM(amount_due - amount_paid) as amount_due'))->first();
+        $all_debt = CustomerDebt::where('payment_status', 'unpaid')->select(\DB::raw('SUM(amount - paid) as amount_due'))->first();
 
-        $all_overdue = Transaction::where('payment_status', 'unpaid')->where('due_date', '<=', $today)->select(\DB::raw('SUM(amount_due - amount_paid) as amount_due'))->first();
+        $all_overdue = CustomerDebt::where('payment_status', 'unpaid')->where('due_date', '<=', $today)->select(\DB::raw('SUM(amount - paid) as amount_due'))->first();
 
         $overdue = 0;
         $debt = 0;
@@ -181,7 +182,7 @@ class DashboardController extends Controller
     private function getSalesAndDebts($date)
     {
         $all_sales = Transaction::select(\DB::raw('SUM(amount_due) as total_amount_due'))->where('entry_date', 'LIKE',  '%' . $date . '%')->first();
-        $all_debts = Transaction::where('entry_date', 'LIKE',  '%' . $date . '%')->select(\DB::raw('SUM(amount_due - amount_paid) as total_amount_due'))->first();
+        $all_debts = CustomerDebt::where('created_at', 'LIKE',  '%' . $date . '%')->select(\DB::raw('SUM(amount - paid) as total_amount_due'))->first();
 
         $sales = 0;
         $debts = 0;

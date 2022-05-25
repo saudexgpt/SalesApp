@@ -74,6 +74,10 @@ class Customer extends Model
     {
         return $this->hasMany(Schedule::class);
     }
+    public function debts()
+    {
+        return $this->hasMany(CustomerDebt::class, 'customer_id', 'id');
+    }
     public function transactions()
     {
         return $this->hasMany(Transaction::class, 'customer_id', 'id');

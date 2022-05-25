@@ -28,10 +28,6 @@ class Transaction extends Model
     {
         return $this->belongsTo(User::class, 'approved_by', 'id');
     }
-    public function payments()
-    {
-        return $this->hasMany(Payment::class, 'transaction_id', 'id');
-    }
     public function details()
     {
         return $this->hasMany(TransactionDetail::class, 'transaction_id', 'id');

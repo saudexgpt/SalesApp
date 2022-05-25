@@ -93,6 +93,17 @@ class TeamsController extends Controller
         return response()->json(compact('team_members'), 200);
     }
 
+    public function repTeamMembers()
+    {
+        $user = $this->getUser();
+        $team_id = ($user->memberOfTeam) ? $user->memberOfTeam->team_id : '';
+        $team_members = [];
+        if ($team_id !== '') {
+            $team_members = TeamMember::with('user')->where('team_id', $team_id)->where('user_id', '!=', $user->id)->get();
+        }
+
+        return response()->json(compact('team_members'), 200);
+    }
     /**
      * Store a newly created resource in storage.
      *

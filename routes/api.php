@@ -141,6 +141,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('/', [PaymentsController::class, 'index']);
         Route::post('/store', [PaymentsController::class, 'store']);
         Route::put('/confirm/{payment}', [PaymentsController::class, 'confirm']);
+        Route::get('daily-collections', [PaymentsController::class, 'repsDailyCollections']);
     });
     Route::group(['prefix' => 'products'], function () {
         Route::get('/', [ItemsController::class, 'index']);
@@ -152,8 +153,11 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     });
     Route::group(['prefix' => 'returns'], function () {
         Route::post('store', [ReturnsController::class, 'store']);
+        Route::get('daily-returned-products', [ReturnsController::class, 'repsDailyReturns']);
     });
     Route::group(['prefix' => 'sales'], function () {
+
+        Route::get('daily-sales', [TransactionsController::class, 'repsDailySales']);
         Route::get('orders', [TransactionsController::class, 'orders']);
         Route::get('fetch', [TransactionsController::class, 'fetchSales']);
         Route::get('fetch-product-sales', [TransactionsController::class, 'fetchProductSales']);
@@ -176,7 +180,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::put('/update/{team}', [TeamsController::class, 'update']);
         Route::delete('/delete/{team}', [TeamsController::class, 'destroy']);
 
-        Route::get('/members', [TeamsController::class, 'fetchTeamMembers']);
+        Route::get('/rep-team-members', [TeamsController::class, 'repTeamMembers']);
         Route::post('/add-members', [TeamsController::class, 'addMembers']);
         Route::delete('/remove-member/{team_member}', [TeamsController::class, 'removeMember']);
         Route::put('/create-team-lead/{team_member}', [TeamsController::class, 'createTeamLead']);
