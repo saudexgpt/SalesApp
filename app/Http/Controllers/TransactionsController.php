@@ -217,13 +217,14 @@ class TransactionsController extends Controller
             try {
                 $date = $unsaved_order->due_date;
                 $invoice_items = $unsaved_order->invoice_items;
-                $check_for_dupicate_entry = Transaction::where('unique_sales_id', $unsaved_order->unique_sales_id)->first();
-                if (!$check_for_dupicate_entry) {
+                $entry_exist = Transaction::where('unique_sales_id', $unsaved_order->unique_sales_id)->first();
+                if (!$entry_exist) {
                     # code...
 
                     $invoice = new Transaction();
                     $customer = Customer::find($unsaved_order->customer_id);
                     $invoice->customer_id    = $unsaved_order->customer_id;
+                    $invoice->unique_sales_id    = $unsaved_order->unique_sales_id;
                     $invoice->field_staff    = $user->id;
                     $invoice->payment_status = ($unsaved_order->payment_mode == 'now') ? 'paid' : 'unpaid';
                     $invoice->amount_due     = $unsaved_order->amount;

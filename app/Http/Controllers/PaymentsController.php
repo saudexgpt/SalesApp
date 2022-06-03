@@ -113,57 +113,26 @@ class PaymentsController extends Controller
                 $customer_id = $collection->customer_id;
 
                 $date = date('Y-m-d', strtotime('now'));
+                $entry_exist = Payment::where('unique_collection_id', $collection->unique_collection_id)->first();
+                if (!$entry_exist) {
 
-                $payment = new Payment();
-                $payment->customer_id = $customer_id;
-                $payment->amount = $amount;
-                $payment->payment_date = $date;
-                $payment->payment_type = $collection->payment_mode;
-                $payment->slip_no = $collection->slip_no;
-                $payment->received_by = $user->id;
-                $payment->save();
+                    $payment = new Payment();
+                    $payment->customer_id = $customer_id;
+                    $payment->unique_collection_id = $collection->unique_collection_id;
+                    $payment->amount = $amount;
+                    $payment->payment_date = $date;
+                    $payment->payment_type = $collection->payment_mode;
+                    $payment->slip_no = $collection->slip_no;
+                    $payment->received_by = $user->id;
+                    if ($payment->save()) {
 
-                // $customer_debts = CustomerDebt::where('customer_id', $customer_id)->whereRaw('amount - paid > 0')->orderBy('id')->get();
+                        $this->settleDebt($customer_id, $payment->id, $amount);
+                    }
 
-                // foreach ($customer_debts as $customer_debt) {
-                //     $debt = $customer_debt->amount - $customer_debt->paid;
-                //     if ($debt <= $amount) {
-
-                //         $customer_debt->paid += $debt;
-                //         $customer_debt->payment_status = 'paid';
-                //         $customer_debt->save();
-
-                //         $payment = new Payment();
-                //         $payment->debt_id = $customer_debt->id;
-                //         $payment->customer_id = $customer_debt->customer_id;
-                //         $payment->amount = $debt;
-                //         $payment->payment_date = $date;
-                //         $payment->payment_type = $collection->payment_mode;
-                //         $payment->received_by = $user->id;
-                //         $payment->save();
-
-                //         $amount -= $debt;
-                //     } else {
-                //         $customer_debt->paid += $amount;
-                //         $customer_debt->save();
-
-                //         $payment = new Payment();
-                //         $payment->debt_id = $customer_debt->id;
-                //         $payment->customer_id = $customer_debt->customer_id;
-                //         $payment->amount = $amount;
-                //         $payment->payment_date = $date;
-                //         $payment->payment_type = $collection->payment_mode;
-                //         $payment->received_by = $user->id;
-                //         $payment->save();
-                //         $amount = 0;
-                //         break;
-                //     }
-                // }
-
-
-                $title = "Payment Received";
-                $description = $user->name . " successfully received ₦$original_amount from $collection->business_name";
-                $this->logUserActivity($title, $description, $user);
+                    $title = "Payment Received";
+                    $description = $user->name . " successfully received ₦$original_amount from $collection->business_name";
+                    $this->logUserActivity($title, $description, $user);
+                }
             } catch (\Throwable $th) {
                 $unsaved_list[] = $collection;
             }
@@ -194,51 +163,51 @@ class PaymentsController extends Controller
     {
         $user = $this->getUser();
         $payment->confirmed_by = $user->id;
-        $customer_id = $payment->customer_id;
+        // $customer_id = $payment->customer_id;
         $amount = $payment->amount;
-        // $payment->save();
-        if ($payment->save()) {
-            //we need to make this approved payment affect debts
-            $customer_debts = CustomerDebt::where('customer_id', $customer_id)->whereRaw('amount - paid > 0')->orderBy('id')->get();
-
-            foreach ($customer_debts as $customer_debt) {
-                $debt = $customer_debt->amount - $customer_debt->paid;
-                if ($debt <= $amount) {
-
-                    $customer_debt->paid += $debt;
-                    $customer_debt->payment_status = 'paid';
-                    $customer_debt->save();
-
-                    $debt_payment = new CustomerDebtPayment();
-                    $debt_payment->customer_id = $customer_id;
-                    $debt_payment->debt_id = $customer_debt->id;
-                    $debt_payment->payment_id = $payment->id;
-                    $debt_payment->amount_paid = $debt;
-                    $debt_payment->save();
-
-                    $amount -= $debt;
-                } else {
-                    $customer_debt->paid += $amount;
-                    $customer_debt->save();
-
-                    $debt_payment = new CustomerDebtPayment();
-                    $debt_payment->customer_id = $customer_id;
-                    $debt_payment->debt_id = $customer_debt->id;
-                    $debt_payment->payment_id = $payment->id;
-                    $debt_payment->amount_paid = $amount;
-                    $debt_payment->save();
-
-                    $amount = 0;
-                    break;
-                }
-            }
-        }
+        $payment->save();
         $title = "Payment Confirmed";
         $description = $user->name . " successfully confirmed NGN$amount paid by" . $payment->customer->business_name;
         $this->logUserActivity($title, $description, $user);
         return $this->show($payment);
     }
 
+    private function settleDebt($customer_id, $payment_id, $amount)
+    {
+        $customer_debts = CustomerDebt::where('customer_id', $customer_id)->whereRaw('amount - paid > 0')->orderBy('id')->get();
+
+        foreach ($customer_debts as $customer_debt) {
+            $debt = $customer_debt->amount - $customer_debt->paid;
+            if ($debt <= $amount) {
+
+                $customer_debt->paid += $debt;
+                $customer_debt->payment_status = 'paid';
+                $customer_debt->save();
+
+                $debt_payment = new CustomerDebtPayment();
+                $debt_payment->customer_id = $customer_id;
+                $debt_payment->debt_id = $customer_debt->id;
+                $debt_payment->payment_id = $payment_id;
+                $debt_payment->amount_paid = $debt;
+                $debt_payment->save();
+
+                $amount -= $debt;
+            } else {
+                $customer_debt->paid += $amount;
+                $customer_debt->save();
+
+                $debt_payment = new CustomerDebtPayment();
+                $debt_payment->customer_id = $customer_id;
+                $debt_payment->debt_id = $customer_debt->id;
+                $debt_payment->payment_id = $payment_id;
+                $debt_payment->amount_paid = $amount;
+                $debt_payment->save();
+
+                $amount = 0;
+                break;
+            }
+        }
+    }
     /**
      * Remove the specified resource from storage.
      *

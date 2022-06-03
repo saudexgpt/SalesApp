@@ -8,6 +8,8 @@ use App\Models\CustomerStockBalance;
 use App\Models\HospitalReport;
 use App\Models\Prescription;
 use App\Models\Schedule;
+use App\Models\User;
+use App\Models\UserGeolocation;
 use App\Models\VanInventory;
 use App\Models\Visit;
 use App\Models\VisitDetail;
@@ -205,30 +207,79 @@ class VisitsController extends Controller
     //     $date_to = getDateFormatWords($date_to);
     //     return response()->json(compact('visit_details', 'currency', 'date_from', 'date_to'), 200);
     // }
+    // public function fetchFootPrints(Request $request)
+    // {
+    //     $user = $this->getUser();
+    //     $date = date('Y-m-d', strtotime('now'));
+    //     $currency = $this->currency();
+    //     if (isset($request->date) && $request->date !== '') {
+    //         $date = date('Y-m-d', strtotime($request->date));
+    //     }
+    //     $condition = [];
+    //     if (isset($request->user_id) && $request->user_id != 'all') {
+    //         $condition['visitor'] = $request->user_id;
+    //     }
+    //     if ($user->hasRole('sales_rep')) {
+
+    //         $visits = Visit::with('details.contact', 'customer', 'visitedBy')
+    //             ->where('visitor',  $user->id)
+    //             ->where('created_at', 'LIKE', '%' . $date . '%')
+    //             ->get();
+    //     } else {
+    //         $visits = Visit::with('details.contact', 'customer', 'visitedBy')
+    //             ->where($condition)
+    //             ->where('created_at', 'LIKE', '%' . $date . '%')
+    //             ->get();
+    //     }
+
+    //     $date = getDateFormatWords($date);
+    //     return response()->json(compact('visits', 'currency', 'date'), 200);
+    // }
     public function fetchFootPrints(Request $request)
     {
         $user = $this->getUser();
         $date = date('Y-m-d', strtotime('now'));
-        $currency = $this->currency();
         if (isset($request->date) && $request->date !== '') {
             $date = date('Y-m-d', strtotime($request->date));
         }
-
-        if ($user->hasRole('sales_rep')) {
-
-            $visits = Visit::with('details.contact', 'customer', 'visitedBy')
-                ->where('visitor',  $user->id)
-                ->where('created_at', 'LIKE', '%' . $date . '%')
-                ->get();
+        if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+            list($sales_reps, $sales_reps_ids) = $this->teamMembers();
         } else {
-            $visits = Visit::with('details.contact', 'customer', 'visitedBy')
-                ->where('visitor', $request->user_id)
+            $userQuery = User::query();
+
+            $userQuery->whereHas('roles', function ($q) {
+                $q->where('name', 'sales_rep');
+            });
+
+            $sales_reps = $userQuery->get();
+        }
+        $reps_not_located = [];
+        $reps_located = [];
+        foreach ($sales_reps as $sales_rep) {
+            $location = UserGeolocation::where('user_id',  $sales_rep->id)
                 ->where('created_at', 'LIKE', '%' . $date . '%')
-                ->get();
+                ->orderBy('id', 'DESC')
+                ->first();
+            if ($location) {
+                $sales_rep->location = $location;
+                $reps_located[] = $sales_rep;
+            } else {
+                $reps_not_located[] = $sales_rep;
+            }
         }
 
         $date = getDateFormatWords($date);
-        return response()->json(compact('visits', 'currency', 'date'), 200);
+        return response()->json(compact('reps_located', 'reps_not_located', 'date'), 200);
+    }
+    public function repTodayVisits(Request $request)
+    {
+        $rep_id = $request->rep_id;
+        $date = $request->date;
+        $visits = Visit::with('visitedBy', 'visitPartner', 'customer', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
+            ->where('visitor',  $rep_id)
+            ->where('created_at', 'LIKE', '%' . $date . '%')
+            ->get();
+        return response()->json(compact('visits'), 200);
     }
     /**
      * Store a newly created resource in storage.

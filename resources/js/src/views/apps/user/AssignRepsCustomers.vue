@@ -72,13 +72,6 @@
                   <span style="float: right; color: #8492a6; font-size: 13px">{{ ' at ' + customer.area }}</span>
                 </el-option>
               </el-select> -->
-              <el-button
-                :disabled="customer_list.length < 1"
-                type="primary"
-                @click="assignOfficer()"
-              >
-                Assign
-              </el-button>
             </aside>
           </el-col>
           <el-tag
@@ -97,6 +90,14 @@
         <el-col :xs="24" :sm="24" :md="24">
           <h3>Selected LGA Customers
             <el-checkbox v-if="customer_list.length > 0" :indeterminate="isIndeterminate" v-model="checkAll" @change="handleCheckAllChange">Check all</el-checkbox>
+
+            <el-button
+              :disabled="customer_list.length < 1"
+              type="primary"
+              @click="assignOfficer()"
+            >
+              Assign
+            </el-button>
           </h3>
           <v-client-table
             v-model="customer_list"
@@ -250,6 +251,7 @@ export default {
       customer_list: [],
       selectedRep: null,
       isIndeterminate: false,
+      checkAll: null,
     };
   },
   created() {

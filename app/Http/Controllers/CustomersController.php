@@ -249,7 +249,6 @@ class CustomersController extends Controller
             'visits.details.contact',
             'visits.visitedBy',
             'payments.confirmer',
-            'payments.transaction.staff',
             'transactions' => function ($q) {
                 $q->orderBy('id', 'DESC')->paginate(10);
             },

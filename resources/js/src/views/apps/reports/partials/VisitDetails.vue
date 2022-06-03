@@ -76,10 +76,13 @@
               <tbody>
 
                 <tr v-for="(detail, index) in visit.detailings" :key="index">
-                  <td class="px-3 py-2">{{ detail.item.name }}</td>
-                  <td class="px-3 py-2">
-                    <el-progress :text-inside="true" :stroke-width="20" :percentage="detail.ratings * 10" :color="ratingStatus(detail.ratings * 10)" />
-                  </td>
+                  <template v-if="detail.item !== null">
+
+                    <td class="px-3 py-2">{{ (detail.item) ? detail.item.name : '' }}</td>
+                    <td class="px-3 py-2">
+                      <el-progress :text-inside="true" :stroke-width="20" :percentage="detail.ratings * 10" :color="ratingStatus(detail.ratings * 10)" />
+                    </td>
+                  </template>
                 </tr>
               </tbody>
             </table>
@@ -123,7 +126,7 @@
                 <tr>
                   <th>Product</th>
                   <th>Quantity</th>
-                  <th>Amount</th>
+                  <!-- <th>Amount</th> -->
                 </tr>
               </thead>
               <tbody>
@@ -133,9 +136,9 @@
                   <td class="px-3 py-2">
                     {{ sample.quantity }} {{ sample.packaging }}
                   </td>
-                  <td class="px-3 py-2">
+                  <!-- <td class="px-3 py-2">
                     ₦ {{ sample.amount.toLocaleString() }}
-                  </td>
+                  </td> -->
                 </tr>
               </tbody>
             </table>

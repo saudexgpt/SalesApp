@@ -32,17 +32,17 @@ const reportsRoutes = {
     //     permissions: ['read-inventories'],
     //   },
     },
-    // {
-    //   hidden: false,
-    //   path: '/reports/footprints',
-    //   name: 'FootPrints',
-    //   slug: 'foot-prints',
-    //   i18n: 'FootPrints',
-    //   component: () => import('@/views/apps/reports/FootPrints'),
-    // //   meta: {
-    // //     permissions: ['read-inventories'],
-    // //   },
-    // },
+    {
+      hidden: false,
+      path: '/reports/footprints',
+      name: 'FootPrints',
+      slug: 'foot-prints',
+      i18n: 'Foot Prints',
+      component: () => import('@/views/apps/reports/FootPrints'),
+    //   meta: {
+    //     permissions: ['read-inventories'],
+    //   },
+    },
     {
       hidden: false,
       path: '/reports/schedules',

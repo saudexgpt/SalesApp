@@ -137,14 +137,15 @@ import checkPermission from '@/utils/permission'; // Permission checking
 import VisitDetails from './VisitDetails';
 export default {
   components: { Pagination, VisitDetails },
-  props: {
-    reps: {
-      type: Array,
-      default: () => [],
-    },
-  },
+  //   props: {
+  //     reps: {
+  //       type: Array,
+  //       default: () => [],
+  //     },
+  //   },
   data() {
     return {
+      reps: [],
       customers: [],
       visits: [],
       visits_columns: [
@@ -206,7 +207,7 @@ export default {
     };
   },
   created() {
-    // this.fetchReports();
+    this.fetchSalesReps();
   },
   methods: {
     moment,
@@ -236,6 +237,19 @@ export default {
       app.form.to = to;
       app.form.panel = panel;
       app.fetchReports();
+    },
+    fetchSalesReps() {
+      const app = this;
+      // this.load_table = true;
+      const salesRepResource = new Resource('users/fetch-sales-reps');
+      salesRepResource
+        .list()
+        .then((response) => {
+          app.reps = response.sales_reps;
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     },
     fetchCustomers(rep_id) {
       const app = this;

@@ -2,7 +2,7 @@
 /* eslint-disable vue/html-end-tags */
 
 <template>
-  <div v-loading="loader">
+  <vx-card v-loading="loader">
     <div id="user-visitData">
       <div class="vx-row">
         <div class="vx-col w-full">
@@ -14,10 +14,14 @@
         </div>
       </div>
       <el-row :gutter="10">
-        <el-col :lg="8" :md="8" :sm="8" :xs="24">
+        <!-- <el-col :lg="8" :md="8" :sm="8" :xs="24">
           <div v-if="!checkRole(['sales_rep'])">
             <span class="demonstration">Select Rep</span>
             <el-select v-model="form.user_id" placeholder="Select Reps" style="width: 100%">
+              <el-option
+                v-if="salesReps.length > 0"
+                label="All"
+                value="all" />
               <el-option
                 v-for="(rep, index) in salesReps"
                 :key="index"
@@ -26,7 +30,7 @@
               />
             </el-select>
           </div>
-        </el-col>
+        </el-col> -->
         <el-col :lg="8" :md="8" :sm="8" :xs="24">
           <span class="demonstration">Select Date</span>
           <el-date-picker
@@ -44,7 +48,8 @@
         </el-col>
       </el-row>
       <div class="carousel-example">
-        <el-tabs>
+        <br>
+        <!-- <el-tabs>
           <el-tab-pane label="Tabular">
             <v-client-table
               v-model="visits"
@@ -54,25 +59,6 @@
               <template slot="sn" slot-scope="props">
                 <span>{{ props.index }}</span>
               </template>
-              <!-- <template slot="action" slot-scope="{row}">
-                    <el-tooltip
-                    class="item"
-                    effect="dark"
-                    content="View Report Details"
-                    placement="top-start"
-                    >
-                    <router-link
-                        :to="'/daily-report/details/' + row.id + '/' + row.report_by"
-                    >
-                        <el-button
-                        circle
-                        type="success"
-                        size="small"
-                        icon="el-icon-view"
-                        />
-                    </router-link>
-                    </el-tooltip>
-                </template> -->
             </v-client-table>
           </el-tab-pane>
           <el-tab-pane v-if="!checkRole(['sales_rep'])" label="Map">
@@ -97,17 +83,63 @@
                   <strong>Business Name: </strong> {{ m.detail.customer.business_name }}<br>
                   <strong>Customer Registered Address: </strong> {{ m.detail.customer.address }}<br>
                   <strong>Visited Pinned Address: </strong> {{ m.detail.address }}<br>
-                  <strong>Date: </strong> {{ moment(m.detail.created_at).format('DD-MM-YYYY hh:mm:ss a') }}<br>
+                  <strong>Date: </strong> {{ moment(m.detail.created_at).format('DD-MM-YYYY hh:mm a') }}<br>
                 </gmap-info-window>
               </gmap-marker>
 
               <gmap-polyline :path.sync="paths" :options="{ strokeColor:'#000000'}" />
             </gmap-map>
           </el-tab-pane>
-        </el-tabs>
+        </el-tabs> -->
+        <el-row :gutter="10">
+          <el-col :lg="16" :md="16" :sm="24" :xs="24">
+            <gmap-map
+              :center="center"
+              :zoom="zoom"
+              style="width:100%;  height: 650px"
+            >
+              <gmap-marker
+                v-for="(m, index) in markers"
+                :key="index"
+                :position="m.position"
+                :icon="icon"
+                @mouseout="showByIndex = null"
+                @click="center=m.position; fetchVisitReports(m.detail)"
+                @mouseover="showByIndex = index;"
+              >
+                <gmap-info-window
+                  :opened="showByIndex === index"
+                >
+                  <strong>Name: </strong> {{ m.detail.name }}<br>
+                  <strong>Current Location: </strong> {{ m.detail.location.longitude + ', ' + m.detail.location.latitude }}<br>
+                  <strong>Date: </strong> {{ moment(m.detail.location.created_at).format('DD-MM-YYYY hh:mm a') }}<br>
+                </gmap-info-window>
+              </gmap-marker>
+
+              <gmap-polyline :path.sync="paths" :options="{ strokeColor:'#000000'}" />
+            </gmap-map>
+          </el-col>
+          <el-col :lg="8" :md="8" :sm="24" :xs="24">
+            <el-alert :closable="false" type="success">Visits made by {{ selected_rep.name }}</el-alert>
+            <br>
+            <div v-loading="loadVisits">
+              <el-timeline v-if="visits.length > 0">
+                <el-timeline-item
+                  v-for="(visit, index) in visits"
+                  :key="index"
+                  :timestamp="moment(visit.created_at).format('DD-MM-YYYY hh:mm a')">
+                  <strong>{{ visit.customer.business_name }}</strong>
+                </el-timeline-item>
+              </el-timeline>
+              <div v-else>
+                <el-empty description="No visits made" />
+              </div>
+            </div>
+          </el-col>
+        </el-row>
       </div>
     </div>
-  </div>
+  </vx-card>
 </template>
 
 <script>
@@ -118,19 +150,13 @@ import GmapPolyline from 'vue2-google-maps/dist/components/polyline';
 import checkPermission from '@/utils/permission'; // Permission checking
 import checkRole from '@/utils/role'; // Permission checking
 import Resource from '@/api/resource';
-const fetchFootprintResource = new Resource('visits/fetch-footprints');
 export default {
   components: {
     GmapCluster, GmapPolyline,
   },
-  props: {
-    salesReps: {
-      type: Array,
-      default: () => [],
-    },
-  },
   data() {
     return {
+      salesReps: [],
       showByIndex: null,
       pickerOptions: {
         disabledDate(time) {
@@ -159,63 +185,54 @@ export default {
       },
       form: {
         date: new Date(),
-        user_id: '',
+        // user_id: 'all',
       },
       // /////////////for map /////////////////
-      center: { lat: 3.3792, lng: 6.5244 }, // default to greenlife office
+      center: { lat: 6.546935900, lng: 3.365565100 }, // default to greenlife office
       zoom: 17,
-      icon: '/images/map-marker.png',
+      icon: '/images/map-image.png',
       // ////////////////////////////////////
       markers: [],
       paths: [],
       loader: false,
+      reps_located: [],
+      reps_not_located: [],
+      selected_rep: '',
       visits: [],
-      columns: [
-        'sn',
-        'customer.business_name',
-        'rep_latitude',
-        'rep_longitude',
-        'customer.address',
-        'address',
-        'visit_date',
-      ],
-
-      options: {
-        headings: {
-          sn: 'S/N',
-          'customer.business_name': 'Customer',
-          'customer.address': 'Customer Address',
-          address: 'Pinned Address',
-          rep_latitude: 'Latitude',
-          rep_longitude: 'Longitude',
-        },
-        pagination: {
-          dropdown: true,
-          chunk: 10,
-        },
-        perPage: 10,
-        // filterByColumn: true,
-        // texts: {
-        //   filter: 'Search:',
-        // },
-        // editableColumns:['name', 'category.name', 'sku'],
-        sortable: ['reporter.name', 'date', 'created_at'],
-        filterable: ['reporter.name', 'date', 'created_at'],
-      },
+      loadVisits: false,
     };
+  },
+  created() {
+    this.fetchFootprint();
   },
   methods: {
     moment,
     checkPermission,
     checkRole,
+    // fetchSalesReps() {
+    //   const app = this;
+    //   // this.load_table = true;
+    //   const salesRepResource = new Resource('users/fetch-sales-reps');
+    //   salesRepResource
+    //     .list()
+    //     .then((response) => {
+    //       app.salesReps = response.sales_reps;
+    //     })
+    //     .catch((error) => {
+    //       console.log(error);
+    //     });
+    // },
     fetchFootprint() {
       this.loader = true;
+
+      const fetchFootprintResource = new Resource('visits/fetch-footprints');
       fetchFootprintResource
         .list(this.form)
         .then((response) => {
-          this.visits = response.visits;
-          if (this.visits.length > 0) {
-            this.center = { lat: this.visits[0].rep_latitude, lng: this.visits[0].rep_longitude };
+          this.reps_located = response.reps_located;
+          this.reps_not_located = response.reps_not_located;
+          if (this.reps_located.length > 0) {
+            this.center = { lat: this.reps_located[0].location.latitude, lng: this.reps_located[0].location.longitude };
           }
           this.addMarker();
           this.loader = false;
@@ -227,22 +244,37 @@ export default {
       var markers = [];
       var paths = [];
       const icon = '/images/map-marker.png';
-      this.visits.forEach(visit => {
+      this.reps_located.forEach(rep => {
         const position = {
-          lat: visit.rep_latitude,
-          lng: visit.rep_longitude,
+          lat: rep.location.latitude,
+          lng: rep.location.longitude,
         };
         paths.push(position);
-        markers.push({ position: position, icon: icon, detail: visit });
+        markers.push({ position: position, icon: icon, detail: rep });
       });
       this.paths = paths;
       this.markers = markers;
     },
-    showDetails(visit){
-      this.$alert('<strong>Customer Registered Address: </strong>' + visit.customer.address + '<br><strong>Visited Pinned Address: </strong>' + visit.address +
-      '<br><strong>Date: </strong>' + this.moment(visit.created_at).format('DD-MM-YYYY hh:mm:ss a'), visit.customer.business_name, {
-        dangerouslyUseHTMLString: true,
-      });
+    // showDetails(rep){
+    //   this.selected_rep = rep;
+    //   this.$alert('<strong>Name: </strong>' + rep.name + '<br><strong>Current Location: </strong>' + rep.location.longitude + ', ' + rep.location.latitude +
+    //   '<br><strong>Date: </strong>' + this.moment(rep.location.created_at).format('DD-MM-YYYY hh:mm a'), rep.name, {
+    //     dangerouslyUseHTMLString: true,
+    //   });
+    // },
+    fetchVisitReports(rep) {
+      const app = this;
+      app.selected_rep = rep;
+      app.loadVisits = true;
+      const visitsResource = new Resource('visits/fetch-today-visits');
+      const param = { rep_id: rep.id, date: app.form.date };
+      visitsResource.list(param)
+        .then(response => {
+          app.visits = response.visits;
+          app.loadVisits = false;
+        }).catch(() => {
+          this.loadVisits = false;
+        });
     },
   },
 };

@@ -92,9 +92,9 @@ class ReturnsController extends Controller
                     $return->expiry_date = date('Y-m-d', strtotime($detail->expiry_date));
                     $return->stocked_by = $user->id;
                     $return->quantity = $detail->quantity_returned;
-                    $return->rate = $detail->rate;
+                    // $return->rate = $detail->rate;
                     $return->batch_no = $detail->batch_no;
-                    $return->amount = $detail->amount;
+                    // $return->amount = $detail->amount;
                     $return->reason = $detail->reason;
                     $return->date = date('Y-m-d', strtotime('now'));
                     $return->save();

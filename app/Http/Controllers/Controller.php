@@ -98,7 +98,7 @@ class Controller extends BaseController
         $team_member = $user->memberOfTeam;
         // foreach ($team_members as $team_member) {
         $team_id = $team_member->team_id;
-        $my_members = TeamMember::with('user.customers')->where('team_id', $team_id)->where('user_id', '!=', $user->id)->get();
+        $my_members = TeamMember::where('team_id', $team_id)->where('user_id', '!=', $user->id)->get();
         foreach ($my_members as $my_member) {
             $all_team_members[] = $my_member->user;
             $all_team_member_ids[] = $my_member->user->id;
