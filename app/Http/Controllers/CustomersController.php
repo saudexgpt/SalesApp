@@ -8,6 +8,7 @@ use App\Models\CustomerContact;
 use App\Models\CustomerType;
 use App\Models\CustomerVerification;
 use App\Models\LocalGovernmentArea;
+use App\Models\SalesReports;
 use App\Models\SampleCustomer;
 use App\Models\Schedule;
 use App\Models\State;
@@ -76,12 +77,14 @@ class CustomersController extends Controller
         $condition = [];
         $with = [
             'customerContacts',
-            'state.lgas',
-            'customerType', /*'tier', 'subRegion', 'region',*/ 'registrar', 'assignedOfficer',
+            // 'state',
+            // 'lga',
+            // 'customerType', 'registrar', 'assignedOfficer',
 
-            'visits' => function ($q) {
-                $q->orderBy('id', 'DESC')->paginate(10);
-            },
+            // 'visits' => function ($q) {
+            //     $q->orderBy('id', 'DESC')->paginate(10);
+            // },
+            // 'visits.contact',
 
         ];
         if ($verify_type === 'verified') {
@@ -240,19 +243,19 @@ class CustomersController extends Controller
             'customerContacts', 'customerType', 'tier', 'subRegion', 'region', 'registrar', 'assignedOfficer', 'verifications.verifier' => function ($q) {
                 $q->orderBy('id', 'DESC');
             },
-            'payments' => function ($q) {
-                $q->orderBy('id', 'DESC');
-            },
-            'visits' => function ($q) {
-                $q->orderBy('id', 'DESC')->paginate(10);
-            },
-            'visits.details.contact',
-            'visits.visitedBy',
-            'payments.confirmer',
-            'transactions' => function ($q) {
-                $q->orderBy('id', 'DESC')->paginate(10);
-            },
-            'transactions.details',
+            // 'payments' => function ($q) {
+            //     $q->orderBy('id', 'DESC');
+            // },
+            // 'visits' => function ($q) {
+            //     $q->orderBy('id', 'DESC')->paginate(10);
+            // },
+            // 'visits.contact',
+            // 'visits.visitedBy',
+            // 'payments.confirmer',
+            // 'transactions' => function ($q) {
+            //     $q->orderBy('id', 'DESC')->paginate(10);
+            // },
+            // 'transactions.details',
             'schedules' => function ($query) use ($today) {
                 $query->where('schedule_date', '>=', $today)->orWhere('repeat_schedule', 'yes')->orderBy('day_num');
             }
@@ -265,7 +268,9 @@ class CustomersController extends Controller
             ->orderBy('day_num')
             ->get()
             ->groupBy('day');
-        return response()->json(compact('schedules', 'customer'), 200);
+        $sales = $customer->customerSalesReport($customer);
+        $debt = $customer->customerDebtReport($customer);
+        return response()->json(compact('sales', 'debt', 'schedules', 'customer'), 200);
     }
     public function myCustomers(Request $request)
     {
@@ -285,18 +290,18 @@ class CustomersController extends Controller
             }
         }
         $customers = Customer::with([
-            'customerContacts', 'customerType', 'tier', 'subRegion', 'region', 'registrar', 'assignedOfficer', 'verifier',
-            'payments' => function ($q) {
-                $q->orderBy('id', 'DESC');
-            },
-            'visits' => function ($q) use ($user) {
-                $q->where('visitor', $user->id)->orderBy('id', 'DESC');
-            },
-            'visits.details.contact',
-            'payments.confirmer', 'debts', 'transactions',
-            'schedules' => function ($query) use ($user, $today) {
-                $query->where('schedule_date', '>=', $today)->orWhere('repeat_schedule', 'yes')->where('rep', $user->id)->orderBy('day_num');
-            }
+            'customerContacts',
+            // 'state',
+            // 'lga',
+            // 'customerType', 'registrar', 'assignedOfficer', 'verifier',
+            // 'visits' => function ($q) use ($user) {
+            //     $q->where('visitor', $user->id)->orderBy('id', 'DESC')->paginate(5);
+            // },
+            // 'visits.contact',
+            // 'payments.confirmer', 'debts', 'transactions',
+            // 'schedules' => function ($query) use ($user, $today) {
+            //     $query->where('schedule_date', '>=', $today)->orWhere('repeat_schedule', 'yes')->where('rep', $user->id)->orderBy('day_num');
+            // }
         ])->where($condition)->orderBy('business_name')->paginate($paginate);
         return response()->json(compact('customers'), 200);
     }
@@ -409,13 +414,21 @@ class CustomersController extends Controller
         $customer->lga_id = $request->lga_id;
         $customer->business_name = $request->business_name;
         $customer->customer_type_id = $request->customer_type_id;
+
+        $customer->street = $request->street;
+        $customer->area = $request->area;
         $customer->latitude = $request->latitude;
         $customer->longitude = $request->longitude;
-        $customer->street = $request->street;
         $customer->address = $request->address;
-        $customer->area = $request->area;
+        $customer->latitude2 = $request->latitude2;
+        $customer->longitude2 = $request->longitude2;
+        $customer->address2 = $request->address2;
+        $customer->latitude3 = $request->latitude3;
+        $customer->longitude3 = $request->longitude3;
+        $customer->address3 = $request->address3;
         $customer->save();
-        return response()->json([], 204);
+        return $this->show($customer);
+        // return response()->json([], 204);
     }
     public function storeBulkCustomers(Request $request)
     {
@@ -552,15 +565,14 @@ class CustomersController extends Controller
         $user = $this->getUser();
         $today  = date('Y-m-d', strtotime('now'));
         $customer = $customer::with([
-            'customerContacts', 'customerType', 'tier', 'subRegion', 'region', 'registrar', 'state',
-            'lga', 'assignedOfficer', 'verifier',
-            'payments' => function ($q) {
-                $q->orderBy('id', 'DESC');
-            },
+            'customerContacts',
+            'state',
+            'lga',
+            'customerType', 'registrar', 'assignedOfficer',
             'visits' => function ($q) use ($user) {
-                $q->where('visitor', $user->id)->orderBy('id', 'DESC');
+                $q->where('visitor', $user->id)->orderBy('id', 'DESC')->paginate(10);
             },
-            'visits.details.contact',
+            'visits.contact',
             'payments.confirmer', 'payments.transaction.staff', 'transactions',
             'schedules' => function ($query) use ($user, $today) {
                 $query->where('schedule_date', '>=', $today)->orWhere('repeat_schedule', 'yes')->where('rep', $user->id)->orderBy('day_num');

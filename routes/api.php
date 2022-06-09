@@ -167,6 +167,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         Route::post('store', [TransactionsController::class, 'store']); //->middleware('permission:create-sales');
         Route::put('supply-orders/{transaction_detail}', [TransactionsController::class, 'supplyOrders']);
+        // Route::get('customer-sales-report/{customer}', [TransactionsController::class, 'customerSalesReport']);
     });
     Route::group(['prefix' => 'schedules'], function () {
         Route::get('fetch', [SchedulesController::class, 'index']);

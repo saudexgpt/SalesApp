@@ -111,4 +111,78 @@ class Customer extends Model
     {
         return $query->where('date_verified', NULL);
     }
+
+    public function customerSalesReport(Customer $customer)
+    {
+        $this_year = date('Y', strtotime('now'));
+        $customer_id = $customer->id;
+        $customer_sales = Transaction::where('customer_id', $customer_id)
+            ->where('created_at', 'LIKE', '%' . $this_year . '%')
+            ->get();
+        $monthly_sales_amounts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        foreach ($customer_sales as $customer_sale) {
+            $month = (int) date('m', strtotime($customer_sale->created_at));
+            $month_index = $month - 1;
+            $monthly_sales_amounts[$month_index] += (float) $customer_sale->amount_due;
+        }
+        $series = [
+            [
+                'name' => 'Sales',
+                'data' => $monthly_sales_amounts, //array format
+                // 'color' => '#333333',
+                // 'stack' => 'Initial Stock'
+            ],
+            // [
+            //     'name' => 'In Transit',
+            //     'data' => $in_transit, //array format
+            //     'color' => '#f39c12',
+            //     'stack' => 'In Stock'
+            // ],
+            // [
+            //     'name' => 'In Stock',
+            //     'data' => $balance, //array format
+            //     'color' => '#00a65a',
+            //     'stack' => 'In Stock'
+            // ],
+            // [
+            //     'name' => 'Supplied',
+            //     'data' => $supplied, //array format
+            //     'color' => '#DC143C',
+            //     'stack' => 'Supplied'
+            // ],
+        ];
+        return $series;
+    }
+    public function customerDebtReport(Customer $customer)
+    {
+        $today = date('Y-m-d', strtotime('now'));
+        $customer_id = $customer->id;
+        $customer_debts = CustomerDebt::where('customer_id', $customer_id)
+            ->whereRaw('amount - paid > 0')
+            ->get();
+        $debts_and_payments = [0, 0, 0];
+        foreach ($customer_debts as $customer_debt) {
+            if ($customer_debt->due_date <= $today) {
+                // overdue debt
+                $debts_and_payments[0] += (float) $customer_debt->amount;
+            } else {
+
+                $debts_and_payments[1] += (float) $customer_debt->amount;
+            }
+            $debts_and_payments[2] += (float) $customer_debt->paid;
+        }
+        // $series = [
+        //     [
+        //         'name' => 'Debt',
+        //         'data' => $debts_and_payments[0], //array format
+        //         // 'color' => '#333333',
+        //         // 'stack' => 'Initial Stock'
+        //     ],
+        //     [
+        //         'name' => 'Paid',
+        //         'data' => $debts_and_payments[1]
+        //     ],
+        // ];
+        return $debts_and_payments;
+    }
 }

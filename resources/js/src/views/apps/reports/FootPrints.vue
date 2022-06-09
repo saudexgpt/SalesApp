@@ -111,24 +111,27 @@
                   :opened="showByIndex === index"
                 >
                   <strong>Name: </strong> {{ m.detail.name }}<br>
-                  <strong>Current Location: </strong> {{ m.detail.location.longitude + ', ' + m.detail.location.latitude }}<br>
+                  <strong>Current Location (LNG, LAT): </strong> {{ m.detail.location.longitude + ', ' + m.detail.location.latitude }}<br>
                   <strong>Date: </strong> {{ moment(m.detail.location.created_at).format('DD-MM-YYYY hh:mm a') }}<br>
                 </gmap-info-window>
               </gmap-marker>
 
-              <gmap-polyline :path.sync="paths" :options="{ strokeColor:'#000000'}" />
+              <!-- <gmap-polyline :path.sync="paths" :options="{ strokeColor:'#000000'}" /> -->
             </gmap-map>
           </el-col>
           <el-col :lg="8" :md="8" :sm="24" :xs="24">
             <el-alert :closable="false" type="success">Visits made by {{ selected_rep.name }}</el-alert>
             <br>
-            <div v-loading="loadVisits">
+            <div v-loading="loadVisits" style="height: 650px; overflow: auto">
               <el-timeline v-if="visits.length > 0">
                 <el-timeline-item
                   v-for="(visit, index) in visits"
                   :key="index"
                   :timestamp="moment(visit.created_at).format('DD-MM-YYYY hh:mm a')">
-                  <strong>{{ visit.customer.business_name }}</strong>
+                  <strong>{{ visit.customer.business_name }}</strong><br>
+                  <small>{{ visit.visit_type }}</small><br>
+                  <small>{{ visit.rep_longitude + ', ' + visit.rep_latitude }}</small><br>
+                  <small>{{ visit.address }}</small>
                 </el-timeline-item>
               </el-timeline>
               <div v-else>
@@ -145,14 +148,15 @@
 <script>
 import moment from 'moment';
 import GmapCluster from 'vue2-google-maps/dist/components/cluster';
-import GmapPolyline from 'vue2-google-maps/dist/components/polyline';
+// import GmapPolyline from 'vue2-google-maps/dist/components/polyline';
 
 import checkPermission from '@/utils/permission'; // Permission checking
 import checkRole from '@/utils/role'; // Permission checking
 import Resource from '@/api/resource';
 export default {
   components: {
-    GmapCluster, GmapPolyline,
+    GmapCluster,
+    // GmapPolyline,
   },
   data() {
     return {
@@ -224,7 +228,7 @@ export default {
     // },
     fetchFootprint() {
       this.loader = true;
-
+      this.visits = [];
       const fetchFootprintResource = new Resource('visits/fetch-footprints');
       fetchFootprintResource
         .list(this.form)

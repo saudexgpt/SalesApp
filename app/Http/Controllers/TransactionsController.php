@@ -570,6 +570,7 @@ class TransactionsController extends Controller
             ->get();
         return array($total_debt_till_date, $past_payments_till_date, $past_returns_till_date, $payments, $returns, $debts);
     }
+
     /**
      * Update the specified resource in storage.
      *
