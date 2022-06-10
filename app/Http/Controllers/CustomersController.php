@@ -13,6 +13,7 @@ use App\Models\SampleCustomer;
 use App\Models\Schedule;
 use App\Models\State;
 use App\Models\User;
+use App\Models\Visit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 
@@ -260,6 +261,8 @@ class CustomersController extends Controller
                 $query->where('schedule_date', '>=', $today)->orWhere('repeat_schedule', 'yes')->orderBy('day_num');
             }
         ])->find($customer->id);
+        $last_visit = Visit::where('customer_id', $customer->id)->orderBy('visit_date', 'DESC')->first();
+        $customer->last_visit = $last_visit;
         $schedules = Schedule::where('customer_id', $customer->id)
             ->where(function ($q) use ($today) {
                 $q->where('schedule_date', '>=', $today);

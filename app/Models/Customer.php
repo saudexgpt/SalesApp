@@ -160,16 +160,17 @@ class Customer extends Model
         $customer_debts = CustomerDebt::where('customer_id', $customer_id)
             ->whereRaw('amount - paid > 0')
             ->get();
-        $debts_and_payments = [0, 0, 0];
+        $debts_and_payments = [0, 0];
         foreach ($customer_debts as $customer_debt) {
+            $debt = $customer_debt->amount - $customer_debt->paid;
             if ($customer_debt->due_date <= $today) {
                 // overdue debt
-                $debts_and_payments[0] += (float) $customer_debt->amount;
+                $debts_and_payments[0] += (float) $debt;
             } else {
 
-                $debts_and_payments[1] += (float) $customer_debt->amount;
+                $debts_and_payments[1] += (float) $debt;
             }
-            $debts_and_payments[2] += (float) $customer_debt->paid;
+            // $debts_and_payments[2] += (float) $customer_debt->paid;
         }
         // $series = [
         //     [
