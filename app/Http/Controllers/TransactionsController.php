@@ -506,10 +506,10 @@ class TransactionsController extends Controller
                 //$running_balance -= $outbound->quantity_supplied;
                 $statements[] = [
                     'type' => 'debt',
-                    'amount_transacted' => $debt->amount_due,
-                    'description' => 'Sales',
+                    'amount_transacted' => $debt->amount,
+                    'description' => ($debt->transaction_id !== NULL) ? 'Sales' : 'Debt',
                     'date' => $debt->created_at,
-                    'debt' => $debt->amount_due,
+                    'debt' => $debt->amount,
                     'paid' => '',
                     'balance' => 0, // initially set to zero
                     // 'packaging' => $outbound->itemStock->item->package_type,
@@ -529,11 +529,17 @@ class TransactionsController extends Controller
     private function getCustomerTransactions($customer_id, $date_from, $date_to)
     {
 
-        $total_debt_till_date = Transaction::groupBy('customer_id')
+        // $total_debt_till_date = Transaction::groupBy('customer_id')
+        //     ->where('customer_id', $customer_id)
+        //     ->where('entry_date', '<', $date_from)
+        //     // ->where('confirmed_by', '!=', null)
+        //     ->select('*', \DB::raw('SUM(amount_due) as total_amount_due'))
+        //     ->first();
+        $total_debt_till_date = CustomerDebt::groupBy('customer_id')
             ->where('customer_id', $customer_id)
-            ->where('entry_date', '<', $date_from)
+            ->where('created_at', '<', $date_from)
             // ->where('confirmed_by', '!=', null)
-            ->select('*', \DB::raw('SUM(amount_due) as total_amount_due'))
+            ->select('*', \DB::raw('SUM(amount) as total_amount_due'))
             ->first();
         $past_payments_till_date = Payment::groupBy('customer_id')
             ->where('customer_id', $customer_id)
@@ -562,11 +568,17 @@ class TransactionsController extends Controller
             ->select('*', \DB::raw('SUM(amount) as total_amount_returned'))
             ->orderBy('date')
             ->get();
-        $debts = Transaction::groupBy('entry_date')
+        // $debts = Transaction::groupBy('entry_date')
+        //     ->where('customer_id', $customer_id)
+        //     ->where('entry_date', '>=', $date_from)
+        //     ->where('entry_date', '<=', $date_to)
+        //     ->orderBy('entry_date')
+        //     ->get();
+        $debts = CustomerDebt::groupBy('created_at')
             ->where('customer_id', $customer_id)
-            ->where('entry_date', '>=', $date_from)
-            ->where('entry_date', '<=', $date_to)
-            ->orderBy('entry_date')
+            ->where('created_at', '>=', $date_from)
+            ->where('created_at', '<=', $date_to)
+            ->orderBy('created_at')
             ->get();
         return array($total_debt_till_date, $past_payments_till_date, $past_returns_till_date, $payments, $returns, $debts);
     }

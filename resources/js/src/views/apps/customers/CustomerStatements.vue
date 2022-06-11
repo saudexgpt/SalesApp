@@ -17,6 +17,17 @@
           <div class="no-print">
             <div class="box-header">
               <span class="pull-right">
+                <router-link
+                  :to="'/customers/index'"
+                >
+                  <el-button
+                    round
+                    class="filter-item"
+                    size="small"
+                    type="danger"
+                    icon="el-icon-back"
+                  />
+                </router-link>
                 <el-button :loading="downloadLoading" round type="primary" icon="document" @click="handleDownload">
                   Export Excel
                 </el-button>

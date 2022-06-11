@@ -413,8 +413,11 @@ export default {
     },
     setEditCustomerDetails(row){
       this.selectedCustomer = row;
-      this.selected_state = this.states.map(object => object.id).indexOf(this.selectedCustomer.state_id);
-      this.setStateLGAs();
+
+      if (this.selectedCustomer.state_id !== null){
+        this.selected_state = this.states.map(object => object.id).indexOf(this.selectedCustomer.state_id);
+        this.setStateLGAs();
+      }
       this.dialogFormVisible = true;
     },
     setStateLGAs() {
