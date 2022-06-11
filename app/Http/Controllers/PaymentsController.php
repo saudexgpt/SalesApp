@@ -214,8 +214,4 @@ class PaymentsController extends Controller
      * @param  \App\Models\Payment  $payment
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Payment $payment)
-    {
-        //
-    }
 }

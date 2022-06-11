@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use App\Models\CustomerCall;
 use App\Models\CustomerContact;
+use App\Models\CustomerDebt;
 use App\Models\CustomerType;
 use App\Models\CustomerVerification;
 use App\Models\LocalGovernmentArea;
@@ -78,12 +79,12 @@ class CustomersController extends Controller
         $condition = [];
         $with = [
             'customerContacts',
-            // 'state',
-            // 'lga',
+            'state',
+            'lga',
             'customerType', 'registrar', 'assignedOfficer',
 
             'visits' => function ($q) {
-                $q->orderBy('id', 'DESC')->paginate(1);
+                $q->orderBy('id', 'DESC')->paginate(5);
             },
 
         ];
@@ -338,12 +339,12 @@ class CustomersController extends Controller
 
 
             // we fetch the geo information of the given address
-            if ($formatted_address !== '') {
+            // if ($formatted_address !== '') {
 
-                if ($lat == '' && $long == '' &&  $area == '') {
-                    list($lat, $long, $formatted_address, $street, $area) = $this->getLocationFromAddress($formatted_address);
-                }
-            }
+            //     if ($lat == '' && $long == '' &&  $area == '') {
+            //         list($lat, $long, $formatted_address, $street, $area) = $this->getLocationFromAddress($formatted_address);
+            //     }
+            // }
             $contacts = json_decode(json_encode($unsaved_customer->customer_contacts));
             $customer = new Customer();
             $customer->status = $status;
@@ -450,7 +451,7 @@ class CustomersController extends Controller
                 $business_type = strtolower(trim($data->BUSINESS_TYPE));
                 // $email =  trim($data->EMAIL);
                 $address =  trim($data->ADDRESS);
-                $cordinate =  trim($data->COORDINATE);
+                $cordinate =  (isset($data->COORDINATE)) ? trim($data->COORDINATE) : '';
                 $area =  (isset($data->AREA)) ? trim($data->AREA) : NULL;
                 $lga_text =  (isset($data->LGA)) ? strtolower(trim($data->LGA)) : NULL;
                 $contact_name =  (isset($data->CONTACT_PERSON)) ? trim($data->CONTACT_PERSON) : NULL;
@@ -493,6 +494,49 @@ class CustomersController extends Controller
             }
         }
         return response()->json(compact('unsaved_customers', 'error'), 200);
+    }
+    public function uploadBulkDebt(Request $request)
+    {
+        set_time_limit(0);
+        // $actor = $this->getUser();
+        $bulk_data = json_decode(json_encode($request->bulk_data));
+        $unsaved_customers = [];
+        $error = [];
+        // try {
+        foreach ($bulk_data as $data) {
+            try {
+
+                $request->business_name =  trim($data->BUSINESS_NAME);
+
+                $amount = trim($data->AMOUNT);
+                $request->relating_officer =  trim($data->REP_ID);
+                $age =  trim($data->AGE);
+                $request->address =  trim($data->ADDRESS);
+
+                $request->customer_contacts = [['name' => NULL, 'phone1' => NULL, 'phone2' => NULL, 'role' => NULL]];
+
+
+                $customer = $this->saveCustomersDetails($request, 'Confirmed');
+                if ($amount > 0) {
+
+                    $this->addDebtor($customer, $amount, $age);
+                }
+            } catch (\Throwable $th) {
+
+                $unsaved_customers[] = $data;
+                $error[] = $th;
+            }
+        }
+        return response()->json(compact('unsaved_customers', 'error'), 200);
+    }
+    public function addDebtor($customer, $amount, $age)
+    {
+        $customer_debt = new CustomerDebt();
+        $customer_debt->customer_id = $customer->id;
+        $customer_debt->amount = $amount;
+        $customer_debt->age = $age;
+        $customer_debt->field_staff = $customer->relating_officer;
+        $customer_debt->save();
     }
     private function saveCustomerContact($customer_id, $contacts)
     {

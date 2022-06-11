@@ -281,7 +281,7 @@ class SubInventoriesController extends Controller
                         $request->item_id = $item->id;
                         $request->quantity = $quantity;
                         $request->staff_id = $staff_id;
-                        $request->expiry_date = $expiry_date;
+                        $request->expiry_date = ($expiry_date !== 'NULL') ? $expiry_date : NULL;
                         $this->store($request);
                     }
                 }

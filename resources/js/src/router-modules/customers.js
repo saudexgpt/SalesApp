@@ -19,6 +19,14 @@ const customersRoutes = {
     },
     {
       hidden: false,
+      path: '/customers/bulk-debt',
+      name: 'BulkUploadDebt',
+      slug: 'add-debtors',
+      i18n: 'Add Bulk Debtors',
+      component: () => import('@/views/apps/customers/BulkDebtorsUpload.vue'),
+    },
+    {
+      hidden: false,
       path: '/customers/index',
       name: 'ViewCustomer',
       slug: 'view-customer',
