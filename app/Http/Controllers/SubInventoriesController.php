@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Item;
 use App\Models\SubInventory;
 use App\Models\VanInventory;
 use App\Models\WarehouseStock;
@@ -25,13 +26,13 @@ class SubInventoriesController extends Controller
         //     ->groupBy('item_id');
         // return response()->json(compact('inventories', 'sub_inventories'), 200);
         $inventories = SubInventory::with('item.price')
-            ->groupBy('warehouse_stock_id', 'batch_no')
+            ->groupBy('warehouse_stock_id', 'expiry_date')
             ->where('staff_id', $user->id)
             ->where('balance', '>', 0)
             ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(moved_to_van) as van_quantity'), \DB::raw('SUM(balance) as total_balance'))
             ->get();
         $sub_inventories = VanInventory::with('item.price')
-            ->groupBy('sub_inventory_id', 'batch_no')
+            ->groupBy('sub_inventory_id', 'expiry_date')
             ->where('staff_id', $user->id)
             ->where('balance', '>', 0)
             ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(sold) as total_sold'), \DB::raw('SUM(balance) as total_balance'))
@@ -127,16 +128,25 @@ class SubInventoriesController extends Controller
     public function store(Request $request)
     {
         $user = $this->getUser();
-        $inventory_items = json_decode(json_encode($request->inventory_items));
-        foreach ($inventory_items as $inventory_item) {
-            $sub_inventory = new SubInventory();
-            $sub_inventory->staff_id = $inventory_item->staff_id;
-            $sub_inventory->item_id = $inventory_item->item_id;
-            $sub_inventory->quantity_stocked = $inventory_item->quantity;
-            $sub_inventory->balance = $inventory_item->quantity;
-            $sub_inventory->stocked_by = $user->name;
-            $sub_inventory->save();
-        }
+        $sub_inventory = new SubInventory();
+        $sub_inventory->staff_id = $request->staff_id;
+        $sub_inventory->item_id = $request->item_id;
+        $sub_inventory->quantity_stocked = $request->quantity;
+        $sub_inventory->balance = $request->quantity;
+        $sub_inventory->expiry_date = $request->expiry_date;
+        $sub_inventory->stocked_by = $user->name;
+        $sub_inventory->save();
+        // $inventory_items = json_decode(json_encode($request->inventory_items));
+        // foreach ($inventory_items as $inventory_item) {
+        //     $sub_inventory = new SubInventory();
+        //     $sub_inventory->staff_id = $inventory_item->staff_id;
+        //     $sub_inventory->item_id = $inventory_item->item_id;
+        //     $sub_inventory->quantity_stocked = $inventory_item->quantity;
+        //     $sub_inventory->balance = $inventory_item->quantity;
+        //     $sub_inventory->expiry_date = $inventory_item->expiry_date;
+        //     $sub_inventory->stocked_by = $user->name;
+        //     $sub_inventory->save();
+        // }
         return 'success';
     }
 
@@ -247,9 +257,41 @@ class SubInventoriesController extends Controller
      * @param  \App\Models\SubInventory  $subInventory
      * @return \Illuminate\Http\Response
      */
-    public function edit(SubInventory $subInventory)
+    public function storeBulkMainInventory(Request $request)
     {
-        //
+        set_time_limit(0);
+        // $actor = $this->getUser();
+        $bulk_data = json_decode(json_encode($request->bulk_data));
+        $unsaved_inventory = [];
+        $error = [];
+        // try {
+        foreach ($bulk_data as $data) {
+            try {
+
+                $item_name =  trim($data->ITEM_NAME);
+
+                $quantity = trim($data->QUANTITY);
+                $expiry_date =  trim($data->EXPIRY_DATE);
+                $staff_id =  trim($data->REP_ID);
+                // let's fetch the state_id and lga_id
+                if ($quantity > 1) {
+
+                    $item = Item::where('name', $item_name)->first();
+                    if ($item) {
+                        $request->item_id = $item->id;
+                        $request->quantity = $quantity;
+                        $request->staff_id = $staff_id;
+                        $request->expiry_date = $expiry_date;
+                        $this->store($request);
+                    }
+                }
+            } catch (\Throwable $th) {
+
+                $unsaved_inventory[] = $data;
+                $error[] = $th;
+            }
+        }
+        return response()->json(compact('unsaved_inventory', 'error'), 200);
     }
 
     /**

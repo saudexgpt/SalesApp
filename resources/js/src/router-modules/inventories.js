@@ -8,7 +8,7 @@ const inventoryRoutes = {
   slug: 'inventory',
   redirect: '/inventory/view',
   meta: {
-    roles: ['sales_rep'],
+    // roles: ['sales_rep'],
   },
   children: [
     {
@@ -43,6 +43,14 @@ const inventoryRoutes = {
       meta: {
         permissions: ['add-stock'],
       },
+    },
+    {
+      hidden: false,
+      path: '/inventory/bulk',
+      name: 'BulkUpload',
+      slug: 'add-inventory',
+      i18n: 'Upload Bulk',
+      component: () => import('@/views/apps/inventories/BulkUpload.vue'),
     },
     // {
     //   hidden: true,

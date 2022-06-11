@@ -136,6 +136,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('stock-product-from-warehouse', [ItemsController::class, 'stockProductsFromWarehouse']);
         Route::put('accept-warehouse-products/{warehouse_stock}', [SubInventoriesController::class, 'acceptWarehouseProducts']);
         Route::get('/warehouse-stock', [SubInventoriesController::class, 'showWarehouseStock']);
+        Route::post('/store-bulk-inventory', [SubInventoriesController::class, 'storeBulkMainInventory']);
     });
     Route::group(['prefix' => 'payments'], function () {
         Route::get('/', [PaymentsController::class, 'index']);
