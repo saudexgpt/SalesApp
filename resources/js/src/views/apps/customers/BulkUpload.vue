@@ -3,7 +3,7 @@
     <el-row :gutter="10" class="padded">
       <el-col :xs="24" :sm="24" :md="24">
         <aside>
-          <el-button v-waves :loading="downloading" round class="filter-item" type="danger" icon="el-icon-download" @click="downloadFormat()">
+          <el-button :loading="downloading" round class="filter-item" type="danger" icon="el-icon-download" @click="downloadFormat()">
             Download Format
           </el-button><br>
           <strong>Note:</strong> To upload bulk customers from excel file, kindly follow the instructions below: <br>
@@ -124,6 +124,7 @@ export default {
       tableHeader: [],
       selected_index: 0,
       error: [],
+      downloading: false,
     };
   },
   methods: {

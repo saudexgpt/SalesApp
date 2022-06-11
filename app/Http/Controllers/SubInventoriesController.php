@@ -25,13 +25,13 @@ class SubInventoriesController extends Controller
         //     ->groupBy('item_id');
         // return response()->json(compact('inventories', 'sub_inventories'), 200);
         $inventories = SubInventory::with('item.price')
-            ->groupBy('item_id')
+            ->groupBy('warehouse_stock_id', 'batch_no')
             ->where('staff_id', $user->id)
             ->where('balance', '>', 0)
             ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(moved_to_van) as van_quantity'), \DB::raw('SUM(balance) as total_balance'))
             ->get();
         $sub_inventories = VanInventory::with('item.price')
-            ->groupBy('item_id')
+            ->groupBy('sub_inventory_id', 'batch_no')
             ->where('staff_id', $user->id)
             ->where('balance', '>', 0)
             ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(sold) as total_sold'), \DB::raw('SUM(balance) as total_balance'))
@@ -88,13 +88,13 @@ class SubInventoriesController extends Controller
     {
         $staff_id = $request->staff_id;
         $inventories = SubInventory::with('item')
-            ->groupBy('item_id')
+            ->groupBy('item_id', 'batch_no')
             ->where('staff_id', $staff_id)
             ->where('balance', '>', 0)
             ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(moved_to_van) as van_quantity'), \DB::raw('SUM(balance) as total_balance'))
             ->get();
         $sub_inventories = VanInventory::with('item')
-            ->groupBy('item_id')
+            ->groupBy('item_id', 'batch_no')
             ->where('staff_id', $staff_id)
             ->where('balance', '>', 0)
             ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(sold) as total_sold'), \DB::raw('SUM(balance) as total_balance'))
@@ -180,50 +180,65 @@ class SubInventoriesController extends Controller
         $quantity = $request->quantity;
         $item_id = $subInventory->item_id;
 
-        $van_inventory = new VanInventory();
-        $van_inventory->staff_id = $user->id;
-        $van_inventory->sub_inventory_id = $subInventory->id;
-        $van_inventory->item_id = $item_id;
-        $van_inventory->quantity_stocked = $quantity;
-        $van_inventory->balance = $quantity;
-        $van_inventory->batch_no = $subInventory->batch_no;
-        $van_inventory->expiry_date = $subInventory->expiry_date;
+        $van_inventory = VanInventory::where([
+            'sub_inventory_id' => $subInventory->id,
+            'staff_id' => $user->id,
+        ])->first();
+        if ($van_inventory) {
+            $van_inventory->quantity_stocked += $quantity;
+            $van_inventory->balance += $quantity;
+        } else {
+            $van_inventory = new VanInventory();
+            $van_inventory->staff_id = $user->id;
+            $van_inventory->sub_inventory_id = $subInventory->id;
+            $van_inventory->item_id = $item_id;
+            $van_inventory->quantity_stocked = $quantity;
+            $van_inventory->balance = $quantity;
+            $van_inventory->batch_no = $subInventory->batch_no;
+            $van_inventory->expiry_date = $subInventory->expiry_date;
+        }
         $van_inventory->save();
 
-        $sub_inventories = SubInventory::where(['item_id' => $item_id, 'staff_id' => $user->id])->whereRaw('balance > 0')->get();
-        foreach ($sub_inventories as $sub_inventory) {
-            if ($quantity > 0) {
+        // subtract from main inventory
+        $subInventory->moved_to_van = $quantity;
+        $subInventory->balance -= $quantity;
+        $subInventory->save();
 
-                $balance = $sub_inventory->balance;
-                if ($quantity <= $balance) {
+        // $sub_inventories = SubInventory::where(['item_id' => $item_id, 'staff_id' => $user->id])->whereRaw('balance > 0')->get();
+        // foreach ($sub_inventories as $sub_inventory) {
+        //     if ($quantity > 0) {
+
+        //         $balance = $sub_inventory->balance;
+        //         if ($quantity <= $balance) {
 
 
-                    $sub_inventory->moved_to_van += $quantity;
-                    $sub_inventory->balance -= $quantity;
-                    $quantity = 0;
-                    $sub_inventory->save();
-                    break;
-                } else {
-                    $sub_inventory->moved_to_van += $balance;
-                    $sub_inventory->balance -= $balance;
-                    $quantity -= $balance;
-                    $sub_inventory->save();
-                }
-            }
-        }
-        $inventories = SubInventory::with('item.price')
-            ->groupBy('item_id')
-            ->where('staff_id', $user->id)
-            ->where('balance', '>', 0)
-            ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(moved_to_van) as van_quantity'), \DB::raw('SUM(balance) as total_balance'))
-            ->get();
-        $sub_inventories = VanInventory::with('item.price')
-            ->groupBy('item_id')
-            ->where('staff_id', $user->id)
-            ->where('balance', '>', 0)
-            ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(sold) as total_sold'), \DB::raw('SUM(balance) as total_balance'))
-            ->get();
-        return response()->json(compact('inventories', 'sub_inventories'), 200);
+        //             $sub_inventory->moved_to_van += $quantity;
+        //             $sub_inventory->balance -= $quantity;
+        //             $quantity = 0;
+        //             $sub_inventory->save();
+        //             break;
+        //         } else {
+        //             $sub_inventory->moved_to_van += $balance;
+        //             $sub_inventory->balance -= $balance;
+        //             $quantity -= $balance;
+        //             $sub_inventory->save();
+        //         }
+        //     }
+        // }
+        return $this->myInventory();
+        // $inventories = SubInventory::with('item.price')
+        //     ->groupBy('item_id')
+        //     ->where('staff_id', $user->id)
+        //     ->where('balance', '>', 0)
+        //     ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(moved_to_van) as van_quantity'), \DB::raw('SUM(balance) as total_balance'))
+        //     ->get();
+        // $sub_inventories = VanInventory::with('item.price')
+        //     ->groupBy('item_id')
+        //     ->where('staff_id', $user->id)
+        //     ->where('balance', '>', 0)
+        //     ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(sold) as total_sold'), \DB::raw('SUM(balance) as total_balance'))
+        //     ->get();
+        // return response()->json(compact('inventories', 'sub_inventories'), 200);
     }
 
     /**

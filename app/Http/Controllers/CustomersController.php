@@ -80,12 +80,11 @@ class CustomersController extends Controller
             'customerContacts',
             // 'state',
             // 'lga',
-            // 'customerType', 'registrar', 'assignedOfficer',
+            'customerType', 'registrar', 'assignedOfficer',
 
-            // 'visits' => function ($q) {
-            //     $q->orderBy('id', 'DESC')->paginate(10);
-            // },
-            // 'visits.contact',
+            'visits' => function ($q) {
+                $q->orderBy('id', 'DESC')->paginate(1);
+            },
 
         ];
         if ($verify_type === 'verified') {
@@ -367,7 +366,7 @@ class CustomersController extends Controller
             $customer->registered_by = $user->id;
             $customer->registrar_lat = $reg_lat;
             $customer->registrar_lng = $reg_lng;
-            $customer->relating_officer = $user->id;
+            $customer->relating_officer = (isset($unsaved_customer->relating_officer)) ? $unsaved_customer->relating_officer : NULL;
             if ($customer->save()) {
                 if (count($contacts) > 0) {
                     $this->saveCustomerContact($customer->id, $contacts);
@@ -400,15 +399,17 @@ class CustomersController extends Controller
         $unsaved_customers = json_decode(json_encode($request->unsaved_customers));
         $customer_list = [];
         $unsaved_list = [];
+        $error = [];
         foreach ($unsaved_customers as $unsaved_customer) {
             try {
                 $customer = $this->saveCustomersDetails($unsaved_customer);
                 $customer_list[] = $this->show($customer);
             } catch (\Throwable $th) {
                 $unsaved_list[] =  $unsaved_customer;
+                $error[] =  $th;
             }
         }
-        return response()->json(['customers' => $customer_list, 'unsaved_list' => $unsaved_list, 'message' => 'success'], 200);
+        return response()->json(['customers' => $customer_list, 'unsaved_list' => $unsaved_list, 'message' => 'success', 'error' => $error], 200);
     }
 
     public function update(Request $request, Customer $customer)
@@ -445,17 +446,19 @@ class CustomersController extends Controller
             try {
 
                 $business_name =  trim($data->BUSINESS_NAME);
+
+                $business_type = strtolower(trim($data->BUSINESS_TYPE));
                 // $email =  trim($data->EMAIL);
                 $address =  trim($data->ADDRESS);
+                $cordinate =  trim($data->COORDINATE);
                 $area =  (isset($data->AREA)) ? trim($data->AREA) : NULL;
-                $lga_text =  strtolower(trim($data->LGA));
-                $cordinate =  trim($data->CORDINATE);
-                $business_type = strtolower(trim($data->BUSINESS_TYPE));
+                $lga_text =  (isset($data->LGA)) ? strtolower(trim($data->LGA)) : NULL;
                 $contact_name =  (isset($data->CONTACT_PERSON)) ? trim($data->CONTACT_PERSON) : NULL;
                 $contact_no = (isset($data->CONTACT_NUMBER)) ? trim($data->CONTACT_NUMBER) : NULL;
-
+                $relating_officer = (isset($data->REP_ID)) ? trim($data->REP_ID) : NULL;
                 $request->business_name = $business_name;
                 $request->address = $address;
+                $request->relating_officer = $relating_officer;
                 $request->area = $area;
                 $request->lga_text = $lga_text;
                 // let's fetch the state_id and lga_id
