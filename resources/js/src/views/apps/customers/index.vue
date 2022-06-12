@@ -349,9 +349,9 @@ export default {
         },
         pagination: {
           dropdown: true,
-          chunk: 100,
+          chunk: 50,
         },
-        perPage: 100,
+        perPage: 50,
         filterByColumn: true,
         // texts: {
         //   filter: 'Search:',
@@ -367,7 +367,7 @@ export default {
       updatingCustomer: false,
       query: {
         page: 1,
-        limit: 100,
+        limit: 50,
         keyword: '',
         role: '',
         verify_type: 'all',

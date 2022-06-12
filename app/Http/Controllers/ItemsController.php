@@ -52,24 +52,24 @@ class ItemsController extends Controller
     public function fetchWarehouseProducts()
     {
         // Create a stream
-        set_time_limit(0);
-        $opts = [
-            "http" => [
-                "method" => "GET",
-                "header" => "Content-type: application/x-www-form-urlencoded"
-            ]
-        ];
+        //set_time_limit(0);
+        // $opts = [
+        //     "http" => [
+        //         "method" => "GET",
+        //         "header" => "Content-type: application/x-www-form-urlencoded"
+        //     ]
+        // ];
 
-        // DOCS: https://www.php.net/manual/en/function.stream-context-create.php
-        $context = stream_context_create($opts);
+        // // DOCS: https://www.php.net/manual/en/function.stream-context-create.php
+        // $context = stream_context_create($opts);
 
-        // Open the file using the HTTP headers set above
-        // DOCS: https://www.php.net/manual/en/function.file-get-contents.php
-        $products =  file_get_contents('https://gpl.3coretechnology.com/api/get-warehouse-products', false, $context);
-        // $products = file_get_contents('http://localhost:8001/api/get-warehouse-products', false, $context);
-        $products_in_json =  json_decode($products);
-        $items = $products_in_json->items;
-        $this->store($items);
+        // // Open the file using the HTTP headers set above
+        // // DOCS: https://www.php.net/manual/en/function.file-get-contents.php
+        // $products =  file_get_contents('https://gpl.3coretechnology.com/api/get-warehouse-products', false, $context);
+        // // $products = file_get_contents('http://localhost:8001/api/get-warehouse-products', false, $context);
+        // $products_in_json =  json_decode($products);
+        // $items = $products_in_json->items;
+        // $this->store($items);
         return 'successful';
         // $products = file_get_contents('http://localhost:8080/api/get-warehouse-products');
         // print_r($products);
