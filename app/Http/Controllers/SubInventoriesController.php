@@ -4,12 +4,38 @@ namespace App\Http\Controllers;
 
 use App\Models\Item;
 use App\Models\SubInventory;
+use App\Models\TeamMember;
 use App\Models\VanInventory;
 use App\Models\WarehouseStock;
 use Illuminate\Http\Request;
 
 class SubInventoriesController extends Controller
 {
+
+    public function fetchTeamProducts()
+    {
+        $user = $this->getUser();
+        if ($user->hasRole('sales_rep')) {
+
+            $team_member = $user->memberOfTeam;
+            if ($team_member) {
+                $team_id = $team_member->team_id;
+                $team_members = TeamMember::where('team_id', $team_id)
+                    ->get()
+                    ->pluck('user_id')
+                    ->toArray();
+
+                $items = SubInventory::groupBy('item_id')
+                    ->whereIn('staff_id', $team_members)
+                    ->get()
+                    ->pluck('item_id')
+                    ->toArray();
+                foreach ($items as $item_id) {
+                    $this->addTeamProducts($team_id, $item_id); // from Controller Class
+                }
+            }
+        }
+    }
     public function myInventory()
     {
         $user = $this->getUser();
@@ -37,6 +63,7 @@ class SubInventoriesController extends Controller
             ->where('balance', '>', 0)
             ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(sold) as total_sold'), \DB::raw('SUM(balance) as total_balance'))
             ->get();
+        $this->fetchTeamProducts();
         return response()->json(compact('inventories', 'sub_inventories'), 200);
     }
     /**

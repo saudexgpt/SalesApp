@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Item;
 use App\Models\ItemPrice;
 use App\Models\ItemTax;
+use App\Models\SubInventory;
+use App\Models\TeamMember;
 use App\Models\TeamProduct;
 use App\Models\VanInventory;
 use App\Models\WarehouseStock;
@@ -13,6 +15,7 @@ use Illuminate\Http\Request;
 
 class ItemsController extends Controller
 {
+
     /**
      * Display a listing of the resource.
      *
@@ -147,21 +150,12 @@ class ItemsController extends Controller
             $team_member = $user->memberOfTeam;
             if ($team_member) {
                 $team_id = $team_member->team_id;
-                $this->addTeamroducts($team_id, $item->id);
+                $this->addTeamProducts($team_id, $item->id); // from controller class
             }
         }
     }
 
-    private function addTeamroducts($team_id, $item_id)
-    {
-        $team_product = TeamProduct::where(['team_id' => $team_id, 'item_id' => $item_id])->first();
-        if (!$team_product) {
-            $team_product = new TeamProduct();
-            $team_product->team_id = $team_id;
-            $team_product->item_id = $item_id;
-            $team_product->save();
-        }
-    }
+
     /**
      * Display the specified resource.
      *

@@ -14,7 +14,9 @@ use App\Models\LocalGovernmentArea;
 use App\Models\ManagerDomain;
 use App\Models\Role;
 use App\Models\State;
+use App\Models\SubInventory;
 use App\Models\TeamMember;
+use App\Models\TeamProduct;
 use App\Models\User;
 use App\Notifications\AuditTrail;
 use Notification;
@@ -23,7 +25,19 @@ class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
+
     protected $user;
+
+    public function addTeamProducts($team_id, $item_id)
+    {
+        $team_product = TeamProduct::where(['team_id' => $team_id, 'item_id' => $item_id])->first();
+        if (!$team_product) {
+            $team_product = new TeamProduct();
+            $team_product->team_id = $team_id;
+            $team_product->item_id = $item_id;
+            $team_product->save();
+        }
+    }
     public function uploadFile($request)
     {
         if ($request->file('avatar') != null && $request->file('avatar')->isValid()) {
