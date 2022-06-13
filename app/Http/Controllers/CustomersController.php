@@ -346,7 +346,13 @@ class CustomersController extends Controller
             //     }
             // }
             $contacts = json_decode(json_encode($unsaved_customer->customer_contacts));
-            $customer = new Customer();
+            if (isset($unsaved_customer->id) && $unsaved_customer->id !== '') {
+
+                $customer = Customer::find($unsaved_customer->id);
+            } else {
+
+                $customer = new Customer();
+            }
             $customer->status = $status;
             $customer->registration_mode = $reg_mode;
             $customer->customer_type_id = $unsaved_customer->customer_type_id;
@@ -542,25 +548,21 @@ class CustomersController extends Controller
     {
         foreach ($contacts as $contact) {
             if ($contact->name !== NULL && $contact->phone1 !== NULL) {
-                $phone1 = $contact->phone1;
-                $phone2 = $contact->phone2;
-                $new_contact = CustomerContact::where(function ($q) use ($phone1, $phone2) {
-                    $q->where('phone1', $phone1);
-                    $q->orWhere('phone2', $phone2);
-                    $q->orWhere('phone1', $phone2);
-                    $q->orWhere('phone2', $phone1);
-                })->where('customer_id', $customer_id)->first();
-                if (!$new_contact) {
+                if (isset($contact->id) && $contact->id !== '') {
+                    $new_contact = CustomerContact::find($contact->id);
+                } else {
+
                     $new_contact = new CustomerContact();
-                    $new_contact->customer_id = $customer_id;
-                    $new_contact->name = $contact->name;
-                    $new_contact->phone1 = $contact->phone1;
-                    $new_contact->phone2 = $contact->phone2;
-                    $new_contact->role = $contact->role;
-                    $new_contact->dob = date('Y-m-d', strtotime($contact->dob));
-                    $new_contact->gender = $contact->gender;
-                    $new_contact->save();
                 }
+                $new_contact = new CustomerContact();
+                $new_contact->customer_id = $customer_id;
+                $new_contact->name = $contact->name;
+                $new_contact->phone1 = $contact->phone1;
+                $new_contact->phone2 = $contact->phone2;
+                $new_contact->role = $contact->role;
+                $new_contact->dob = date('Y-m-d', strtotime($contact->dob));
+                $new_contact->gender = $contact->gender;
+                $new_contact->save();
             }
         }
     }
