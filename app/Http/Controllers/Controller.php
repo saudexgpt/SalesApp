@@ -201,7 +201,7 @@ class Controller extends BaseController
     }
     public function contactSpecialties()
     {
-        $specialties = ['Cardiologist', 'Dentist', 'Dermatologist', 'Endocrinologist', 'Pharmacist', 'Gynaecologist & Obstetrician', 'Optometrist', 'Neorologist', 'Surgeon', 'Pediatrician', 'Nurse', 'Mid-Wife'];
+        $specialties = ['Cardiologist', 'Dentist', 'Dermatologist', 'Endocrinologist', 'Pharmacist', 'Gynaecologist & Obstetrician', 'Optometrist', 'Neorologist', 'Surgeon', 'Pediatrician', 'Nurse', 'Mid-Wife', 'MD/CEO', 'Manager'];
 
         return response()->json(compact('specialties'), 200);
     }
