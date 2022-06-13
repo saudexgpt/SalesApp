@@ -71,7 +71,7 @@ class SalesRepDetailsRequest extends Command
             $name_array = explode(' ', $repUser->name);
             $last_name = $name_array[0];
             $first_name = (isset($name_array[1])) ? $name_array[1] : NULL;
-            $user = User::where('email', $email)->first();
+            $user = User::where('username', $email)->first();
             if (!$user) {
                 $user = new User();
                 $user->password = bcrypt('password');
