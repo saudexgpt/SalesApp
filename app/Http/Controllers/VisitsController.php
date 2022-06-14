@@ -316,6 +316,7 @@ class VisitsController extends Controller
             $purposes = json_decode(json_encode($unsaved_visit->purposes));
             $purpose = implode(',', $purposes);
             $visit_type = 'off site';
+            $distance = NULL;
             if ($lat != '') {
 
                 $distance = haversineGreatCircleDistanceBetweenTwoPoints(
@@ -343,6 +344,7 @@ class VisitsController extends Controller
                     $visit->rep_longitude = $long;
                     $visit->address = $formatted_address;
                     $visit->accuracy = $unsaved_visit->accuracy;
+                    $visit->proximity = $distance;
                     $visit->visiting_partner_id = (isset($unsaved_visit->visiting_partner_id)) ? $unsaved_visit->visiting_partner_id : NULL;
                     $visit->customer_contact_id = $customer_contact_id;
                     $visit->visit_type = $visit_type;
