@@ -300,6 +300,16 @@ class VisitsController extends Controller
             $customer = Customer::find($customer_id);
             $lat = $unsaved_visit->rep_latitude;
             $long = $unsaved_visit->rep_longitude;
+            $str_response = $this->getLocationFromLatLong($lat, $long);
+            $json = json_decode($str_response);
+            $formatted_address = $json->{'results'}[0]->{'formatted_address'};
+            if ($customer->latitude == NULL || $customer->longitude == NULL) {
+                $customer->latitude =  $lat;
+                $customer->longitude = $long;
+                $customer->address = $formatted_address;
+                $customer->save();
+            }
+
             $visit_date = $unsaved_visit->visit_date;
             $customer_contact_id = ($unsaved_visit->contact_id) ? $unsaved_visit->contact_id : null;
 
@@ -324,16 +334,14 @@ class VisitsController extends Controller
                 $visit = Visit::where(['customer_id' => $customer_id, 'visitor' => $user->id, 'visit_date' => $date])->first();
 
                 if (!$visit) {
-                    // $str_response = $this->getLocationFromLatLong($lat, $long);
-                    // $json = json_decode($str_response);
-                    // $formatted_address = $json->{'results'}[0]->{'formatted_address'};
+
                     $visit = new Visit();
                     $visit->customer_id = $customer_id;
                     $visit->visitor = $user->id;
                     $visit->visit_date = $date;
                     $visit->rep_latitude = $lat;
                     $visit->rep_longitude = $long;
-                    // $visit->address = $formatted_address;
+                    $visit->address = $formatted_address;
                     $visit->accuracy = $unsaved_visit->accuracy;
                     $visit->visiting_partner_id = (isset($unsaved_visit->visiting_partner_id)) ? $unsaved_visit->visiting_partner_id : NULL;
                     $visit->customer_contact_id = $customer_contact_id;
