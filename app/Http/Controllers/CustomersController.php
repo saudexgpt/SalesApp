@@ -373,7 +373,7 @@ class CustomersController extends Controller
             $customer->registered_by = $user->id;
             $customer->registrar_lat = $reg_lat;
             $customer->registrar_lng = $reg_lng;
-            $customer->relating_officer = (isset($unsaved_customer->relating_officer)) ? $unsaved_customer->relating_officer : NULL;
+            $customer->relating_officer = (isset($unsaved_customer->relating_officer)) ? $unsaved_customer->relating_officer : $user->id;
             if ($customer->save()) {
                 if (count($contacts) > 0) {
                     $this->saveCustomerContact($customer->id, $contacts);
