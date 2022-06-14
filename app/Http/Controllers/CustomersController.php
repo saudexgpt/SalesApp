@@ -554,14 +554,15 @@ class CustomersController extends Controller
 
                     $new_contact = new CustomerContact();
                 }
+
                 $new_contact = new CustomerContact();
                 $new_contact->customer_id = $customer_id;
                 $new_contact->name = $contact->name;
                 $new_contact->phone1 = $contact->phone1;
                 $new_contact->phone2 = $contact->phone2;
                 $new_contact->role = $contact->role;
-                $new_contact->dob = date('Y-m-d', strtotime($contact->dob));
-                $new_contact->gender = $contact->gender;
+                $new_contact->dob = (isset($contact->dob)) ? date('Y-m-d', strtotime($contact->dob)) : NULL;
+                $new_contact->gender = (isset($contact->gender)) ? $contact->gender : NULL;
                 $new_contact->save();
             }
         }
