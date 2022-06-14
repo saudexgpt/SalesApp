@@ -274,7 +274,7 @@ class VisitsController extends Controller
     public function repTodayVisits(Request $request)
     {
         $rep_id = $request->rep_id;
-        $date = $request->date;
+        $date = date('Y-m-d', strtotime($request->date));
         $visits = Visit::with('visitedBy', 'visitPartner', 'customer', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
             ->where('visitor',  $rep_id)
             ->where('created_at', 'LIKE', '%' . $date . '%')
