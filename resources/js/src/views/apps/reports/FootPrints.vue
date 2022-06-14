@@ -93,31 +93,68 @@
         </el-tabs> -->
         <el-row :gutter="10">
           <el-col :lg="16" :md="16" :sm="24" :xs="24">
-            <gmap-map
-              :center="center"
-              :zoom="zoom"
-              style="width:100%;  height: 650px"
-            >
-              <gmap-marker
-                v-for="(m, index) in markers"
-                :key="index"
-                :position="m.position"
-                :icon="icon"
-                @mouseout="showByIndex = null"
-                @click="center=m.position; fetchVisitReports(m.detail)"
-                @mouseover="showByIndex = index;"
+            <div v-if="viewType === 'foot_print_list'">
+
+              <gmap-map
+                :center="center"
+                :zoom="zoom"
+                style="width:100%;  height: 650px"
               >
-                <gmap-info-window
-                  :opened="showByIndex === index"
+                <gmap-marker
+                  v-for="(m, index) in markers"
+                  :key="index"
+                  :position="m.position"
+                  :icon="icon"
+                  @mouseout="showByIndex = null"
+                  @click="center=m.position; fetchVisitReports(m.detail)"
+                  @mouseover="showByIndex = index;"
                 >
-                  <strong>Name: </strong> {{ m.detail.name }}<br>
-                  <strong>Current Location (LNG, LAT): </strong> {{ m.detail.location.longitude + ', ' + m.detail.location.latitude }}<br>
-                  <strong>Date: </strong> {{ moment(m.detail.location.created_at).format('DD-MM-YYYY hh:mm a') }}<br>
-                </gmap-info-window>
-              </gmap-marker>
+                  <gmap-info-window
+                    :opened="showByIndex === index"
+                  >
+                    <strong>Name: </strong> {{ m.detail.name }}<br>
+                    <strong>Current Location (LNG, LAT): </strong> {{ m.detail.location.longitude + ', ' + m.detail.location.latitude }}<br>
+                    <strong>Date: </strong> {{ moment(m.detail.location.created_at).format('DD-MM-YYYY hh:mm a') }}<br>
+                  </gmap-info-window>
+                </gmap-marker>
 
               <!-- <gmap-polyline :path.sync="paths" :options="{ strokeColor:'#000000'}" /> -->
-            </gmap-map>
+              </gmap-map>
+            </div>
+            <div v-else>
+              <el-button type="danger" round @click="viewType = 'foot_print_list'">Go Back</el-button>
+              <gmap-map
+                :center="selectedVisit.center"
+                :zoom="15"
+                style="width:100%;  height: 650px"
+              >
+                <gmap-marker
+                  v-for="(m, index) in selectedVisit.markers"
+                  :key="index"
+                  :position="m.position"
+                  :icon="m.icon"
+                  @mouseout="showByIndex = null"
+                  @mouseover="showByIndex = index;"
+                >
+                  <gmap-info-window
+                    :opened="showByIndex === index"
+                  >
+                    <div v-if="m.type === 'customer'">
+                      <strong>Name: </strong> {{ m.detail.business_name }}<br>
+                      <strong>Location (LNG, LAT): </strong> {{ m.detail.longitude + ', ' + m.detail.latitude }}<br>
+                      <strong>Address</strong> {{ m.address }}<br>
+                    </div>
+                    <div v-else>
+                      <strong>Name: </strong> {{ m.detail.visited_by.name }}<br>
+                      <strong>Location: </strong> {{ m.detail.rep_longitude + ', ' + m.detail.rep_latitude }}<br>
+                      <strong>Address: </strong> {{ m.detail.address }}<br>
+                    </div>
+                  </gmap-info-window>
+                </gmap-marker>
+
+              <!-- <gmap-polyline :path.sync="paths" :options="{ strokeColor:'#000000'}" /> -->
+              </gmap-map>
+            </div>
           </el-col>
           <el-col :lg="8" :md="8" :sm="24" :xs="24">
             <el-alert :closable="false" type="success">Visits made by {{ selected_rep.name }}</el-alert>
@@ -128,10 +165,14 @@
                   v-for="(visit, index) in visits"
                   :key="index"
                   :timestamp="moment(visit.created_at).format('DD-MM-YYYY hh:mm a')">
-                  <strong>{{ visit.customer.business_name }}</strong><br>
-                  <small>{{ visit.visit_type }}</small><br>
-                  <small>{{ visit.rep_longitude + ', ' + visit.rep_latitude }}</small><br>
-                  <small>{{ visit.address }}</small>
+                  <div style="cursor: pointer;" @click="showVisitMapDetails(visit)">
+                    <strong>{{ visit.customer.business_name }}</strong><br>
+                    <small><strong>Customer's Coordinate: </strong> {{ visit.customer.longitude + ', ' + visit.customer.latitude }}</small><br>
+                    <small><strong>Visit Coordinate: </strong>{{ visit.rep_longitude + ', ' + visit.rep_latitude }}</small><br>
+                    <small><strong>Proximity: </strong>{{ visit.proximity }}metres</small><br>
+                    <small>{{ visit.visit_type }}</small><br>
+                  </div>
+                  <!-- <small>{{ visit.address }}</small> -->
                 </el-timeline-item>
               </el-timeline>
               <div v-else>
@@ -162,6 +203,7 @@ export default {
     return {
       salesReps: [],
       showByIndex: null,
+      viewType: 'foot_print_list',
       pickerOptions: {
         disabledDate(time) {
           return time.getTime() > Date.now();
@@ -193,7 +235,7 @@ export default {
       },
       // /////////////for map /////////////////
       center: { lat: 6.546935900, lng: 3.365565100 }, // default to greenlife office
-      zoom: 17,
+      zoom: 9,
       icon: '/images/map-image.png',
       // ////////////////////////////////////
       markers: [],
@@ -204,6 +246,10 @@ export default {
       selected_rep: '',
       visits: [],
       loadVisits: false,
+      selectedVisit: {
+        center: {},
+        markers: [],
+      },
     };
   },
   created() {
@@ -213,6 +259,31 @@ export default {
     moment,
     checkPermission,
     checkRole,
+    showVisitMapDetails(visit) {
+      const app = this;
+      const rep_position = {
+        lat: visit.rep_latitude,
+        lng: visit.rep_longitude,
+      };
+      const customer_position = {
+        lat: visit.customer.latitude,
+        lng: visit.customer.longitude,
+      };
+      const rep_icon = '/images/map-image.png';
+      const customer_icon = {
+        url: visit.customer.photo,
+        scaledSize: { width: 50, height: 50 },
+        labelOrigin: { x: 0, y: 0 },
+      };
+      app.selectedVisit = {
+        center: { customer_position },
+        markers: [
+          { position: customer_position, icon: customer_icon, type: 'customer', detail: visit.customer },
+          { position: rep_position, icon: rep_icon, type: 'rep', detail: visit },
+        ],
+      };
+      app.viewType = 'visit_details';
+    },
     // fetchSalesReps() {
     //   const app = this;
     //   // this.load_table = true;

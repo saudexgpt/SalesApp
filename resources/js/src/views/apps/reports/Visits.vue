@@ -151,6 +151,7 @@ export default {
       visits_columns: [
         'customer.business_name',
         'visit_type',
+        'proximity',
         'next_appointment_date',
         'contact.name',
         // 'market_feedback',
@@ -163,6 +164,7 @@ export default {
       visits_options: {
         headings: {
           next_appointment_date: 'Next Appointment',
+          proximity: 'Proximity (M)',
           'customer.business_name': 'Customer',
           'visited_by.name': 'Visited By',
           'contact.name': 'Personnel Contacted',
