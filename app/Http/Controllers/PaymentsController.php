@@ -7,6 +7,7 @@ use App\Models\CustomerDebt;
 use App\Models\CustomerDebtPayment;
 use App\Models\Payment;
 use App\Models\Transaction;
+use App\Models\Visit;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -137,6 +138,8 @@ class PaymentsController extends Controller
                 $unsaved_list[] = $collection;
             }
         }
+        $visit_obj = new Visit();
+        $visit_obj->saveAsVisits($user, $unsaved_collections);
         return response()->json(['unsaved_list' => $unsaved_list, 'message' => 'success'], 200);
     }
 

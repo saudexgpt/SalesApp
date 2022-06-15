@@ -48,7 +48,7 @@ function addSingleElementToString($parent_string, $child_string)
     if ($parent_string == '') {
         $str =  $child_string;
     } else {
-        $str =  $parent_string . '~' . $child_string;
+        $str =  $parent_string . '~ ' . $child_string;
     }
 
 
@@ -118,4 +118,75 @@ function vincentyGreatCircleDistanceBetweenTwoPoints(
 
     $angle = atan2(sqrt($a), $b);
     return $angle * $earthRadius;
+}
+
+
+
+function getLocationFromLatLong($lat, $long)
+{
+
+    // echo urlencode($address);
+    $apiKey = env('GOOGLE_API_KEY');
+    $json = file_get_contents('https://maps.googleapis.com/maps/api/geocode/json?latlng=' . $lat . ',' . $long . '&key=' . $apiKey);
+
+    $json = json_decode($json);
+    // print_r($json);
+    //return $json;
+    $lat = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lat'};
+    $long = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lng'};
+    $formatted_address = $json->{'results'}[0]->{'formatted_address'};
+    $street = '';
+    $area = '';
+    $address_components = $json->{'results'}[0]->{'address_components'};
+    foreach ($address_components as $address_component) {
+        $types = $address_component->types;
+        foreach ($types as $key => $value) {
+            if ($value === 'route') {
+                $street = $address_component->long_name;
+            }
+            if ($value === 'administrative_area_level_2') {
+                $area = $address_component->long_name;
+            } else if ($value === 'locality') {
+                $area = $address_component->long_name;
+            }
+        }
+    }
+    // $formatted_address = $json->{'results'}[0]->{'formatted_address'};
+    // $street = $json->{'results'}[0]->{'address_components'}[1]->{'long_name'};
+    // $area = $json->{'results'}[0]->{'address_components'}[4]->{'long_name'};
+    return array($lat, $long, $formatted_address, $street, $area);
+}
+function getLocationFromAddress($address)
+{
+    $address = str_replace(',', '', $address);
+    // echo urlencode($address);
+    $apiKey = env('GOOGLE_API_KEY');
+    $json = file_get_contents('https://maps.googleapis.com/maps/api/geocode/json?address=' . urlencode($address) . '&key=' . $apiKey);
+
+    $json = json_decode($json);
+    // print_r($json);
+    // return $json;
+    $lat = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lat'};
+    $long = $json->{'results'}[0]->{'geometry'}->{'location'}->{'lng'};
+    $formatted_address = $json->{'results'}[0]->{'formatted_address'};
+    $street = '';
+    $area = '';
+    $address_components = $json->{'results'}[0]->{'address_components'};
+    foreach ($address_components as $address_component) {
+        $types = $address_component->types;
+        foreach ($types as $key => $value) {
+            if ($value === 'route') {
+                $street = $address_component->long_name;
+            }
+            if ($value === 'administrative_area_level_2') {
+                $area = $address_component->long_name;
+            } else if ($value === 'locality') {
+                $area = $address_component->long_name;
+            }
+        }
+    }
+    // $formatted_address = $json->{'results'}[0]->{'formatted_address'};
+    // $street = $json->{'results'}[0]->{'address_components'}[1]->{'long_name'};
+    // $area = $json->{'results'}[0]->{'address_components'}[4]->{'long_name'};
+    return array($lat, $long, $formatted_address, $street, $area);
 }

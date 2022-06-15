@@ -315,9 +315,9 @@ class CustomersController extends Controller
         $user = $this->getUser();
         $lat = $long = $reg_lat = $reg_lng = $street = $area = NULL;
         $reg_mode = 'offline';
-        if (isset($unsaved_customer->registrar_lat, $unsaved_customer->registrar_lng)) {
-            $reg_lat = $unsaved_customer->registrar_lat;
-            $reg_lng = $unsaved_customer->registrar_lng;
+        if (isset($unsaved_customer->rep_latitude, $unsaved_customer->rep_longitude)) {
+            $reg_lat = $unsaved_customer->rep_latitude;
+            $reg_lng = $unsaved_customer->rep_longitude;
         }
         if (isset($unsaved_customer->customer_latitude, $unsaved_customer->customer_longitude)) {
             $lat = $unsaved_customer->customer_latitude;
@@ -328,7 +328,7 @@ class CustomersController extends Controller
             $long = $reg_lng;
         }
 
-        $customer = Customer::where(['business_name' => $unsaved_customer->business_name/*, 'latitude' => $lat, 'longitude' => $long*/])->first();
+        $customer = Customer::where(['business_name' => $unsaved_customer->business_name, 'latitude' => $lat, 'longitude' => $long])->first();
 
 
         if (!$customer) {
@@ -343,7 +343,7 @@ class CustomersController extends Controller
             // if ($formatted_address !== '') {
 
             //     if ($lat == '' && $long == '' &&  $area == '') {
-            //         list($lat, $long, $formatted_address, $street, $area) = $this->getLocationFromAddress($formatted_address);
+            //         list($lat, $long, $formatted_address, $street, $area) = getLocationFromAddress($formatted_address);
             //     }
             // }
             $contacts = json_decode(json_encode($unsaved_customer->customer_contacts));
@@ -404,6 +404,7 @@ class CustomersController extends Controller
      */
     public function store(Request $request)
     {
+        $user = $this->getUser();
         $unsaved_customers = json_decode(json_encode($request->unsaved_customers));
         $customer_list = [];
         $unsaved_list = [];
@@ -411,12 +412,15 @@ class CustomersController extends Controller
         foreach ($unsaved_customers as $unsaved_customer) {
             try {
                 $customer = $this->saveCustomersDetails($unsaved_customer);
+                $unsaved_customer->customer_id = $customer->id;
                 $customer_list[] = $this->show($customer);
             } catch (\Throwable $th) {
                 $unsaved_list[] =  $unsaved_customer;
                 $error[] =  $th;
             }
         }
+        $visit_obj = new Visit();
+        $visit_obj->saveAsVisits($user, $unsaved_customers);
         return response()->json(['customers' => $customer_list, 'unsaved_list' => $unsaved_list, 'message' => 'success', 'error' => $error], 200);
     }
 
@@ -635,7 +639,7 @@ class CustomersController extends Controller
     {
         $lat = $request->latitude;
         $long = $request->longitude;
-        return $this->getLocationFromLatLong($lat, $long);
+        return getLocationFromLatLong($lat, $long);
     }
     /**
      * Display the specified resource.

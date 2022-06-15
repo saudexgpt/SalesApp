@@ -2,8 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Customer;
 use Illuminate\Console\Command;
 use App\Models\User;
+use App\Models\Visit;
 
 class SalesRepDetailsRequest extends Command
 {
@@ -94,9 +96,38 @@ class SalesRepDetailsRequest extends Command
             }
         }
     }
+    public function updateAllEmptyCustomerAddresses()
+    {
+        $customers = Customer::where('longitude', '!=', NULL)->where('location_updated', '0')->get();
+        foreach ($customers as $customer) {
+            $lat = $customer->latitude;
+            $long = $customer->longitude;
+            list($lat, $long, $formatted_address, $street, $area) = getLocationFromLatLong($lat, $long);
+            $customer->latitude =  $lat;
+            $customer->longitude = $long;
+            $customer->address = $formatted_address;
+            $customer->street = $street;
+            $customer->area = $area;
+            $customer->location_updated = '1';
+            $customer->save();
+        }
+    }
+    public function updateAllEmptyVisitAddresses()
+    {
+        $visits = Visit::where('address', '=', NULL)->get();
+        foreach ($visits as $visit) {
+            $lat = $visit->rep_latitude;
+            $long = $visit->rep_longitude;
+            list($lat, $long, $formatted_address, $street, $area) = getLocationFromLatLong($lat, $long);
+            $visit->address = $formatted_address;
+            $visit->save();
+        }
+    }
     public function handle()
     {
         //
+        $this->updateAllEmptyVisitAddresses();
         $this->fetchWarehouseRepDetails();
+        $this->updateAllEmptyCustomerAddresses();
     }
 }

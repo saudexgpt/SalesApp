@@ -12,6 +12,7 @@ use App\Models\SubInventory;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
 use App\Models\VanInventory;
+use App\Models\Visit;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -266,6 +267,8 @@ class TransactionsController extends Controller
                 $unsaved_list[] = $unsaved_order;
             }
         }
+        $visit_obj = new Visit();
+        $visit_obj->saveAsVisits($user, $unsaved_orders);
         //////update next invoice number/////
         // $this->incrementReceiptNo('invoice');
 
