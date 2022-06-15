@@ -83,6 +83,9 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('store', [CustomersController::class, 'store'])->middleware('permission:create-customers');
         Route::post('store-bulk', [CustomersController::class, 'storeBulkCustomers'])->middleware('permission:create-customers');
         Route::post('store-bulk-debtors', [CustomersController::class, 'uploadBulkDebt'])->middleware('permission:create-customers');
+        Route::post('load-debts', [CustomersController::class, 'loadDebts']);
+        Route::delete('delete-debt/{debt}', [CustomersController::class, 'deleteDebt']);
+
 
         Route::put('update/{customer}', [CustomersController::class, 'update'])->middleware('permission:update-customers');
 

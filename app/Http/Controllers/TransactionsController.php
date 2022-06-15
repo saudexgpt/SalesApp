@@ -63,20 +63,20 @@ class TransactionsController extends Controller
         if ($user->hasRole('sales_rep')) {
 
             $debts = $user->debts()
-                ->groupBy('customer_id')
+                //->groupBy('customer_id')
                 ->with([
-                    'staff',
-                    'customer.assignedOfficer',
-                    'payments' => function ($q) {
-                        $q->orderBy('id', 'DESC');
-                    },
+                    //'staff',
+                    'customer',
+                    // 'payments' => function ($q) {
+                    //     $q->orderBy('id', 'DESC');
+                    // },
                 ])
                 ->whereRaw('amount - paid > 0')
-                ->where('created_at', '<=',  $date_to)
-                ->where('created_at', '>=',  $date_from)
+                // ->where('created_at', '<=',  $date_to)
+                // ->where('created_at', '>=',  $date_from)
                 ->where($condition)
-                ->select('*', \DB::raw('SUM(amount) as total_amount_due'), \DB::raw('SUM(paid) as total_amount_paid'))
-                ->paginate(50);
+                // ->select('*', \DB::raw('SUM(amount) as total_amount_due'), \DB::raw('SUM(paid) as total_amount_paid'))
+                ->get();
 
             // $debts = $user->transactions()->with(['customer', 'payments' => function ($q) {
             //     $q->orderBy('id', 'DESC');

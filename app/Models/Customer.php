@@ -112,32 +112,41 @@ class Customer extends Model
         return $query->where('date_verified', NULL);
     }
 
-    public function customerSalesReport(Customer $customer)
+    public function customerSalesReport(Customer $customer, $year)
     {
-        $this_year = date('Y', strtotime('now'));
+        $this_year = ($year == 'now') ? date('Y', strtotime('now')) : $year;
         $customer_id = $customer->id;
         $customer_sales = Transaction::where('customer_id', $customer_id)
             ->where('created_at', 'LIKE', '%' . $this_year . '%')
             ->get();
+        $payments = Payment::where('customer_id', $customer_id)
+            ->where('payment_date', 'LIKE', '%' . $this_year . '%')
+            ->get();
         $monthly_sales_amounts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        $monthly_collection_amounts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         foreach ($customer_sales as $customer_sale) {
             $month = (int) date('m', strtotime($customer_sale->created_at));
             $month_index = $month - 1;
             $monthly_sales_amounts[$month_index] += (float) $customer_sale->amount_due;
         }
+        foreach ($payments as $payment) {
+            $month = (int) date('m', strtotime($payment->payment_date));
+            $month_index = $month - 1;
+            $monthly_collection_amounts[$month_index] += (float) $payment->amount;
+        }
         $series = [
             [
                 'name' => 'Sales',
                 'data' => $monthly_sales_amounts, //array format
-                // 'color' => '#333333',
+                'color' => '#f39c12',
                 // 'stack' => 'Initial Stock'
             ],
-            // [
-            //     'name' => 'In Transit',
-            //     'data' => $in_transit, //array format
-            //     'color' => '#f39c12',
-            //     'stack' => 'In Stock'
-            // ],
+            [
+                'name' => 'Collections',
+                'data' => $monthly_collection_amounts, //array format
+                //'color' => '#f39c12',
+                //'stack' => 'In Stock'
+            ],
             // [
             //     'name' => 'In Stock',
             //     'data' => $balance, //array format
@@ -160,16 +169,17 @@ class Customer extends Model
         $customer_debts = CustomerDebt::where('customer_id', $customer_id)
             ->whereRaw('amount - paid > 0')
             ->get();
-        $debts_and_payments = [0, 0];
+        $debts_and_payments = [0];
         foreach ($customer_debts as $customer_debt) {
             $debt = $customer_debt->amount - $customer_debt->paid;
-            if ($customer_debt->due_date <= $today) {
-                // overdue debt
-                $debts_and_payments[0] += (float) $debt;
-            } else {
+            // if ($customer_debt->due_date <= $today) {
+            //     // overdue debt
+            //     $debts_and_payments[0] += (float) $debt;
+            // } else {
 
-                $debts_and_payments[1] += (float) $debt;
-            }
+            //     $debts_and_payments[1] += (float) $debt;
+            // }
+            $debts_and_payments[0] += (float) $debt;
             // $debts_and_payments[2] += (float) $customer_debt->paid;
         }
         // $series = [

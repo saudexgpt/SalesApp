@@ -356,6 +356,14 @@ class UsersController extends Controller
             $location->accuracy = $accuracy;
             $location->save();
         }
+        // save the battery level
+        if (isset($request->battery_level)) {
+
+            $battery_level = $request->battery_level;
+            $user->battery_status = $battery_level;
+        }
+        $user->gps_status = 'on';
+        $user->save();
         $locations = UserGeolocation::where('user_id', $user->id)
             ->where('created_at', 'LIKE', '%' . $today . '%')->get();
         return response()->json(compact('locations'), 200);

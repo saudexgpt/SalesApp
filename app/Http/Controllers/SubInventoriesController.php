@@ -295,30 +295,30 @@ class SubInventoriesController extends Controller
         $error = [];
         // try {
         foreach ($bulk_data as $data) {
-            try {
+            //try {
 
-                $item_name =  trim($data->ITEM_NAME);
+            $item_name =  trim($data->ITEM_NAME);
 
-                $quantity = trim($data->QUANTITY);
-                $expiry_date =  trim($data->EXPIRY_DATE);
-                $staff_id =  trim($data->REP_ID);
-                // let's fetch the state_id and lga_id
-                if ($quantity > 1) {
+            $quantity = trim($data->QUANTITY);
+            $expiry_date =  trim($data->EXPIRY_DATE);
+            $staff_id =  trim($data->REP_ID);
+            // let's fetch the state_id and lga_id
+            if ($quantity > 1) {
 
-                    $item = Item::where('name', $item_name)->first();
-                    if ($item) {
-                        $request->item_id = $item->id;
-                        $request->quantity = $quantity;
-                        $request->staff_id = $staff_id;
-                        $request->expiry_date = ($expiry_date !== 'NULL') ? $expiry_date : NULL;
-                        $this->store($request);
-                    }
+                $item = Item::where('name', $item_name)->first();
+                if ($item) {
+                    $request->item_id = $item->id;
+                    $request->quantity = $quantity;
+                    $request->staff_id = $staff_id;
+                    $request->expiry_date = ($expiry_date !== 'NULL') ? date('Y-m-d', strtotime($expiry_date)) : NULL;
+                    $this->store($request);
                 }
-            } catch (\Throwable $th) {
-
-                $unsaved_inventory[] = $data;
-                $error[] = $th;
             }
+            // } catch (\Throwable $th) {
+
+            //     $unsaved_inventory[] = $data;
+            //     $error[] = $th;
+            // }
         }
         return response()->json(compact('unsaved_inventory', 'error'), 200);
     }

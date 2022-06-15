@@ -235,8 +235,9 @@ class CustomersController extends Controller
     //         ->groupBy('day');
     //     return response()->json(compact('schedules'), 200);
     // }
-    public function customerDetails(Customer $customer)
+    public function customerDetails(Request $request, Customer $customer)
     {
+        $year = $request->year;
         $today  = date('Y-m-d', strtotime('now'));
         $customer = $customer::with([
             'state',
@@ -271,7 +272,7 @@ class CustomersController extends Controller
             ->orderBy('day_num')
             ->get()
             ->groupBy('day');
-        $sales = $customer->customerSalesReport($customer);
+        $sales = $customer->customerSalesReport($customer, $year);
         $debt = $customer->customerDebtReport($customer);
         return response()->json(compact('sales', 'debt', 'schedules', 'customer'), 200);
     }
@@ -327,7 +328,7 @@ class CustomersController extends Controller
             $long = $reg_lng;
         }
 
-        $customer = Customer::where(['business_name' => $unsaved_customer->business_name, 'latitude' => $lat, 'longitude' => $long])->first();
+        $customer = Customer::where(['business_name' => $unsaved_customer->business_name/*, 'latitude' => $lat, 'longitude' => $long*/])->first();
 
 
         if (!$customer) {
@@ -510,39 +511,68 @@ class CustomersController extends Controller
         $error = [];
         // try {
         foreach ($bulk_data as $data) {
-            try {
+            //try {
 
-                $request->business_name =  trim($data->BUSINESS_NAME);
+            $request->business_name =  trim($data->BUSINESS_NAME);
 
-                $amount = trim($data->AMOUNT);
-                $request->relating_officer =  trim($data->REP_ID);
-                $age =  trim($data->AGE);
-                $request->address =  trim($data->ADDRESS);
+            $amount = trim($data->AMOUNT);
+            $request->relating_officer =  trim($data->REP_ID);
+            $age =  trim($data->AGE);
+            $request->address =  trim($data->ADDRESS);
 
-                $request->customer_contacts = [['name' => NULL, 'phone1' => NULL, 'phone2' => NULL, 'role' => NULL]];
+            $request->customer_contacts = [['name' => NULL, 'phone1' => NULL, 'phone2' => NULL, 'role' => NULL]];
 
 
-                $customer = $this->saveCustomersDetails($request, 'Confirmed');
-                if ($amount > 0) {
+            $customer = $this->saveCustomersDetails($request, 'Confirmed');
+            //if ($amount > 0) {
 
-                    $this->addDebtor($customer, $amount, $age);
-                }
-            } catch (\Throwable $th) {
+            $this->addDebtor($customer, $amount, $age);
+            //}
+            // } catch (\Throwable $th) {
 
-                $unsaved_customers[] = $data;
-                $error[] = $th;
-            }
+            //     $unsaved_customers[] = $data;
+            //     $error[] = $th;
+            // }
         }
         return response()->json(compact('unsaved_customers', 'error'), 200);
     }
+    public function loadDebts(Request $request)
+    {
+        $user = $this->getUser();
+        $debtors = json_decode(json_encode($request->debtors));
+        foreach ($debtors as $debtor) {
+
+            $customer_debt = new CustomerDebt();
+            $customer_debt->customer_id = $debtor->customer_id;
+            $customer_debt->amount = $debtor->amount;
+            // $customer_debt->age = $age;
+            $customer_debt->field_staff = $user->id;
+            $customer_debt->created_at = $debtor->created_at;
+            $customer_debt->save();
+        }
+        return 'success';
+    }
+    public function deleteDebt(CustomerDebt $debt)
+    {
+        $debt->delete();
+        return response()->json([], 204);
+    }
     public function addDebtor($customer, $amount, $age)
     {
-        $customer_debt = new CustomerDebt();
-        $customer_debt->customer_id = $customer->id;
-        $customer_debt->amount = $amount;
-        $customer_debt->age = $age;
-        $customer_debt->field_staff = $customer->relating_officer;
-        $customer_debt->save();
+        $customer_debt = CustomerDebt::where([
+            'customer_id' => $customer->id,
+            'amount' => $amount,
+            'field_staff' => $customer->relating_officer
+        ])->first();
+        if (!$customer_debt) {
+
+            $customer_debt = new CustomerDebt();
+            $customer_debt->customer_id = $customer->id;
+            $customer_debt->amount = $amount;
+            $customer_debt->age = $age;
+            $customer_debt->field_staff = $customer->relating_officer;
+            $customer_debt->save();
+        }
     }
     private function saveCustomerContact($customer_id, $contacts)
     {

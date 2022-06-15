@@ -62,6 +62,7 @@ class UserResource extends JsonResource
             'avatar' => '/' . $this->photo, //'https://i.pravatar.cc',
             'can_edit' => $can_edit,
             'p_status' => $this->password_status,
+            'disable_debtors_creation' => false,
         ];
     }
 }

@@ -25,7 +25,23 @@
       </div>
     </div>
     <el-row :gutter="10">
-      <el-col :lg="12" :md="12" :sm="12" :xs="24">
+      <el-col :lg="8" :md="8" :sm="8" :xs="24">
+        <label for="">Select Rep</label>
+        <el-select v-model="form.rep_id" filterable style="width: 100%" @input="fetchCustomers($event)">
+          <el-option
+            v-if="reps.length > 0"
+            label="All"
+            value="all" />
+          <el-option
+            v-for="(rep, index) in reps"
+            :key="index"
+            :label="rep.name"
+            :value="rep.id"
+
+          />
+        </el-select>
+      </el-col>
+      <el-col :lg="8" :md="8" :sm="8" :xs="24">
         <label for="">Select Customer</label>
         <el-select v-model="form.customer_id" filterable style="width: 100%" @input="fetchSales">
           <el-option
@@ -40,7 +56,7 @@
           />
         </el-select>
       </el-col>
-      <el-col :lg="12" :md="12" :sm="12" :xs="24">
+      <el-col :lg="8" :md="8" :sm="8" :xs="24">
         <label for="">&nbsp;</label><br>
         <el-popover placement="right" trigger="click">
           <date-range-picker
@@ -119,6 +135,7 @@ export default {
   data() {
     return {
       sales: [],
+      reps: [],
       sales_columns: [
         'transaction.customer.business_name',
         'transaction.invoice_no',
@@ -184,19 +201,43 @@ export default {
     };
   },
   created() {
-    this.fetchCustomers();
+    this.fetchSalesReps();
     this.fetchSales();
   },
   methods: {
     moment,
-    fetchCustomers() {
+    fetchSalesReps() {
       const app = this;
-      const customerResource = new Resource('customers/all');
-      customerResource.list()
-        .then(response => {
-          app.customers = response.customers;
+      // this.load_table = true;
+      const salesRepResource = new Resource('users/fetch-sales-reps');
+      salesRepResource
+        .list()
+        .then((response) => {
+          app.reps = response.sales_reps;
+        })
+        .catch((error) => {
+          console.log(error);
         });
     },
+    fetchCustomers(rep_id) {
+      const app = this;
+      app.load_customer = true;
+      const customerResource = new Resource('customers/rep-customers');
+      const param = { rep_id };
+      customerResource.list(param)
+        .then(response => {
+          app.customers = response.customers;
+          app.load_customer = false;
+        });
+    },
+    // fetchCustomers() {
+    //   const app = this;
+    //   const customerResource = new Resource('customers/all');
+    //   customerResource.list()
+    //     .then(response => {
+    //       app.customers = response.customers;
+    //     });
+    // },
     format(date) {
       var month = date.toLocaleString('en-US', { month: 'short' });
       return month + ' ' + date.getDate() + ', ' + date.getFullYear();
