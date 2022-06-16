@@ -51,8 +51,8 @@ class Visit extends Model
 
             $customer_id = $unsaved_visit->customer_id;
             $customer = Customer::find($customer_id);
-            $lat = $unsaved_visit->rep_latitude;
-            $long = $unsaved_visit->rep_longitude;
+            $lat = isset($unsaved_visit->rep_latitude) ? $unsaved_visit->rep_latitude : NULL;
+            $long = isset($unsaved_visit->rep_longitude) ? $unsaved_visit->rep_longitude : NULL;
 
             $visit_date = date('Y-m-d', strtotime('now')); // $unsaved_visit->visit_date;
             $customer_contact_id = (isset($unsaved_visit->contact_id)) ? $unsaved_visit->contact_id : null;
@@ -61,7 +61,7 @@ class Visit extends Model
             $purpose = (isset($unsaved_visit->purpose)) ? $unsaved_visit->purpose : 'Detailing';
             $visit_type = 'off site';
             $distance = NULL;
-            if ($lat != '') {
+            if ($lat != NULL && $lat != '') {
 
                 $distance = haversineGreatCircleDistanceBetweenTwoPoints(
                     $customer->latitude,
