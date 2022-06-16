@@ -48,6 +48,7 @@ function addSingleElementToString($parent_string, $child_string)
     if ($parent_string == '') {
         $str =  $child_string;
     } else {
+        $parent_string = str_replace(',', '~', $parent_string);
         $str =  $parent_string . '~ ' . $child_string;
     }
 
