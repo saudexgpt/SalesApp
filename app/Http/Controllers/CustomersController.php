@@ -202,16 +202,16 @@ class CustomersController extends Controller
     {
         $user = $this->getUser();
         if ($user->hasRole('sales_rep')) {
-            $customers = Customer::with('customerContacts')->where(['relating_officer' => $user->id])->get();
+            $customers = Customer::with('customerContacts')->where(['relating_officer' => $user->id])->orderBy('business_name')->get();
             return response()->json(compact('customers'), 200);
         } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
             // $sales_reps_ids is in array form
             list($sales_reps, $sales_reps_ids) = $this->teamMembers();
-            $customers = Customer::with('customerContacts')->whereIn('relating_officer', $sales_reps_ids)->get();
+            $customers = Customer::with('customerContacts')->whereIn('relating_officer', $sales_reps_ids)->orderBy('business_name')->get();
             return response()->json(compact('customers'), 200);
         } else {
             // admin and super admin only
-            $customers = Customer::with('customerContacts')->get();
+            $customers = Customer::with('customerContacts')->orderBy('business_name')->get();
             return response()->json(compact('customers'), 200);
         }
     }

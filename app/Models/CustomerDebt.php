@@ -33,7 +33,7 @@ class CustomerDebt extends Model
         if ($payments->isNotEmpty()) {
             foreach ($payments as $payment) {
                 $payment_id = $payment->id;
-                $amount = $payment->amount;
+                $amount = $payment->amount - $payment->used_to_clear_debt;
 
                 $customer_debts = CustomerDebt::where('customer_id', $customer_id)->whereRaw('amount - paid > 0')->orderBy('id')->get();
                 if ($customer_debts->isNotEmpty()) {
