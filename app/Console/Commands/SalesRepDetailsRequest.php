@@ -102,14 +102,17 @@ class SalesRepDetailsRequest extends Command
         foreach ($customers as $customer) {
             $lat = $customer->latitude;
             $long = $customer->longitude;
-            list($lat, $long, $formatted_address, $street, $area) = getLocationFromLatLong($lat, $long);
-            $customer->latitude =  $lat;
-            $customer->longitude = $long;
-            $customer->address = $formatted_address;
-            $customer->street = $street;
-            $customer->area = $area;
-            $customer->location_updated = '1';
-            $customer->save();
+            if ($lat !== NULL && $long !== NULL) {
+
+                list($lat, $long, $formatted_address, $street, $area) = getLocationFromLatLong($lat, $long);
+                $customer->latitude =  $lat;
+                $customer->longitude = $long;
+                $customer->address = $formatted_address;
+                $customer->street = $street;
+                $customer->area = $area;
+                $customer->location_updated = '1';
+                $customer->save();
+            }
         }
     }
     public function updateAllEmptyVisitAddresses()
