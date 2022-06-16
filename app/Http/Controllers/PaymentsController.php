@@ -127,12 +127,13 @@ class PaymentsController extends Controller
                     $payment->received_by = $user->id;
                     if ($payment->save()) {
 
-                        $this->settleDebt($customer_id, $payment->id, $amount);
-                    }
+                        $customer_debt_obj = new CustomerDebt();
+                        $customer_debt_obj->settleDebt($customer_id);
 
-                    $title = "Payment Received";
-                    $description = $user->name . " successfully received ₦$original_amount from $collection->business_name";
-                    $this->logUserActivity($title, $description, $user);
+                        $title = "Payment Received";
+                        $description = $user->name . " successfully received ₦$original_amount from $collection->business_name";
+                        $this->logUserActivity($title, $description, $user);
+                    }
                 }
             } catch (\Throwable $th) {
                 $unsaved_list[] = $collection;
@@ -175,42 +176,7 @@ class PaymentsController extends Controller
         return $this->show($payment);
     }
 
-    private function settleDebt($customer_id, $payment_id, $amount)
-    {
-        $customer_debts = CustomerDebt::where('customer_id', $customer_id)->whereRaw('amount - paid > 0')->orderBy('id')->get();
 
-        foreach ($customer_debts as $customer_debt) {
-            $debt = $customer_debt->amount - $customer_debt->paid;
-            if ($debt <= $amount) {
-
-                $customer_debt->paid += $debt;
-                $customer_debt->payment_status = 'paid';
-                $customer_debt->save();
-
-                $debt_payment = new CustomerDebtPayment();
-                $debt_payment->customer_id = $customer_id;
-                $debt_payment->debt_id = $customer_debt->id;
-                $debt_payment->payment_id = $payment_id;
-                $debt_payment->amount_paid = $debt;
-                $debt_payment->save();
-
-                $amount -= $debt;
-            } else {
-                $customer_debt->paid += $amount;
-                $customer_debt->save();
-
-                $debt_payment = new CustomerDebtPayment();
-                $debt_payment->customer_id = $customer_id;
-                $debt_payment->debt_id = $customer_debt->id;
-                $debt_payment->payment_id = $payment_id;
-                $debt_payment->amount_paid = $amount;
-                $debt_payment->save();
-
-                $amount = 0;
-                break;
-            }
-        }
-    }
     /**
      * Remove the specified resource from storage.
      *

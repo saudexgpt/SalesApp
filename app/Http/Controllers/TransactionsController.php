@@ -223,7 +223,6 @@ class TransactionsController extends Controller
                     # code...
 
                     $invoice = new Transaction();
-                    $customer = Customer::find($unsaved_order->customer_id);
                     $invoice->customer_id    = $unsaved_order->customer_id;
                     $invoice->unique_sales_id    = $unsaved_order->unique_sales_id;
                     $invoice->field_staff    = $user->id;
@@ -240,6 +239,8 @@ class TransactionsController extends Controller
 
                         $this->addCustomerDebt($invoice);
                         $this->createInvoiceItems($invoice, $invoice_items);
+                        $customer_debt_obj = new CustomerDebt();
+                        $customer_debt_obj->settleDebt($invoice->customer_id);
 
                         //uncomment this if the sales feature for the app is reactivated
                         // if ($unsaved_order->payment_mode == 'now') {
@@ -250,6 +251,7 @@ class TransactionsController extends Controller
                         //     $this->payAmount($invoice, $unsaved_order->amount_collected);
                         // }
 
+                        $customer = Customer::find($unsaved_order->customer_id);
                         $title = "New Sales made";
                         $description = $user->name . " successfully made sales to $customer->business_name";
                         $this->logUserActivity($title, $description, $user);
