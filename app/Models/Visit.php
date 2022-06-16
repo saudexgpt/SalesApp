@@ -58,7 +58,7 @@ class Visit extends Model
             $customer_contact_id = (isset($unsaved_visit->contact_id)) ? $unsaved_visit->contact_id : null;
 
             // $purposes = json_decode(json_encode($unsaved_visit->purpose));
-            $purpose = $unsaved_visit->purpose;
+            $purpose = (isset($unsaved_visit->purpose)) ? $unsaved_visit->purpose : 'Detailing';
             $visit_type = 'off site';
             $distance = NULL;
             if ($lat != '') {
