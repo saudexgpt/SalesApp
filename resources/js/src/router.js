@@ -38,7 +38,7 @@ import reportsRoutes from '@/router-modules/reports';
 // import schedulesRoutes from '@/router-modules/schedules';
 import transactionsRoutes from '@/router-modules/transactions';
 import customersRoutes from '@/router-modules/customers';
-import inventoryRoutes from '@/router-modules/inventories';
+// import inventoryRoutes from '@/router-modules/inventories';
 // import dailyReportRoutes from '@/router-modules/daily-reports';
 import downloadablesRoutes from '@/router-modules/downloadables';
 
@@ -113,7 +113,7 @@ export const asyncRoutes = [
   transactionsRoutes,
   // dailyReportRoutes,
   // schedulesRoutes,
-  inventoryRoutes,
+  // inventoryRoutes,
   reportsRoutes,
   downloadablesRoutes,
   settingsRoutes,

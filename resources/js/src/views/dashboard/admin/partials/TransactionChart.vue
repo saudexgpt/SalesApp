@@ -28,10 +28,6 @@
         </span>
       </div>
     </div>
-    <div class="flex">
-      <span class="flex items-center"><div class="h-3 w-3 rounded-full mr-1 bg-primary"/><span>Sales</span></span>
-      <span class="flex items-center ml-4"><div class="h-3 w-3 rounded-full mr-1 bg-danger"/><span>Debts</span></span>
-    </div>
     <vue-apex-charts :options="clientRetentionBar.chartOptions" :series="clientRetentionBar.series" type="bar" height="277" />
   </vx-card>
 </template>
@@ -48,12 +44,21 @@ export default {
           name: 'Sales',
           data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         }, {
-          name: 'Debts',
+          name: 'Collections',
           data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         }],
         chartOptions: {
           stroke: {
             lineCap: 'round',
+          },
+          plotOptions: {
+            bar: {
+              borderRadius: 0,
+              columnWidth: '50%',
+              dataLabels: {
+                position: 'bottom', // top, center, bottom
+              },
+            },
           },
           grid: {
             borderColor: '#ebebeb',
@@ -63,23 +68,21 @@ export default {
             },
           },
           legend: {
-            show: false,
+            show: true,
           },
           dataLabels: {
             enabled: false,
+            formatter: function(val) {
+              return '₦' + val;
+            },
+            offsetY: -20,
           },
           chart: {
-            stacked: true,
+            stacked: false,
             type: 'bar',
             toolbar: { show: false },
           },
-          colors: ['#1ccc48', '#EA5455'],
-          plotOptions: {
-            bar: {
-              columnWidth: '20%',
-              endingShape: 'rounded',
-            },
-          },
+          colors: ['#111111', '#1ccc48'],
           xaxis: {
             labels: {
               style: {
@@ -87,7 +90,7 @@ export default {
               },
             },
             axisTicks: {
-              show: false,
+              show: true,
             },
             categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
             axisBorder: {
@@ -97,8 +100,25 @@ export default {
           yaxis: {
             tickAmount: 5,
             labels: {
+              show: true,
+              formatter: function(val) {
+                return val;
+              },
               style: {
-                cssClass: 'text-grey fill-current',
+                colors: ['#000000'],
+              },
+            },
+            title: {
+              text: 'Amount (₦)',
+              rotate: -90,
+              offsetX: 0,
+              offsetY: 0,
+              style: {
+                color: '#000000',
+                fontSize: '12px',
+                fontFamily: 'Helvetica, Arial, sans-serif',
+                fontWeight: 600,
+                cssClass: 'apexcharts-yaxis-title',
               },
             },
           },

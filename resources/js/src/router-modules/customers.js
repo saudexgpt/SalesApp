@@ -10,7 +10,7 @@ const customersRoutes = {
   // permissions: ['read-customers'],
   children: [
     {
-      hidden: false,
+      hidden: true,
       path: '/customers/bulk',
       name: 'BulkUpload',
       slug: 'add-customers',
@@ -18,7 +18,7 @@ const customersRoutes = {
       component: () => import('@/views/apps/customers/BulkUpload.vue'),
     },
     {
-      hidden: false,
+      hidden: true,
       path: '/customers/bulk-debt',
       name: 'BulkUploadDebt',
       slug: 'add-debtors',

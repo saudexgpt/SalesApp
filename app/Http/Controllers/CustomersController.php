@@ -588,8 +588,6 @@ class CustomersController extends Controller
 
                     $new_contact = new CustomerContact();
                 }
-
-                $new_contact = new CustomerContact();
                 $new_contact->customer_id = $customer_id;
                 $new_contact->name = $contact->name;
                 $new_contact->phone1 = $contact->phone1;
@@ -609,12 +607,12 @@ class CustomersController extends Controller
         $contacts = json_decode(json_encode($request->customer_contacts));
         if (count($contacts) > 0) {
 
-            // delete old
-            if (count($customer->customerContacts) > 0) {
-                foreach ($customer->customerContacts as $customerContact) {
-                    $customerContact->delete();
-                }
-            }
+            // delete oldp
+            // if (count($customer->customerContacts) > 0) {
+            //     foreach ($customer->customerContacts as $customerContact) {
+            //         $customerContact->delete();
+            //     }
+            // }
             $this->saveCustomerContact($customer_id, $contacts);
 
             $title = "Customer Contacts Added";

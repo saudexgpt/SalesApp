@@ -154,7 +154,7 @@ class DashboardController extends Controller
     {
         $year = (isset($request->from) && $request->from != '') ? date('Y', strtotime($request->from)) : date('Y', strtotime('now'));
         $sales_array = [];
-        $debts_array = [];
+        $collections_array = [];
         for ($month = 1; $month <= 12; $month++) {
             if ($month < 10) {
 
@@ -163,35 +163,35 @@ class DashboardController extends Controller
 
                 $date = $year . '-' . $month;
             }
-            list($sales, $debts) = $this->getSalesAndDebts($date);
+            list($sales, $collections) = $this->getSalesAndDebts($date);
             $sales_array[] = $sales;
-            $debts_array[] = $debts;
+            $collections_array[] = $collections;
         }
         $series = [
             [
-                'name' => 'Sales (NGN)',
+                'name' => 'Sales',
                 'data' => $sales_array
             ],
             [
-                'name' => 'Debts (NGN)',
-                'data' => $debts_array
+                'name' => 'Collections',
+                'data' => $collections_array
             ]
         ];
         return response()->json(compact('series'), 200);
     }
     private function getSalesAndDebts($date)
     {
-        $all_sales = Transaction::select(\DB::raw('SUM(amount_due) as total_amount_due'))->where('entry_date', 'LIKE',  '%' . $date . '%')->first();
-        $all_debts = CustomerDebt::where('created_at', 'LIKE',  '%' . $date . '%')->select(\DB::raw('SUM(amount - paid) as total_amount_due'))->first();
+        $all_sales = Transaction::select(\DB::raw('SUM(amount_due) as total_amount_due'))->where('created_at', 'LIKE',  '%' . $date . '%')->first();
+        $all_collections = Payment::where('created_at', 'LIKE',  '%' . $date . '%')->select(\DB::raw('SUM(amount) as total_amount'))->first();
 
         $sales = 0;
-        $debts = 0;
+        $collections = 0;
         if ($all_sales) {
             $sales = $all_sales->total_amount_due;
         }
-        if ($all_debts) {
-            $debts = $all_debts->total_amount_due * -1;
+        if ($all_collections) {
+            $collections = $all_collections->total_amount;
         }
-        return array($sales, $debts);
+        return array($sales, $collections);
     }
 }
