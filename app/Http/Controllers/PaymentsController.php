@@ -34,8 +34,8 @@ class PaymentsController extends Controller
     public function index(Request $request)
     {
         $user = $this->getUser();
-        $date_from = Carbon::now()->startOfQuarter();
-        $date_to = Carbon::now()->endOfQuarter();
+        $date_from = Carbon::now()->startOfMonth();
+        $date_to = Carbon::now()->endOfMonth();
         $panel = 'quarter';
         $currency = $this->currency();
         if (isset($request->from, $request->to)) {
@@ -43,10 +43,8 @@ class PaymentsController extends Controller
             $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
             $panel = $request->panel;
         }
-        $condition = [];
-        if (isset($request->customer_id) && $request->customer_id != 'all') {
-            $condition = ['customer_id' => $request->customer_id];
-        }
+        $rep_field_name = 'received_by';
+        $condition = $this->setQueryConditions($request, $rep_field_name);
         $delivery_status = $request->delivery_status;
         if ($user->hasRole('sales_rep')) {
 
@@ -54,7 +52,8 @@ class PaymentsController extends Controller
                 ->with(['customer', 'confirmer'])
                 ->where('received_by', $user->id)
                 ->where('payment_date', '<=',  $date_to)
-                ->where('payment_date', '>=',  $date_from)->where($condition)
+                ->where('payment_date', '>=',  $date_from)
+                ->where($condition)
                 ->orderBy('id', 'DESC')
                 ->select('*', \DB::raw('SUM(amount) as total_amount'))
                 ->paginate(10);
@@ -65,8 +64,8 @@ class PaymentsController extends Controller
                 ->with(['customer.assignedOfficer', 'confirmer'])
                 ->where('payment_date', '<=',  $date_to)
                 ->where('payment_date', '>=',  $date_from)
-                ->where($condition)
                 ->whereIn('received_by', $sales_reps_ids)
+                ->where($condition)
                 ->orderBy('id', 'DESC')
                 ->select('*', \DB::raw('SUM(amount) as total_amount'))
                 ->paginate(10);

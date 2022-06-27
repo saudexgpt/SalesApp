@@ -76,7 +76,6 @@ class CustomersController extends Controller
         //         $condition = ['customer_type_id' => $customer_type_id];
         //     }
         // }
-        $condition = [];
         $with = [
             'customerContacts',
             'state',
@@ -93,17 +92,14 @@ class CustomersController extends Controller
         } else if ($verify_type === 'unverified') {
             $userQuery = $userQuery->Unverified();
         }
-        if (isset($request->customer_type_id)) {
-
-            $customer_type_id = $request->customer_type_id;
-            if ($customer_type_id != 'all') {
-                $condition = array_merge($condition, ['customer_type_id' => $customer_type_id]);
-            }
-        }
+        $rep_field_name = 'relating_officer';
+        $condition = $this->setQueryConditions($request, $rep_field_name);
         if ($user->hasRole('sales_rep')) {
             $customers = $userQuery->with($with)->where($condition)->where('relating_officer', $user->id)->orderBy('id', 'DESC')->paginate($limit);
             return response()->json(compact('customers'), 200);
         } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+
+
             // $sales_reps_ids is in array form
             list($sales_reps, $sales_reps_ids) = $this->teamMembers();
             $customers = $userQuery->with($with)->where($condition)->whereIn('relating_officer', $sales_reps_ids)->orderBy('id', 'DESC')->paginate($limit);
@@ -139,14 +135,8 @@ class CustomersController extends Controller
         //         $condition = ['customer_type_id' => $customer_type_id];
         //     }
         // }
-        $condition = [];
-        if (isset($request->customer_type_id)) {
-
-            $customer_type_id = $request->customer_type_id;
-            if ($customer_type_id != 'all') {
-                $condition = array_merge($condition, ['customer_type_id' => $customer_type_id]);
-            }
-        }
+        $rep_field_name = 'relating_officer';
+        $condition = $this->setQueryConditions($request, $rep_field_name);
         if ($user->hasRole('sales_rep')) {
             $customers = $userQuery->Unverified()->with([
                 'customerContacts',

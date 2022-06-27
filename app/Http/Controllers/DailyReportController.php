@@ -40,8 +40,8 @@ class DailyReportController extends Controller
     public function myReports(Request $request)
     {
         $user = $this->getUser();
-        $date_from = Carbon::now()->startOfQuarter();
-        $date_to = Carbon::now()->endOfQuarter();
+        $date_from = Carbon::now()->startOfMonth();
+        $date_to = Carbon::now()->endOfMonth();
         $panel = 'month';
         if (isset($request->from, $request->to)) {
             $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';

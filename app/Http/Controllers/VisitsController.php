@@ -56,8 +56,8 @@ class VisitsController extends Controller
     public function fetchHospitalVisits(Request $request)
     {
         $user = $this->getUser();
-        $date_from = Carbon::now()->startOfQuarter();
-        $date_to = Carbon::now()->endOfQuarter();
+        $date_from = Carbon::now()->startOfMonth();
+        $date_to = Carbon::now()->endOfMonth();
         $panel = 'quarter';
         $currency = $this->currency();
         if (isset($request->from, $request->to, $request->panel)) {
@@ -111,8 +111,8 @@ class VisitsController extends Controller
     public function fetchGeneralVisits(Request $request)
     {
         $user = $this->getUser();
-        $date_from = Carbon::now()->startOfQuarter();
-        $date_to = Carbon::now()->endOfQuarter();
+        $date_from = Carbon::now()->startOfMonth();
+        $date_to = Carbon::now()->endOfMonth();
         $panel = 'quarter';
         $currency = $this->currency();
         if (isset($request->from, $request->to, $request->panel)) {
@@ -161,8 +161,8 @@ class VisitsController extends Controller
     // public function fetchGeneralVisits(Request $request)
     // {
     //     $user = $this->getUser();
-    //     $date_from = Carbon::now()->startOfQuarter();
-    //     $date_to = Carbon::now()->endOfQuarter();
+    //     $date_from = Carbon::now()->startOfMonth();
+    //     $date_to = Carbon::now()->endOfMonth();
     //     $panel = 'quarter';
     //     $currency = $this->currency();
     //     if (isset($request->from, $request->to, $request->panel)) {

@@ -1,5 +1,5 @@
 <template>
-  <vx-card v-loading="load">
+  <vx-card>
     <div class="vx-row">
       <div class="vx-col lg:w-3/4 w-full">
         <div class="flex items-end px-3">
@@ -27,7 +27,7 @@
     <el-row :gutter="10">
       <el-col :lg="8" :md="8" :sm="8" :xs="24">
         <label for="">Select Rep</label>
-        <el-select v-model="form.rep_id" filterable style="width: 100%" @input="fetchCustomers($event)">
+        <el-select v-model="form.rep_id" filterable style="width: 100%" @change="fetchCustomers($event)">
           <el-option
             v-if="reps.length > 0"
             label="All"
@@ -74,7 +74,7 @@
         </el-popover>
       </el-col>
     </el-row>
-    <el-row :gutter="10">
+    <el-row v-loading="load" :gutter="10">
       <v-client-table v-model="sales" :columns="sales_columns" :options="sales_options">
         <div
           slot="quantity"
@@ -90,7 +90,7 @@
           slot-scope="props"
           class="alert alert-success"
         >{{ currency + Number(props.row.rate).toLocaleString() }}</div>
-        <div
+        <!-- <div
           slot="main_rate"
           slot-scope="props"
           class="alert alert-info"
@@ -108,7 +108,7 @@
         <div
           slot="expiry_date"
           slot-scope="props"
-        >{{ (props.row.expiry_date) ? moment(props.row.expiry_date).format('ll') : '' }}</div>
+        >{{ (props.row.expiry_date) ? moment(props.row.expiry_date).format('ll') : '' }}</div> -->
         <div
           slot="transaction.created_at"
           slot-scope="props"
@@ -141,29 +141,29 @@ export default {
         'transaction.invoice_no',
         'product',
         'quantity',
-        'main_rate',
-        'main_amount',
+        // 'main_rate',
+        // 'main_amount',
         'rate',
         'amount',
-        'batch_no',
-        'expiry_date',
+        // 'batch_no',
+        // 'expiry_date',
         'name', // field staff
         'transaction.created_at',
       ],
 
       sales_options: {
         headings: {
-          'transaction.customer.business_name': 'Customer',
+          'transaction.customer.business_name': 'Customer Name',
           'transaction.invoice_no': 'Invoice No.',
           amount_due: 'Amount',
           amount_paid: 'Amount Paid',
           delivery_status: 'Delivery Status',
           'name': 'Field Staff',
-          'rate': 'Sell Rate',
-          'amount': 'Sell Amount',
-          'main_amount': 'Original Amount',
-          'main_rate': 'Original Rate',
-          'transaction.created_at': 'Created at',
+          //   'rate': 'Sell Rate',
+          //   'amount': 'Sell Amount',
+          //   'main_amount': 'Original Amount',
+          //   'main_rate': 'Original Rate',
+          'transaction.created_at': 'Date',
         },
         pagination: {
           dropdown: true,
@@ -175,8 +175,8 @@ export default {
         //   filter: 'Search:',
         // },
         // editableColumns:['name', 'category.name', 'sku'],
-        sortable: ['transaction.invoice_no', 'transaction.created_at', 'name,'],
-        filterable: ['transaction.invoice_no', 'transaction.customer.business_name', 'transaction.created_at', 'name'],
+        sortable: ['transaction.invoice_no', 'product', 'transaction.created_at', 'name,'],
+        filterable: ['transaction.invoice_no', 'product', 'transaction.customer.business_name', 'transaction.created_at', 'name'],
       },
       load: false,
       total: 0,
@@ -189,6 +189,7 @@ export default {
         page: 1,
         limit: 25,
         customer_id: 'all',
+        rep_id: '',
       },
       sub_title: '',
       submitTitle: 'Fetch Report',
@@ -202,7 +203,7 @@ export default {
   },
   created() {
     this.fetchSalesReps();
-    this.fetchSales();
+    // this.fetchSales();
   },
   methods: {
     moment,
@@ -221,6 +222,8 @@ export default {
     },
     fetchCustomers(rep_id) {
       const app = this;
+      app.form.rep_id = rep_id;
+      app.form.customer_id = 'all';
       app.load_customer = true;
       const customerResource = new Resource('customers/rep-customers');
       const param = { rep_id };
@@ -229,6 +232,7 @@ export default {
           app.customers = response.customers;
           app.load_customer = false;
         });
+      app.fetchSales();
     },
     // fetchCustomers() {
     //   const app = this;
@@ -281,20 +285,20 @@ export default {
     handleDownload() {
       this.downloadLoading = true;
       import('@/vendor/Export2Excel').then(excel => {
-        const multiHeader = [['Product Sales ' + this.sub_title, '', '', '', '', '', '', '', '', '', '', '', '']];
+        const multiHeader = [['Product Sales ' + this.sub_title, '', '', '', '', '', '', '', '']];
         const tHeader = [
           'CUSTOMER',
           'INVOICE NUMBER',
           'PRODUCT',
           'QUANTITY',
-          'ORIGINAL RATE',
-          'ORIGINAL AMOUNT',
-          'SELL RATE',
-          'SELL AMOUNT',
-          'BATCH NO.',
-          'EXPIRY DATE',
+          //   'ORIGINAL RATE',
+          //   'ORIGINAL AMOUNT',
+          'RATE',
+          'AMOUNT',
+          // 'BATCH NO.',
+          // 'EXPIRY DATE',
           'FIELD STAFF',
-          'CREATED AT',
+          'DATE',
         ];
         const filterVal = this.sales_columns;
         const list = this.sales;

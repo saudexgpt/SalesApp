@@ -47,18 +47,16 @@ class TransactionsController extends Controller
     public function fetchDebts(Request $request)
     {
         $user = $this->getUser();
-        $date_from = Carbon::now()->startOfQuarter();
-        $date_to = Carbon::now()->endOfQuarter();
+        $date_from = Carbon::now()->startOfMonth();
+        $date_to = Carbon::now()->endOfMonth();
         $panel = 'quarter';
         $currency = $this->currency();
         if (isset($request->from, $request->to)) {
             $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
             $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
         }
-        $condition = [];
-        if (isset($request->customer_id) && $request->customer_id != 'all') {
-            $condition = ['customer_id' => $request->customer_id];
-        }
+        $rep_field_name = 'field_staff';
+        $condition = $this->setQueryConditions($request, $rep_field_name);
         $delivery_status = $request->delivery_status;
 
         if ($user->hasRole('sales_rep')) {
@@ -94,8 +92,8 @@ class TransactionsController extends Controller
                     },
                 ])
                 ->whereRaw('amount - paid > 0')
-                ->where('created_at', '<=',  $date_to)
-                ->where('created_at', '>=',  $date_from)
+                // ->where('created_at', '<=',  $date_to)
+                // ->where('created_at', '>=',  $date_from)
                 ->where($condition)
                 ->whereIn('field_staff', $sales_reps_ids)
                 ->select('*', \DB::raw('SUM(amount) as total_amount_due'), \DB::raw('SUM(paid) as total_amount_paid'))
@@ -110,8 +108,8 @@ class TransactionsController extends Controller
                     },
                 ])
                 ->whereRaw('amount - paid > 0')
-                ->where('created_at', '<=',  $date_to)
-                ->where('created_at', '>=',  $date_from)
+                // ->where('created_at', '<=',  $date_to)
+                // ->where('created_at', '>=',  $date_from)
                 ->where($condition)
                 ->select('*', \DB::raw('SUM(amount) as total_amount_due'), \DB::raw('SUM(paid) as total_amount_paid'))
                 ->paginate(50);
@@ -127,8 +125,8 @@ class TransactionsController extends Controller
     public function fetchSales(Request $request)
     {
         $user = $this->getUser();
-        $date_from = Carbon::now()->startOfQuarter();
-        $date_to = Carbon::now()->endOfQuarter();
+        $date_from = Carbon::now()->startOfMonth();
+        $date_to = Carbon::now()->endOfMonth();
         $panel = 'quarter';
         $currency = $this->currency();
         if (isset($request->from, $request->to)) {
@@ -136,10 +134,8 @@ class TransactionsController extends Controller
             $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
             $panel = $request->panel;
         }
-        $condition = [];
-        if (isset($request->customer_id) && $request->customer_id != 'all') {
-            $condition = ['customer_id' => $request->customer_id];
-        }
+        $rep_field_name = 'field_staff';
+        $condition = $this->setQueryConditions($request, $rep_field_name);
         $delivery_status = $request->delivery_status;
         if ($user->hasRole('sales_rep')) {
 
@@ -159,17 +155,16 @@ class TransactionsController extends Controller
     public function fetchProductSales(Request $request)
     {
         $user = $this->getUser();
-        $date_from = Carbon::now()->startOfQuarter();
-        $date_to = Carbon::now()->endOfQuarter();
+        $date_from = Carbon::now()->startOfMonth();
+        $date_to = Carbon::now()->endOfMonth();
         $currency = $this->currency();
         if (isset($request->from, $request->to)) {
             $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
             $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
         }
-        $condition = [];
-        if (isset($request->customer_id) && $request->customer_id != 'all') {
-            $condition = ['customer_id' => $request->customer_id];
-        }
+        $rep_field_name = 'transaction_details.field_staff';
+        $condition = $this->setQueryConditions($request, $rep_field_name);
+
         $delivery_status = $request->delivery_status;
         if ($user->hasRole('sales_rep')) {
 

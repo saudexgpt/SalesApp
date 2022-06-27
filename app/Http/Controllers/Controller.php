@@ -181,4 +181,22 @@ class Controller extends BaseController
         // $activity_log->user_type = $user->roles[0]->name;
         // $activity_log->save();
     }
+
+    public function setQueryConditions($data, $rep_field_name)
+    {
+        $condition = [];
+
+        if (isset($data->rep_id) && $data->rep_id != '' && $data->rep_id != 'all') {
+
+            $condition = [$rep_field_name => $data->rep_id];
+        }
+        if (isset($data->customer_id) && $data->customer_id != '' && $data->customer_id != 'all') {
+            $condition = array_merge($condition, ['customer_id' => $data->customer_id]);
+        }
+        if (isset($data->customer_type_id) && $data->customer_type_id != '' && $data->customer_type_id != 'all') {
+
+            $condition = array_merge($condition, ['customer_type_id' => $data->customer_type_id]);
+        }
+        return $condition;
+    }
 }

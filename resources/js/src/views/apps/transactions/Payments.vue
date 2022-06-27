@@ -1,6 +1,6 @@
 <template>
 
-  <vx-card v-loading="load">
+  <vx-card>
     <div class="vx-row">
       <div class="vx-col lg:w-3/4 w-full">
         <div class="flex items-end px-3">
@@ -26,7 +26,23 @@
       </div>
     </div>
     <el-row :gutter="10">
-      <el-col :lg="12" :md="12" :sm="12" :xs="24">
+      <el-col :lg="8" :md="8" :sm="8" :xs="24">
+        <label for="">Select Rep</label>
+        <el-select v-model="form.rep_id" filterable style="width: 100%" @change="fetchCustomers($event)">
+          <el-option
+            v-if="reps.length > 0"
+            label="All"
+            value="all" />
+          <el-option
+            v-for="(rep, index) in reps"
+            :key="index"
+            :label="rep.name"
+            :value="rep.id"
+
+          />
+        </el-select>
+      </el-col>
+      <el-col :lg="8" :md="8" :sm="8" :xs="24">
         <label for="">Select Customer</label>
         <el-select v-model="form.customer_id" filterable style="width: 100%" @input="fetchPayments">
           <el-option
@@ -41,7 +57,7 @@
           />
         </el-select>
       </el-col>
-      <el-col :lg="12" :md="12" :sm="12" :xs="24">
+      <el-col :lg="8" :md="8" :sm="8" :xs="24">
         <label for="">&nbsp;</label><br>
         <el-popover placement="right" trigger="click">
           <date-range-picker
@@ -59,7 +75,7 @@
         </el-popover>
       </el-col>
     </el-row>
-    <el-row :gutter="10">
+    <el-row v-loading="load" :gutter="10">
       <v-client-table v-model="payments" :columns="payments_columns" :options="payments_options">
         <div
           slot="confirmer.name"
@@ -152,6 +168,7 @@ export default {
         page: 1,
         limit: 10,
         customer_id: 'all',
+        rep_id: '',
       },
       sub_title: '',
       submitTitle: 'Fetch Report',
@@ -161,23 +178,52 @@ export default {
       show_calendar: false,
       downloadLoading: false,
       customers: [],
+      reps: [],
     };
   },
   created() {
-    this.fetchCustomers();
-    this.fetchPayments();
+    this.fetchSalesReps();
+    // this.fetchCustomers();
+    // this.fetchPayments();
   },
   methods: {
     moment,
     checkPermission,
-    fetchCustomers() {
+    fetchSalesReps() {
       const app = this;
-      const customerResource = new Resource('customers/all');
-      customerResource.list()
-        .then(response => {
-          app.customers = response.customers;
+      // this.load_table = true;
+      const salesRepResource = new Resource('users/fetch-sales-reps');
+      salesRepResource
+        .list()
+        .then((response) => {
+          app.reps = response.sales_reps;
+        })
+        .catch((error) => {
+          console.log(error);
         });
     },
+    fetchCustomers(rep_id) {
+      const app = this;
+      app.form.rep_id = rep_id;
+      app.form.customer_id = 'all';
+      app.load_customer = true;
+      const customerResource = new Resource('customers/rep-customers');
+      const param = { rep_id };
+      customerResource.list(param)
+        .then(response => {
+          app.customers = response.customers;
+          app.load_customer = false;
+        });
+      app.fetchPayments();
+    },
+    // fetchCustomers() {
+    //   const app = this;
+    //   const customerResource = new Resource('customers/all');
+    //   customerResource.list()
+    //     .then(response => {
+    //       app.customers = response.customers;
+    //     });
+    // },
     format(date) {
       var month = date.toLocaleString('en-US', { month: 'short' });
       return month + ' ' + date.getDate() + ', ' + date.getFullYear();
@@ -205,6 +251,7 @@ export default {
       app.payments_options.perPage = limit;
       const paymentsResource = new Resource('payments');
       const param = app.form;
+      app.load = true;
       paymentsResource.list(param)
         .then(response => {
           app.payments = response.payments.data;
@@ -214,6 +261,7 @@ export default {
             element['index'] = (page - 1) * limit + index + 1;
           });
           this.total = response.payments.total;
+          app.load = false;
         });
     },
     confirmPayment(index, row) {

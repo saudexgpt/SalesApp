@@ -63,23 +63,50 @@
           </el-col>
         </el-row> -->
         <el-row :gutter="20">
-          <el-col :xs="24" :sm="12" :md="12">
+          <el-col :xs="24" :sm="8" :md="8">
+            Search Customer
             <el-input
               v-model="query.keyword"
               placeholder="Search Customer"
-              style="width: 200px"
+              style="width: 100%"
               class="filter-item"
               @input="handleFilter"
             />
           </el-col>
-          <el-col :xs="24" :sm="12" :md="12">
-
-            <!-- <el-alert type="success">These customers have been verified at least once</el-alert> -->
-            <el-radio-group v-model="query.verify_type" @change="getList()">
+          <el-col :xs="24" :sm="8" :md="8">
+            Filter by Rep
+            <el-select
+              v-model="query.rep_id"
+              placeholder="Select Rep"
+              filterable
+              style="width: 100%"
+              @input="getList()"
+            >
+              <el-option
+                v-for="(rep, index) in sales_reps"
+                :key="index"
+                :label="rep.name"
+                :value="rep.id"
+              />
+            </el-select>
+          </el-col>
+          <el-col :xs="24" :sm="8" :md="8">
+            Filter by Verification
+            <el-select
+              v-model="query.verify_type"
+              placeholder="Filter by Verification"
+              style="width: 100%"
+              @input="getList()"
+            >
+              <el-option label="All" value="all"/>
+              <el-option label="Verified" value="verified"/>
+              <el-option label="Unverified" value="unverified"/>
+            </el-select>
+            <!-- <el-radio-group v-model="query.verify_type" @change="getList()">
               <el-radio label="all" border>All</el-radio>
               <el-radio label="verified" border>Verified</el-radio>
               <el-radio label="unverified" border>Unverified</el-radio>
-            </el-radio-group>
+            </el-radio-group> -->
           </el-col>
         </el-row>
       </div>
@@ -98,10 +125,10 @@
           :options="options"
         >
 
-          <template slot="assigned_officer.name" slot-scope="props">
+          <template slot="assigned_officer" slot-scope="props">
             <el-select
               v-if="checkPermission(['assign-field-staff'])"
-              v-model="props.row.assigned_officer.id"
+              v-model="props.row.relating_officer"
               placeholder="Select Rep"
               filterable
               @input="assignOfficer($event, props.row.id)"
@@ -113,7 +140,7 @@
                 :value="rep.id"
               />
             </el-select>
-            <span v-else>{{ props.row.assigned_officer.name }}</span>
+            <span v-else>{{ (props.row.assigned_officer !== null) ? props.row.assigned_officer.name : 'Not Assigned' }}</span>
           </template>
           <template slot="visits" slot-scope="scope">
             <span>{{ (scope.row.visits.length > 0) ? moment(scope.row.visits[0].visit_date).format('ll') : 'Not visited' }}</span>
@@ -325,7 +352,7 @@ export default {
         // 'area',
         'visits',
         'registrar.name',
-        'assigned_officer.name',
+        'assigned_officer',
         'address',
         // 'verifier.name',
         'created_at',
@@ -338,7 +365,7 @@ export default {
           'customer_type.name': 'Type',
           'visits': 'Last Visit',
           'registrar.name': 'Registered By',
-          'assigned_officer.name': 'Field Staff',
+          'assigned_officer': 'Field Staff',
           'verifier.name': 'Verified By',
         },
         rowAttributesCallback(row) {
@@ -358,7 +385,7 @@ export default {
         // },
         // editableColumns:['name', 'category.name', 'sku'],
         sortable: ['business_name', 'customer_type.name', 'created_at', 'date_verified'],
-        filterable: ['business_name', 'customer_type.name', 'registrar.name', 'assigned_officer.name'],
+        filterable: ['business_name', 'customer_type.name', 'registrar.name'],
       },
       total: 0,
       loading: false,
@@ -371,6 +398,7 @@ export default {
         keyword: '',
         role: '',
         verify_type: 'all',
+        rep_id: '',
       },
       selectedCustomer: {},
       dialogFormVisible: false,
@@ -600,13 +628,19 @@ export default {
       return jsonData.map((v) =>
         filterVal.map((j) => {
           if (j === 'customer_type.name') {
-            return v['customer_type']['name'];
+            if (v['customer_type'] !== null) {
+              return v['customer_type']['name'];
+            }
           }
           if (j === 'registrar.name') {
-            return v['registrar']['name'];
+            if (v['registrar'] !== null) {
+              return v['registrar']['name'];
+            }
           }
           if (j === 'assigned_officer.name') {
-            return v['assigned_officer']['name'];
+            if (v['assigned_officer'] !== null) {
+              return v['assigned_officer']['name'];
+            }
           }
           return v[j];
         }),

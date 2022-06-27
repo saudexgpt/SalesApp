@@ -24,8 +24,8 @@ class ReturnsController extends Controller
     public function fetchReturnedProducts(Request $request)
     {
         $user = $this->getUser();
-        $date_from = Carbon::now()->startOfQuarter();
-        $date_to = Carbon::now()->endOfQuarter();
+        $date_from = Carbon::now()->startOfMonth();
+        $date_to = Carbon::now()->endOfMonth();
         $panel = 'quarter';
         $currency = $this->currency();
         if (isset($request->from, $request->to, $request->panel)) {
