@@ -177,7 +177,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix' => 'schedules'], function () {
         Route::get('fetch', [SchedulesController::class, 'index']);
         Route::get('fetch-reps', [SchedulesController::class, 'fetchRepsSchedules']);
-
+        Route::post('store-rep-schedule', [SchedulesController::class, 'storeRepSchedule']);
+        Route::get('today-schedule', [SchedulesController::class, 'todaySchedule']);
         Route::post('store', [SchedulesController::class, 'store']); //->middleware('permission:create-sales');
     });
     Route::group(['prefix' => 'teams'], function () {

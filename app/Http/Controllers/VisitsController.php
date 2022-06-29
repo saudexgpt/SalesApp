@@ -46,7 +46,8 @@ class VisitsController extends Controller
             $date = date('Y-m-d', strtotime($request->date));
             $visits = $user->visits()->with('customer', 'visitedBy', 'contact', 'details.contact', 'detailings', 'customerStockBalances', 'customerSamples')->orderBy('id', 'DESC')->where('created_at', 'LIKE', '%' . $date . '%')->get();
         } else {
-            $visits = $user->visits()->with('customer', 'visitedBy', 'contact', 'details.contact', 'detailings', 'customerStockBalances', 'customerSamples')->orderBy('id', 'DESC')->where('created_at', 'NOT LIKE', '%' . $today . '%')->take(50)->get();
+            $yesterday = date('Y-m-d', strtotime('yesterday'));
+            $visits = $user->visits()->with('customer', 'visitedBy', 'contact', 'details.contact', 'detailings', 'customerStockBalances', 'customerSamples')->orderBy('id', 'DESC')->where('created_at', 'LIKE', '%' . $yesterday . '%')->get();
         }
         $today_visits = $user->visits()->with('customer', 'visitedBy', 'contact', 'details.contact', 'detailings', 'customerStockBalances', 'customerSamples')
             ->where('created_at', 'LIKE', '%' . $today . '%')->orderBy('id', 'DESC')->get();

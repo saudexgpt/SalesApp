@@ -57,7 +57,7 @@
           />
         </el-select>
       </el-col>
-      <!-- <el-col :lg="8" :md="8" :sm="8" :xs="24">
+      <el-col :lg="8" :md="8" :sm="8" :xs="24">
         <label for="">&nbsp;</label><br>
         <el-popover placement="right" trigger="click">
           <date-range-picker
@@ -73,7 +73,7 @@
             <i class="el-icon-date" /> Pick Date Range
           </el-button>
         </el-popover>
-      </el-col> -->
+      </el-col>
     </el-row>
     <el-row v-loading="load" :gutter="10">
       <v-client-table v-model="debts" :columns="debts_columns" :options="debts_options">
@@ -161,8 +161,8 @@ export default {
         headings: {
           'customer.business_name': 'Customer',
           // invoice_no: 'Invoice No.',
-          amount_due: 'Amount',
-          amount_paid: 'Amount Paid',
+          total_amount_due: 'Due',
+          total_amount_paid: 'Paid',
           delivery_status: 'Delivery Status',
           'customer.assigned_officer.name': 'Relating Officer',
           created_at: 'Age',

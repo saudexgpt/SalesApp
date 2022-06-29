@@ -12,7 +12,7 @@ const adminRoutes = {
     {
       hidden: true,
       path: '/schedules/manage',
-      component: () => import('@/views/apps/schedules'),
+      component: () => import('@/views/apps/schedules/index'),
     },
   ],
 };

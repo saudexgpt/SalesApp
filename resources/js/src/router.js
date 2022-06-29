@@ -35,8 +35,8 @@ Vue.use(Router);
 import dashboardRoutes from '@/router-modules/dashboard';
 import settingsRoutes from '@/router-modules/settings';
 import reportsRoutes from '@/router-modules/reports';
-// import schedulesRoutes from '@/router-modules/schedules';
-import transactionsRoutes from '@/router-modules/transactions';
+import schedulesRoutes from '@/router-modules/schedules';
+// import transactionsRoutes from '@/router-modules/transactions';
 import customersRoutes from '@/router-modules/customers';
 // import inventoryRoutes from '@/router-modules/inventories';
 // import dailyReportRoutes from '@/router-modules/daily-reports';
@@ -110,9 +110,9 @@ export const asyncRoutes = [
   // =============================================================================
   dashboardRoutes,
   customersRoutes,
-  transactionsRoutes,
+  // transactionsRoutes,
   // dailyReportRoutes,
-  // schedulesRoutes,
+  schedulesRoutes,
   // inventoryRoutes,
   reportsRoutes,
   downloadablesRoutes,

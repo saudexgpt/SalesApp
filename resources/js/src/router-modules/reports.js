@@ -12,6 +12,39 @@ const reportsRoutes = {
     // //////////////////Settings///////////////////////////
     {
       hidden: false,
+      component: () => import('@/views/apps/transactions/Sales'),
+      path: '/reports/sales',
+      name: 'Sales',
+      slug: 'sales',
+      i18n: 'Sales',
+      meta: {
+        // permissions: [],
+      },
+    },
+    {
+      hidden: false,
+      component: () => import('@/views/apps/transactions/Payments'),
+      path: '/reports/collections',
+      name: 'Collections',
+      slug: 'collections',
+      i18n: 'Collections',
+      meta: {
+        // permissions: [],
+      },
+    },
+    {
+      hidden: false,
+      component: () => import('@/views/apps/transactions/Debts'),
+      path: '/reports/debts',
+      name: 'Debts',
+      slug: 'debts',
+      i18n: 'Debts',
+      meta: {
+        // permissions: [],
+      },
+    },
+    {
+      hidden: false,
       path: '/reports/inventory',
       name: 'InventoryReport',
       slug: 'inventory',
@@ -43,17 +76,17 @@ const reportsRoutes = {
     //     permissions: ['read-inventories'],
     //   },
     },
-    {
-      hidden: false,
-      path: '/reports/schedules',
-      name: 'Schedules',
-      slug: 'schedules',
-      i18n: 'Schedules',
-      component: () => import('@/views/apps/reports/Schedules'),
-    //   meta: {
-    //     permissions: ['read-inventories'],
-    //   },
-    },
+    // {
+    //   hidden: false,
+    //   path: '/reports/schedules',
+    //   name: 'Schedules',
+    //   slug: 'schedules',
+    //   i18n: 'Schedules',
+    //   component: () => import('@/views/apps/reports/Schedules'),
+    // //   meta: {
+    // //     permissions: ['read-inventories'],
+    // //   },
+    // },
     {
       hidden: false,
       component: () => import('@/views/apps/Notifications'),

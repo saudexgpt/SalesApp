@@ -92,8 +92,8 @@ class TransactionsController extends Controller
                     },
                 ])
                 ->whereRaw('amount - paid > 0')
-                // ->where('created_at', '<=',  $date_to)
-                // ->where('created_at', '>=',  $date_from)
+                ->where('created_at', '<=',  $date_to)
+                ->where('created_at', '>=',  $date_from)
                 ->where($condition)
                 ->whereIn('field_staff', $sales_reps_ids)
                 ->select('*', \DB::raw('SUM(amount) as total_amount_due'), \DB::raw('SUM(paid) as total_amount_paid'))
@@ -108,8 +108,8 @@ class TransactionsController extends Controller
                     },
                 ])
                 ->whereRaw('amount - paid > 0')
-                // ->where('created_at', '<=',  $date_to)
-                // ->where('created_at', '>=',  $date_from)
+                ->where('created_at', '<=',  $date_to)
+                ->where('created_at', '>=',  $date_from)
                 ->where($condition)
                 ->select('*', \DB::raw('SUM(amount) as total_amount_due'), \DB::raw('SUM(paid) as total_amount_paid'))
                 ->paginate(50);

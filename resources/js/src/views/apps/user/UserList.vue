@@ -106,7 +106,6 @@
             placement="top-start"
           >
             <router-link
-              v-if="!scope.row.roles.includes('admin')"
               :to="'/settings/users/edit/' + scope.row.id"
             >
               <el-button
@@ -126,7 +125,6 @@
           >
             <el-button
               v-permission="['update-users']"
-              v-if="!scope.row.roles.includes('admin')"
               round
               type="warning"
               size="small"

@@ -62,12 +62,9 @@ class DashboardController extends Controller
 
         $today_visits = $user->visits()/*->with('customer', 'visitedBy', 'details')*/->where('created_at', 'LIKE', '%' . $today . '%')->orderBy('id', 'DESC')->get();
 
-        $today_schedule = $user->mySchedules()->with('customer')->where('schedule_date', $today)->orWhere(function ($q) use ($day) {
-            $q->where('repeat_schedule', 'yes');
-            $q->where('day', $day);
-        })->get();
 
-        return response()->json(compact('user', 'customers', 'sales', 'debt', 'overdue', 'today_visits', 'currency', 'today_schedule'), 200);
+
+        return response()->json(compact('user', 'customers', 'sales', 'debt', 'overdue', 'today_visits', 'currency'), 200);
     }
 
     public function managerDashboard()

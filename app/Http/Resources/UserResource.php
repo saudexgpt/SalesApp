@@ -21,6 +21,8 @@ class UserResource extends JsonResource
             $can_edit = true;
         }
 
+        $xml = simplexml_load_file("apk/app_version.xml") or die("Error: Cannot create object");
+
         // $roles = array_map(
         //             function ($role) {
         //                 return $role['name'];
@@ -35,6 +37,7 @@ class UserResource extends JsonResource
         // );
         // $rights = array_merge($roles, $permissions);
         return [
+            'version' => $xml->version[0],
             'id' => $this->id,
             'name' => $this->first_name . ' ' . $this->last_name,
             'first_name' => $this->first_name,

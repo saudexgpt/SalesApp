@@ -82,16 +82,72 @@ class SchedulesController extends Controller
             $schedule->save();
         }
     }
+    public function storeRepSchedule(Request $request)
+    {
+        $user = $this->getUser();
+        $schedule_date = date('Y-m-d', strtotime($request->schedule_date));
+        $schedule_time = '8:00:00';
+        $customer_ids = $request->customer_ids;
+        $rep = $request->rep;
+        $note = $request->note;
+        $repeat_schedule = $request->repeat_schedule;
+        $day = date('l', strtotime($request->schedule_date)); // returns 'Monday' or 'Tuesday' , etc
+        $day_num = workingDaysStr($day);
+        foreach ($customer_ids as $customer_id) {
+            $schedule = Schedule::where(['customer_id' => $customer_id, 'rep' => $rep, 'schedule_date' => $schedule_date])->first();
+            if (!$schedule) {
+                $schedule = new Schedule();
+            }
 
+            $schedule->day = $day;
+            $schedule->day_num = $day_num;
+            $schedule->schedule_date = $schedule_date;
+            $schedule->schedule_time = $schedule_time;
+            $schedule->customer_id = $customer_id;
+            $schedule->rep = $rep;
+            $schedule->note = $note;
+            $schedule->repeat_schedule = $repeat_schedule;
+            $schedule->scheduled_by = $user->id;
+            $schedule->save();
+            $schedule_time = date('H:i:s', strtotime($schedule_time . ' +30 minutes'));
+        }
+        return 'success';
+    }
     /**
      * Display the specified resource.
      *
      * @param  \App\Models\Schedule  $schedule
      * @return \Illuminate\Http\Response
      */
-    public function show(Schedule $schedule)
+    public function todaySchedule(Request $request)
     {
-        //
+        $lat = $request->latitude;
+        $long = $request->longitude;
+        $today = date('Y-m-d H:i:s', strtotime('now' . ' +1 hour'));
+        $day = date('l', strtotime('now' . ' +1 hour'));
+        $user = $this->getUser();
+        $schedules = $user->mySchedules()->with('customer')->where('schedule_date', $today)->orWhere(function ($q) use ($day) {
+            $q->where('repeat_schedule', 'yes');
+            $q->where('day', $day);
+        })->get();
+        $today_schedule = [];
+        foreach ($schedules as $schedule) {
+            $customer = $schedule->customer;
+
+
+            $distance = haversineGreatCircleDistanceBetweenTwoPoints(
+                $customer->latitude,
+                $customer->longitude,
+                $lat,
+                $long,
+            );
+            $index = (int) $distance;
+            if (isset($today_schedule[$index])) {
+                $index++;
+            }
+            $today_schedule[$index] = $schedule;
+        }
+        return response()->json(compact('today_schedule'), 200);
     }
 
     /**
@@ -126,5 +182,7 @@ class SchedulesController extends Controller
     public function destroy(Schedule $schedule)
     {
         //
+        $schedule->delete();
+        return response()->json([], 204);
     }
 }
