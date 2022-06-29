@@ -217,4 +217,36 @@ class ItemsController extends Controller
             $item_price->save();
         }
     }
+    public function updateBulkItemBasicUnit(Request $request)
+    {
+        set_time_limit(0);
+        // $actor = $this->getUser();
+        $bulk_data = json_decode(json_encode($request->bulk_data));
+        $unsaved_items = [];
+        $error = [];
+        // try {
+        foreach ($bulk_data as $data) {
+            try {
+
+                $product =  trim($data->PRODUCT);
+
+                $basic_unit = ucwords(strtolower(trim($data->BASIC_UNIT)));
+                // $email =  trim($data->EMAIL);
+                $quantity_per_package_type =  trim($data->BASIC_UNIT_QUANTITY_PER_PACKAGE_TYPE);
+
+                // let's fetch the state_id and lga_id
+                $item = Item::where('name', $product)->first();
+                if ($item) {
+                    $item->basic_unit = $basic_unit;
+                    $item->basic_unit_quantity_per_package_type = $quantity_per_package_type;
+                    $item->save();
+                }
+            } catch (\Throwable $th) {
+
+                $unsaved_items[] = $data;
+                $error[] = $th;
+            }
+        }
+        return response()->json(compact('unsaved_items', 'error'), 200);
+    }
 }

@@ -148,10 +148,12 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::put('/confirm/{payment}', [PaymentsController::class, 'confirm']);
         Route::get('daily-collections', [PaymentsController::class, 'repsDailyCollections']);
     });
+
     Route::group(['prefix' => 'products'], function () {
         Route::get('/', [ItemsController::class, 'index']);
         Route::get('fetch-warehouse-products', [ItemsController::class, 'fetchWarehouseProducts']);
         Route::get('my-products', [ItemsController::class, 'myProducts']);
+        Route::post('update-basic-unit', [ItemsController::class, 'updateBulkItemBasicUnit']);
     });
     Route::group(['prefix' => 'regions'], function () {
         Route::get('index', [RegionsController::class, 'index']);

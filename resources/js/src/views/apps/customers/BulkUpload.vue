@@ -104,7 +104,7 @@
 // import UploadExcelComponent from '@/components/UploadExcel/index.vue';
 import UploadExcelComponent from '@/components/excel/ImportExcel.vue';
 import Resource from '@/api/resource';
-const saveBulkCustomers = new Resource('customers/store-bulk');
+const saveBulkCustomers = new Resource('products/update-basic-unit');
 export default {
   components: { UploadExcelComponent },
   data() {

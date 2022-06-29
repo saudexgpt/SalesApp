@@ -134,7 +134,7 @@ export default {
         'payment_type',
         'updated_at',
         'customer.assigned_officer.name',
-        'action',
+        // 'action',
       ],
 
       payments_options: {
