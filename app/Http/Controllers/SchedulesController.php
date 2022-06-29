@@ -123,8 +123,8 @@ class SchedulesController extends Controller
     {
         $lat = $request->latitude;
         $long = $request->longitude;
-        $today = date('Y-m-d H:i:s', strtotime('now' . ' +1 hour'));
-        $day = date('l', strtotime('now' . ' +1 hour'));
+        $today = date('Y-m-d H:i:s', strtotime('now'));
+        $day = date('l', strtotime('now'));
         $user = $this->getUser();
         $schedules = $user->mySchedules()->with('customer')->where('schedule_date', $today)->orWhere(function ($q) use ($day) {
             $q->where('repeat_schedule', 'yes');
