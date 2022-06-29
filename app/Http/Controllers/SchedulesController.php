@@ -126,10 +126,17 @@ class SchedulesController extends Controller
         $today = date('Y-m-d H:i:s', strtotime('now'));
         $day = date('l', strtotime('now'));
         $user = $this->getUser();
-        $schedules = $user->mySchedules()->with('customer')->where('schedule_date', $today)->orWhere(function ($q) use ($day) {
-            $q->where('repeat_schedule', 'yes');
-            $q->where('day', $day);
-        })->get();
+        $schedules = Schedule::with('customer')
+            ->where('rep', $user->id)
+            ->where(function ($q) use ($day, $today) {
+
+                $q->where('schedule_date', $today);
+                $q->orWhere(function ($p) use ($day) {
+
+                    $p->where('repeat_schedule', 'yes');
+                    $p->where('day', $day);
+                });
+            })->get();
         $today_schedule = [];
         foreach ($schedules as $schedule) {
             $customer = $schedule->customer;
