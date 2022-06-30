@@ -58,10 +58,6 @@ class UsersController extends Controller
             $userQuery->whereHas('roles', function ($q) use ($role) {
                 $q->where('name', $role);
             });
-        } else {
-            $userQuery->whereHas('roles', function ($q) {
-                $q->where('name', '!=', 'customer');
-            });
         }
         $userQuery->where('user_type', '!=', 'developer');
 
