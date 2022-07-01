@@ -1,19 +1,21 @@
 <template>
   <div class="app-container">
-    <legend>Your password needs to be updated. Please change your password below.</legend>
-    <el-form v-loading="load" ref="user">
-      <el-form-item label="Password">
-        <el-input v-model="user.password" type="password" />
-      </el-form-item>
-      <el-form-item label="Confirm Password">
-        <el-input v-model="user.confirmPassword" type="password" />
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" @click="updatePassword">
-          Update
-        </el-button>
-      </el-form-item>
-    </el-form>
+    <el-card>
+      <legend>Update your password</legend>
+      <el-form v-loading="load" ref="user">
+        <el-form-item label="Password">
+          <el-input v-model="user.password" type="password" />
+        </el-form-item>
+        <el-form-item label="Confirm Password">
+          <el-input v-model="user.confirmPassword" type="password" />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="updatePassword">
+            Update
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
   </div>
 </template>
 <script>

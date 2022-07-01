@@ -24,56 +24,7 @@
         </div>
       </div>
     </div>
-    <el-row :gutter="10">
-      <el-col :lg="8" :md="8" :sm="8" :xs="24">
-        <label for="">Select Rep</label>
-        <el-select v-model="form.rep_id" filterable style="width: 100%" @change="fetchCustomers($event)">
-          <el-option
-            v-if="reps.length > 0"
-            label="All"
-            value="all" />
-          <el-option
-            v-for="(rep, index) in reps"
-            :key="index"
-            :label="rep.name"
-            :value="rep.id"
-
-          />
-        </el-select>
-      </el-col>
-      <el-col :lg="8" :md="8" :sm="8" :xs="24">
-        <label for="">Select Customer</label>
-        <el-select v-model="form.customer_id" filterable style="width: 100%" @input="fetchSales">
-          <el-option
-            label="All"
-            value="all" />
-          <el-option
-            v-for="(customer, index) in customers"
-            :key="index"
-            :label="customer.business_name"
-            :value="customer.id"
-
-          />
-        </el-select>
-      </el-col>
-      <el-col :lg="8" :md="8" :sm="8" :xs="24">
-        <label for="">&nbsp;</label><br>
-        <el-popover placement="right" trigger="click">
-          <date-range-picker
-            :from="$route.query.from"
-            :to="$route.query.to"
-            :panel="panel"
-            :panels="panels"
-            :submit-title="submitTitle"
-            :future="future"
-            @update="setDateRange"
-          />
-          <el-button id="pick_date1" slot="reference" type="primary">
-            <i class="el-icon-date" /> Pick Date Range
-          </el-button>
-        </el-popover>
-      </el-col>
-    </el-row>
+    <filter-options @submitQuery="fetchSales" />
     <el-row v-loading="load" :gutter="10">
       <v-client-table v-model="sales" :columns="sales_columns" :options="sales_options">
         <div
@@ -130,8 +81,9 @@
 import moment from 'moment';
 import Pagination from '@/components/Pagination';
 import Resource from '@/api/resource';
+import FilterOptions from '@/views/apps/reports/FilterOptions';
 export default {
-  components: { Pagination },
+  components: { Pagination, FilterOptions },
   data() {
     return {
       sales: [],
@@ -202,73 +154,15 @@ export default {
     };
   },
   created() {
-    this.fetchSalesReps();
-    // this.fetchSales();
   },
   methods: {
     moment,
-    fetchSalesReps() {
+    fetchSales(param) {
       const app = this;
-      // this.load_table = true;
-      const salesRepResource = new Resource('users/fetch-sales-reps');
-      salesRepResource
-        .list()
-        .then((response) => {
-          app.reps = response.sales_reps;
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    },
-    fetchCustomers(rep_id) {
-      const app = this;
-      app.form.rep_id = rep_id;
-      app.form.customer_id = 'all';
-      app.load_customer = true;
-      const customerResource = new Resource('customers/rep-customers');
-      const param = { rep_id };
-      customerResource.list(param)
-        .then(response => {
-          app.customers = response.customers;
-          app.load_customer = false;
-        });
-      app.fetchSales();
-    },
-    // fetchCustomers() {
-    //   const app = this;
-    //   const customerResource = new Resource('customers/all');
-    //   customerResource.list()
-    //     .then(response => {
-    //       app.customers = response.customers;
-    //     });
-    // },
-    format(date) {
-      var month = date.toLocaleString('en-US', { month: 'short' });
-      return month + ' ' + date.getDate() + ', ' + date.getFullYear();
-    },
-    setDateRange(values) {
-      const app = this;
-      document.getElementById('pick_date1').click();
-      app.show_calendar = false;
-      let panel = app.panel;
-      let from = app.week_start;
-      let to = app.week_end;
-      if (values !== '') {
-        to = this.format(new Date(values.to));
-        from = this.format(new Date(values.from));
-        panel = values.panel;
-      }
-      app.form.from = from;
-      app.form.to = to;
-      app.form.panel = panel;
-      app.fetchSales();
-    },
-    fetchSales() {
-      const app = this;
-      const { limit, page } = app.form;
+      app.form = param;
+      const { limit, page } = param;
       app.sales_options.perPage = limit;
       const salesResource = new Resource('sales/fetch-product-sales');
-      const param = app.form;
       app.load = true;
       salesResource.list(param)
         .then(response => {
@@ -318,10 +212,10 @@ export default {
       return jsonData.map(v =>
         filterVal.map(j => {
           if (j === 'expiry_date') {
-            return (v[j]) ? moment(v[j]).format('lll') : '';
+            moment(v['expiry_date']).format('lll');
           }
           if (j === 'transaction.created_at') {
-            return (v[j]) ? moment(v[j]).format('lll') : '';
+            return (v['transaction']) ? moment(v['transaction']['created_at']).format('lll') : '';
           }
           if (j === 'transaction.customer.business_name') {
             return v['transaction']['customer']['business_name'];

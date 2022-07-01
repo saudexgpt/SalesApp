@@ -112,6 +112,7 @@ class VisitsController extends Controller
     public function fetchGeneralVisits(Request $request)
     {
         $user = $this->getUser();
+        $paginate_option = $request->paginate_option;
         $date_from = Carbon::now()->startOfMonth();
         $date_to = Carbon::now()->endOfMonth();
         $panel = 'quarter';
@@ -131,29 +132,30 @@ class VisitsController extends Controller
 
         if ($user->hasRole('sales_rep')) {
 
-            $visits = Visit::with('visitedBy', 'visitPartner', 'customer', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
+            $visitsQuery = Visit::with('visitedBy', 'visitPartner', 'customer', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
                 ->where('visitor',  $user->id)
                 ->where('created_at', '<=',  $date_to)
                 ->where('created_at', '>=',  $date_from)
-                ->where($condition)
-                ->paginate(10);
+                ->where($condition);
         } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
             // $sales_reps_ids is in array form
             list($sales_reps, $sales_reps_ids) = $this->teamMembers();
-            $visits = Visit::with('visitedBy', 'visitPartner', 'customer', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
+            $visitsQuery = Visit::with('visitedBy', 'visitPartner', 'customer', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
                 ->where('created_at', '<=',  $date_to)
                 ->where('created_at', '>=',  $date_from)
                 ->where($condition)
-                ->whereIn('visits.visitor', $sales_reps_ids)
-                ->paginate(10);
+                ->whereIn('visits.visitor', $sales_reps_ids);
         } else {
-            $visits = Visit::with('visitedBy', 'visitPartner', 'customer', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
+            $visitsQuery = Visit::with('visitedBy', 'visitPartner', 'customer', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
                 ->where('created_at', '<=',  $date_to)
                 ->where('created_at', '>=',  $date_from)
-                ->where($condition)
-                ->paginate(10);
+                ->where($condition);
         }
-
+        if ($paginate_option === 'all') {
+            $visits = $visitsQuery->get();
+        } else {
+            $visits = $visitsQuery->paginate(25);
+        }
         $date_from = getDateFormatWords($date_from);
         $date_to = getDateFormatWords($date_to);
         return response()->json(compact('visits', 'currency', 'date_from', 'date_to'), 200);
@@ -239,38 +241,54 @@ class VisitsController extends Controller
     public function fetchFootPrints(Request $request)
     {
         $user = $this->getUser();
-        $date = date('Y-m-d', strtotime('now'));
+        $date = date('Y-m-d', strtotime('now')) . ' 00:00:00';
+        $date_time = date('Y-m-d H:i:s', strtotime('now'));
         if (isset($request->date) && $request->date !== '') {
-            $date = date('Y-m-d', strtotime($request->date));
+            $date = date('Y-m-d', strtotime($request->date)) . ' 00:00:00';
+            $date_time = date('Y-m-d H:i:s', strtotime($request->date));
         }
-        if (!$user->isSuperAdmin() && !$user->isAdmin()) {
-            list($sales_reps, $sales_reps_ids) = $this->teamMembers();
+        $last_seen_time_gap = (new \DateTime($date_time))->modify('-1 hour')->format('Y-m-d H:i:s');
+        $userQuery = User::query();
+
+        $userQuery->whereHas('roles', function ($q) {
+            $q->where('name', 'sales_rep');
+        });
+        if (isset($request->team_id) && $request->team_id !== '') {
+
+            $team_id = $request->team_id;
+            $sales_reps = $userQuery->join('team_members', 'team_members.user_id', 'users.id')
+                ->where('team_id', $team_id)->select('users.*')->get();
         } else {
-            $userQuery = User::query();
 
-            $userQuery->whereHas('roles', function ($q) {
-                $q->where('name', 'sales_rep');
-            });
+            if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+                list($sales_reps, $sales_reps_ids) = $this->teamMembers();
+            } else {
+                $userQuery = User::query();
 
-            $sales_reps = $userQuery->get();
+                $userQuery->whereHas('roles', function ($q) {
+                    $q->where('name', 'sales_rep');
+                });
+
+                $sales_reps = $userQuery->get();
+            }
         }
-        $reps_not_located = [];
-        $reps_located = [];
+        $online_reps = [];
+        $offline_reps = [];
         foreach ($sales_reps as $sales_rep) {
             $location = UserGeolocation::where('user_id',  $sales_rep->id)
-                ->where('created_at', 'LIKE', '%' . $date . '%')
+                // ->where('created_at', 'LIKE', '%' . $date . '%')
                 ->orderBy('id', 'DESC')
                 ->first();
             if ($location) {
                 $sales_rep->location = $location;
-                $reps_located[] = $sales_rep;
+                $online_reps[] = $sales_rep;
             } else {
-                $reps_not_located[] = $sales_rep;
+                $offline_reps[] = $sales_rep;
             }
         }
 
         $date = getDateFormatWords($date);
-        return response()->json(compact('reps_located', 'reps_not_located', 'date'), 200);
+        return response()->json(compact('online_reps', 'offline_reps', 'date', 'last_seen_time_gap'), 200);
     }
     public function repTodayVisits(Request $request)
     {

@@ -25,56 +25,7 @@
         </div>
       </div>
     </div>
-    <el-row :gutter="10">
-      <el-col :lg="8" :md="8" :sm="8" :xs="24">
-        <label for="">Select Rep</label>
-        <el-select v-model="form.rep_id" filterable style="width: 100%" @change="fetchCustomers($event)">
-          <el-option
-            v-if="reps.length > 0"
-            label="All"
-            value="all" />
-          <el-option
-            v-for="(rep, index) in reps"
-            :key="index"
-            :label="rep.name"
-            :value="rep.id"
-
-          />
-        </el-select>
-      </el-col>
-      <el-col :lg="8" :md="8" :sm="8" :xs="24">
-        <label for="">Select Customer</label>
-        <el-select v-model="form.customer_id" filterable style="width: 100%" @input="fetchPayments">
-          <el-option
-            label="All"
-            value="all" />
-          <el-option
-            v-for="(customer, index) in customers"
-            :key="index"
-            :label="customer.business_name"
-            :value="customer.id"
-
-          />
-        </el-select>
-      </el-col>
-      <el-col :lg="8" :md="8" :sm="8" :xs="24">
-        <label for="">&nbsp;</label><br>
-        <el-popover placement="right" trigger="click">
-          <date-range-picker
-            :from="$route.query.from"
-            :to="$route.query.to"
-            :panel="panel"
-            :panels="panels"
-            :submit-title="submitTitle"
-            :future="future"
-            @update="setDateRange"
-          />
-          <el-button id="pick_date2" slot="reference" type="primary">
-            <i class="el-icon-date" /> Pick Date Range
-          </el-button>
-        </el-popover>
-      </el-col>
-    </el-row>
+    <filter-options @submitQuery="fetchPayments" />
     <el-row v-loading="load" :gutter="10">
       <v-client-table v-model="payments" :columns="payments_columns" :options="payments_options">
         <div
@@ -121,8 +72,9 @@ import moment from 'moment';
 import Pagination from '@/components/Pagination';
 import Resource from '@/api/resource';
 import checkPermission from '@/utils/permission'; // Permission checking
+import FilterOptions from '@/views/apps/reports/FilterOptions';
 export default {
-  components: { Pagination },
+  components: { Pagination, FilterOptions },
   data() {
     return {
       payments: [],
@@ -182,75 +134,19 @@ export default {
     };
   },
   created() {
-    this.fetchSalesReps();
+    // this.fetchSalesReps();
     // this.fetchCustomers();
     // this.fetchPayments();
   },
   methods: {
     moment,
     checkPermission,
-    fetchSalesReps() {
+    fetchPayments(param) {
       const app = this;
-      // this.load_table = true;
-      const salesRepResource = new Resource('users/fetch-sales-reps');
-      salesRepResource
-        .list()
-        .then((response) => {
-          app.reps = response.sales_reps;
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    },
-    fetchCustomers(rep_id) {
-      const app = this;
-      app.form.rep_id = rep_id;
-      app.form.customer_id = 'all';
-      app.load_customer = true;
-      const customerResource = new Resource('customers/rep-customers');
-      const param = { rep_id };
-      customerResource.list(param)
-        .then(response => {
-          app.customers = response.customers;
-          app.load_customer = false;
-        });
-      app.fetchPayments();
-    },
-    // fetchCustomers() {
-    //   const app = this;
-    //   const customerResource = new Resource('customers/all');
-    //   customerResource.list()
-    //     .then(response => {
-    //       app.customers = response.customers;
-    //     });
-    // },
-    format(date) {
-      var month = date.toLocaleString('en-US', { month: 'short' });
-      return month + ' ' + date.getDate() + ', ' + date.getFullYear();
-    },
-    setDateRange(values) {
-      const app = this;
-      document.getElementById('pick_date2').click();
-      app.show_calendar = false;
-      let panel = app.panel;
-      let from = app.week_start;
-      let to = app.week_end;
-      if (values !== '') {
-        to = this.format(new Date(values.to));
-        from = this.format(new Date(values.from));
-        panel = values.panel;
-      }
-      app.form.from = from;
-      app.form.to = to;
-      app.form.panel = panel;
-      app.fetchPayments();
-    },
-    fetchPayments() {
-      const app = this;
+      app.form = param;
       const { limit, page } = app.form;
       app.payments_options.perPage = limit;
       const paymentsResource = new Resource('payments');
-      const param = app.form;
       app.load = true;
       paymentsResource.list(param)
         .then(response => {
@@ -312,11 +208,8 @@ export default {
     formatJson(filterVal, jsonData) {
       return jsonData.map(v =>
         filterVal.map(j => {
-          if (j === 'payment_date') {
-            return (v[j]) ? moment(v[j]).format('lll') : '';
-          }
           if (j === 'updated_at') {
-            return (v[j]) ? moment(v[j]).format('lll') : '';
+            return (v[j]) ? moment(v['updated_at']).format('lll') : '';
           }
           if (j === 'customer.business_name') {
             return v['customer']['business_name'];

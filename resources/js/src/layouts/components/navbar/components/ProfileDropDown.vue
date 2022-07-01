@@ -20,13 +20,13 @@
         </div>
         <br>
         <vs-row>
-          <!-- <vs-col vs-type="flex" vs-justify="center" vs-align="center" vs-w="6">
-            <vs-button color="primary" type="border" @click="$router.push('/pages/profile').catch(() => {})">
-              <feather-icon icon="UserIcon" svg-classes="w-4 h-4" />
-              <span class="ml-2">Profile</span>
+          <vs-col vs-type="flex" vs-justify="center" vs-align="center" vs-w="7">
+            <vs-button color="danger" type="border" @click="$router.push('/settings/default-password').catch(() => {})">
+              <feather-icon icon="KeyIcon" svg-classes="w-4 h-4" />
+              <span class="ml-2">Update Password</span>
             </vs-button>
-          </vs-col> -->
-          <vs-col vs-type="flex" vs-justify="center" vs-align="center" vs-w="6">
+          </vs-col>
+          <vs-col vs-type="flex" vs-justify="center" vs-align="center" vs-w="5">
             <vs-button color="primary" type="border" @click="logout">
               <feather-icon icon="LogOutIcon" svg-classes="w-4 h-4" />
               <span class="ml-2">Logout</span>

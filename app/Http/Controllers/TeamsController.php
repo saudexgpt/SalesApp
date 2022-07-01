@@ -13,7 +13,18 @@ class TeamsController extends Controller
 {
     public function index()
     {
-        $teams = Team::with('members.user')->orderBy('name')->get();
+
+        $user = $this->getUser();
+        if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+            $teams = [];
+            foreach ($user->memberOfTeams as $team_member) {
+                $teams[] = $team_member->team;
+            }
+        } else {
+            // admin and super admin only
+            $teams = Team::/*with('members.user')->*/orderBy('name')->get();
+        }
+
         return response()->json(compact('teams'), 200);
     }
     public function fetchTeamReps(Request $request)
@@ -74,7 +85,7 @@ class TeamsController extends Controller
         $user_ids = json_decode(json_encode($request->user_ids));
         $team_id = $request->team_id;
         foreach ($user_ids as $user_id) {
-            $team_member = TeamMember::where([/*'team_id' => $team_id, */'user_id' => $user_id])->first();
+            $team_member = TeamMember::where(['team_id' => $team_id, 'user_id' => $user_id])->first();
             if (!$team_member) {
                 $team_member = new TeamMember();
             }

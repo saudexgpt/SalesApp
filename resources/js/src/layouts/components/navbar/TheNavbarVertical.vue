@@ -20,7 +20,10 @@
 
         <!-- <search-bar /> -->
         <!-- <bookmarks :navbarColor="navbarColor" v-if="windowWidth >= 992" /> -->
-
+        <vs-button v-if="pStatus === 'default'" color="danger" @click="$router.push('/settings/default-password').catch(() => {})">
+          <feather-icon icon="KeyIcon" svg-classes="w-4 h-4" />
+          <span class="ml-2">Update Password</span>
+        </vs-button>
         <vs-spacer />
 
         <!-- <i18n /> -->
@@ -61,6 +64,9 @@ export default {
     },
   },
   computed: {
+    pStatus(){
+      return this.$store.getters.pStatus;
+    },
     navbarColorLocal() {
       return this.$store.state.theme === 'dark' && this.navbarColor === '#fff' ? '#10163a' : this.navbarColor;
     },

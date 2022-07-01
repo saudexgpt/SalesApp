@@ -16,57 +16,7 @@
           >Export Excel</el-button>
         </span>
       </div>
-      <el-row :gutter="10">
-        <el-col :lg="8" :md="8" :sm="8" :xs="24">
-          <label for="">Select Rep</label>
-          <el-select v-model="form.rep_id" filterable style="width: 100%" @input="fetchCustomers($event)">
-            <el-option
-              v-if="reps.length > 0"
-              label="All"
-              value="all" />
-            <el-option
-              v-for="(rep, index) in reps"
-              :key="index"
-              :label="rep.name"
-              :value="rep.id"
-
-            />
-          </el-select>
-        </el-col>
-        <el-col v-loading="load_customer" :lg="8" :md="8" :sm="8" :xs="24">
-          <label for="">Select Customer</label>
-          <el-select v-model="form.customer_id" filterable style="width: 100%" @input="fetchReports()">
-            <el-option
-              v-if="customers.length > 0"
-              label="All"
-              value="all" />
-            <el-option
-              v-for="(customer, index) in customers"
-              :key="index"
-              :label="customer.business_name"
-              :value="customer.id"
-
-            />
-          </el-select>
-        </el-col>
-        <el-col :lg="8" :md="8" :sm="8" :xs="24">
-          <label for="">&nbsp;</label><br>
-          <el-popover placement="right" trigger="click">
-            <date-range-picker
-              :from="$route.query.from"
-              :to="$route.query.to"
-              :panel="panel"
-              :panels="panels"
-              :submit-title="submitTitle"
-              :future="future"
-              @update="setDateRange"
-            />
-            <el-button id="pick_date6" slot="reference" type="primary">
-              <i class="el-icon-date" /> Pick Date Range
-            </el-button>
-          </el-popover>
-        </el-col>
-      </el-row>
+      <filter-options @submitQuery="fetchReports" />
       <el-row v-loading="load" :gutter="10">
         <br>
         <v-client-table v-model="visits" :columns="visits_columns" :options="visits_options">
@@ -135,8 +85,9 @@ import Pagination from '@/components/Pagination';
 import Resource from '@/api/resource';
 import checkPermission from '@/utils/permission'; // Permission checking
 import VisitDetails from './partials/VisitDetails';
+import FilterOptions from '@/views/apps/reports/FilterOptions';
 export default {
-  components: { Pagination, VisitDetails },
+  components: { Pagination, VisitDetails, FilterOptions },
   //   props: {
   //     reps: {
   //       type: Array,
@@ -154,6 +105,7 @@ export default {
         'proximity',
         'next_appointment_date',
         'contact.name',
+        'purpose',
         // 'market_feedback',
         'visited_by.name',
         'visit_duration',
@@ -209,68 +161,19 @@ export default {
     };
   },
   created() {
-    this.fetchSalesReps();
+    // this.fetchSalesReps();
   },
   methods: {
     moment,
     checkPermission,
-    format(date) {
-      var month = date.toLocaleString('en-US', { month: 'short' });
-      return month + ' ' + date.getDate() + ', ' + date.getFullYear();
-    },
-    showDetails(visit) {
+    fetchReports(param) {
       const app = this;
-      app.selected_visit = visit;
-      app.page = 'details';
-    },
-    setDateRange(values) {
-      const app = this;
-      document.getElementById('pick_date6').click();
-      app.show_calendar = false;
-      let panel = app.panel;
-      let from = app.week_start;
-      let to = app.week_end;
-      if (values !== '') {
-        to = this.format(new Date(values.to));
-        from = this.format(new Date(values.from));
-        panel = values.panel;
-      }
-      app.form.from = from;
-      app.form.to = to;
-      app.form.panel = panel;
-      app.fetchReports();
-    },
-    fetchSalesReps() {
-      const app = this;
-      // this.load_table = true;
-      const salesRepResource = new Resource('users/fetch-sales-reps');
-      salesRepResource
-        .list()
-        .then((response) => {
-          app.reps = response.sales_reps;
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    },
-    fetchCustomers(rep_id) {
-      const app = this;
-      app.load_customer = true;
-      const customerResource = new Resource('customers/rep-customers');
-      const param = { rep_id };
-      customerResource.list(param)
-        .then(response => {
-          app.customers = response.customers;
-          app.load_customer = false;
-        });
-    },
-    fetchReports() {
-      const app = this;
+      app.form = param;
       app.load = true;
       const { limit, page } = app.form;
       app.visits_options.perPage = limit;
       const visitsResource = new Resource('visits/fetch-general-visits');
-      const param = app.form;
+      // const param = app.form;
       visitsResource.list(param)
         .then(response => {
           app.visits = response.visits.data;
@@ -286,17 +189,29 @@ export default {
     handleDownload() {
       this.downloadLoading = true;
       import('@/vendor/Export2Excel').then(excel => {
-        const multiHeader = [['Collections ' + this.sub_title, '', '', '', '', '', '', '']];
+        const multiHeader = [['Visits ' + this.sub_title, '', '', '', '', '', '', '', '', '']];
         const tHeader = [
           'CUSTOMER',
-          'MARKETED PRODUCTS',
+          'VISIT TYPE',
+          'PROXIMITY (M)',
           'FOLLOW-UP SCHEDULE',
-          'PERSONNEL CONTACTED',
-          'FEEDBACK',
+          'CONTACTED PERSONNEL',
+          'PURPOSE',
           'RELATING OFFICER',
+          'VISIT DURATION',
           'CREATED AT',
         ];
-        const filterVal = this.visits_columns;
+        const filterVal = [
+          'customer.business_name',
+          'visit_type',
+          'proximity',
+          'next_appointment_date',
+          'contact.name',
+          'purpose',
+          'visited_by.name',
+          'visit_duration',
+          'created_at',
+        ];
         const list = this.visits;
         const data = this.formatJson(filterVal, list);
         excel.export_json_to_excel({
@@ -317,10 +232,13 @@ export default {
             return (v[j]) ? moment(v[j]).format('lll') : '';
           }
           if (j === 'customer.business_name') {
-            return v['customer']['business_name'];
+            return (v['customer']) ? v['customer']['business_name'] : '';
           }
-          if (j === 'daily_report.reporter.name') {
-            return v['daily_report']['reporter']['name'];
+          if (j === 'contact.name') {
+            return (v['contact']) ? v['contact']['name'] : '';
+          }
+          if (j === 'visited_by.name') {
+            return (v['visited_by']) ? v['visited_by']['name'] : '';
           }
           return v[j];
         }),

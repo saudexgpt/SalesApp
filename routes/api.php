@@ -14,7 +14,7 @@ use App\Http\Controllers\TransactionsController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\VisitsController;
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\DailyReportController;
+use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\PaymentsController;
 use App\Http\Controllers\PermissionsController;
 use App\Http\Controllers\SubInventoriesController;
@@ -121,12 +121,12 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('transaction-stats', [DashboardController::class, 'transactionStat']);
     });
     Route::group(['prefix' => 'daily-report'], function () {
-        Route::get('index', [DailyReportController::class, 'index']);
-        Route::get('visited-customers', [DailyReportController::class, 'visitedCustomers']);
-        Route::get('my-reports', [DailyReportController::class, 'myReports']);
+        Route::get('index', [ReportsController::class, 'index']);
+        Route::get('visited-customers', [ReportsController::class, 'visitedCustomers']);
+        Route::get('my-reports', [ReportsController::class, 'myReports']);
 
-        Route::post('store', [DailyReportController::class, 'store']);
-        Route::get('details', [DailyReportController::class, 'reportDetails']);
+        Route::post('store', [ReportsController::class, 'store']);
+        Route::get('details', [ReportsController::class, 'reportDetails']);
     });
 
     Route::group(['prefix' => 'inventory'], function () {
@@ -247,5 +247,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('customer-statement', [TransactionsController::class, 'customerStatement']);
 
         Route::get('fetch-returned-products', [ReturnsController::class, 'fetchReturnedProducts']);
+
+        Route::get('downloadables', [ReportsController::class, 'downloadables']);
     });
 });

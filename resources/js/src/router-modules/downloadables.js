@@ -12,7 +12,7 @@ const downloadablesRoutes = {
   children: [
     {
       hidden: true,
-      component: () => import('@/views/apps/user/index.vue'),
+      component: () => import('@/views/apps/downloadables/index.vue'),
       path: '/downloadables/index',
       name: 'Downloadables',
       slug: 'downloadables',

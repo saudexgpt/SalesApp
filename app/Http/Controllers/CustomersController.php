@@ -76,7 +76,7 @@ class CustomersController extends Controller
         //         $condition = ['customer_type_id' => $customer_type_id];
         //     }
         // }
-        $with = [
+        $relationships = [
             'customerContacts',
             'state',
             'lga',
@@ -95,17 +95,23 @@ class CustomersController extends Controller
         $rep_field_name = 'relating_officer';
         $condition = $this->setQueryConditions($request, $rep_field_name);
         if ($user->hasRole('sales_rep')) {
-            $customers = $userQuery->with($with)->where($condition)->where('relating_officer', $user->id)->orderBy('id', 'DESC')->paginate($limit);
+            $customers = $userQuery->with($relationships)->where($condition)->where('relating_officer', $user->id)->orderBy('id', 'DESC')->paginate($limit);
             return response()->json(compact('customers'), 200);
         } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
 
 
             // $sales_reps_ids is in array form
             list($sales_reps, $sales_reps_ids) = $this->teamMembers();
-            $customers = $userQuery->with($with)->where($condition)->whereIn('relating_officer', $sales_reps_ids)->orderBy('id', 'DESC')->paginate($limit);
+            $customers = $userQuery->with($relationships)->where($condition)->whereIn('relating_officer', $sales_reps_ids)->orderBy('id', 'DESC');
         } else {
             // admin and super admin only
-            $customers = $userQuery->with($with)->where($condition)->orderBy('id', 'DESC')->paginate($limit);
+            $customers = $userQuery->with($relationships)->where($condition)->orderBy('id', 'DESC');
+        }
+        $paginate_option = $request->paginate_option;
+        if ($paginate_option === 'all') {
+            $customers = $userQuery->get();
+        } else {
+            $customers = $userQuery->paginate($limit);
         }
         $customer_types = CustomerType::get();
         $states = State::with('lgas')->get();

@@ -9,12 +9,13 @@ use App\Models\HospitalReport;
 use App\Models\Payment;
 use App\Models\ReturnedProduct;
 use App\Models\Schedule;
+use App\Models\TeamMember;
 use App\Models\Transaction;
 use App\Models\Visit;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
-class DailyReportController extends Controller
+class ReportsController extends Controller
 {
     //
     public function visitedCustomers(Request $request)
@@ -225,4 +226,27 @@ class DailyReportController extends Controller
             $schedule->save();
         }
     }
+    // private function formatDownloadableConditions($data)
+    // {
+    //     $condition = [];
+    //     $team_id = $data->team_id;
+    //     $rep_id = $data->rep_id;
+    //     $customer_id = $data->customer_id;
+    //     $rep_ids = [];
+    //     if ($rep_id === 'all') {
+
+
+    //         $team_members = TeamMember::where('team_id', $team_id)->get();
+    //         foreach ($team_members as $team_member) {
+    //             $rep_ids[] = $team_member->user_id;
+    //         }
+
+    //     }else {
+    //         # code...
+    //     }
+    // }
+    // public function downloadables(Request $request)
+    // {
+    //     $table = $request->table;
+    // }
 }

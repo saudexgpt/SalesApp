@@ -25,56 +25,7 @@
         </div>
       </div>
     </div>
-    <el-row :gutter="10">
-      <el-col :lg="8" :md="8" :sm="8" :xs="24">
-        <label for="">Select Rep</label>
-        <el-select v-model="form.rep_id" filterable style="width: 100%" @change="fetchCustomers($event)">
-          <el-option
-            v-if="reps.length > 0"
-            label="All"
-            value="all" />
-          <el-option
-            v-for="(rep, index) in reps"
-            :key="index"
-            :label="rep.name"
-            :value="rep.id"
-
-          />
-        </el-select>
-      </el-col>
-      <el-col :lg="8" :md="8" :sm="8" :xs="24">
-        <label for="">Select Customer</label>
-        <el-select v-model="form.customer_id" filterable style="width: 100%" @input="fetchDebts">
-          <el-option
-            label="All"
-            value="all" />
-          <el-option
-            v-for="(customer, index) in customers"
-            :key="index"
-            :label="customer.business_name"
-            :value="customer.id"
-
-          />
-        </el-select>
-      </el-col>
-      <el-col :lg="8" :md="8" :sm="8" :xs="24">
-        <label for="">&nbsp;</label><br>
-        <el-popover placement="right" trigger="click">
-          <date-range-picker
-            :from="$route.query.from"
-            :to="$route.query.to"
-            :panel="panel"
-            :panels="panels"
-            :submit-title="submitTitle"
-            :future="future"
-            @update="setDateRange"
-          />
-          <el-button id="pick_date4" slot="reference" type="primary">
-            <i class="el-icon-date" /> Pick Date Range
-          </el-button>
-        </el-popover>
-      </el-col>
-    </el-row>
+    <filter-options @submitQuery="fetchDebts" />
     <el-row v-loading="load" :gutter="10">
       <v-client-table v-model="debts" :columns="debts_columns" :options="debts_options">
         <!-- <div slot="child_row" slot-scope="props" style="background: #000">
@@ -99,6 +50,12 @@
             </tbody>
           </table>
         </div> -->
+
+        <div
+          slot="relating_officer"
+          slot-scope="props"
+          class="alert alert-info"
+        >{{ (props.row.customer.relating_officer) ? props.row.customer.assigned_officer.name : '' }}</div>
         <div
           slot="total_amount_due"
           slot-scope="props"
@@ -139,8 +96,9 @@
 import moment from 'moment';
 import Pagination from '@/components/Pagination';
 import Resource from '@/api/resource';
+import FilterOptions from '@/views/apps/reports/FilterOptions';
 export default {
-  components: { Pagination },
+  components: { Pagination, FilterOptions },
   data() {
     return {
       debts: [],
@@ -150,7 +108,7 @@ export default {
         'total_amount_due',
         'total_amount_paid',
         'balance',
-        'customer.assigned_officer.name',
+        'relating_officer',
 
         // 'delivery_status',
         'date',
@@ -164,7 +122,7 @@ export default {
           total_amount_due: 'Due',
           total_amount_paid: 'Paid',
           delivery_status: 'Delivery Status',
-          'customer.assigned_officer.name': 'Relating Officer',
+          relating_officer: 'Relating Officer',
           created_at: 'Age',
         },
         pagination: {
@@ -205,65 +163,17 @@ export default {
     };
   },
   created() {
-    this.fetchSalesReps();
+    // this.fetchSalesReps();
     // this.fetchDebts();
   },
   methods: {
     moment,
-    fetchSalesReps() {
+    fetchDebts(param) {
       const app = this;
-      // this.load_table = true;
-      const salesRepResource = new Resource('users/fetch-sales-reps');
-      salesRepResource
-        .list()
-        .then((response) => {
-          app.reps = response.sales_reps;
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    },
-    fetchCustomers(rep_id) {
-      const app = this;
-      app.form.rep_id = rep_id;
-      app.form.customer_id = 'all';
-      app.load_customer = true;
-      const customerResource = new Resource('customers/rep-customers');
-      const param = { rep_id };
-      customerResource.list(param)
-        .then(response => {
-          app.customers = response.customers;
-          app.load_customer = false;
-        });
-      app.fetchDebts();
-    },
-    format(date) {
-      var month = date.toLocaleString('en-US', { month: 'short' });
-      return month + ' ' + date.getDate() + ', ' + date.getFullYear();
-    },
-    setDateRange(values) {
-      const app = this;
-      document.getElementById('pick_date4').click();
-      app.show_calendar = false;
-      let panel = app.panel;
-      let from = app.week_start;
-      let to = app.week_end;
-      if (values !== '') {
-        to = this.format(new Date(values.to));
-        from = this.format(new Date(values.from));
-        panel = values.panel;
-      }
-      app.form.from = from;
-      app.form.to = to;
-      app.form.panel = panel;
-      app.fetchDebts();
-    },
-    fetchDebts() {
-      const app = this;
+      app.form = param;
       const { limit, page } = app.form;
       app.debts_options.perPage = limit;
       const debtsResource = new Resource('sales/fetch-debts');
-      const param = app.form;
       app.load = true;
       debtsResource.list(param)
         .then(response => {
@@ -280,13 +190,15 @@ export default {
     handleDownload() {
       this.downloadLoading = true;
       import('@/vendor/Export2Excel').then(excel => {
-        const multiHeader = [['Product Sales ' + this.sub_title, '', '', '', '', '']];
+        const multiHeader = [['Customer Debts ' + this.sub_title, '', '', '', '', '', '', '']];
         const tHeader = [
           'CUSTOMER',
           'AMOUNT',
           'AMOUNT PAID',
           'BALANCE',
           'RELATING OFFICER',
+          'DATE',
+          'AGE',
         ];
         const filterVal = this.debts_columns;
         const list = this.debts;
@@ -308,8 +220,17 @@ export default {
           if (j === 'customer.business_name') {
             return v['customer']['business_name'];
           }
-          if (j === 'customer.assigned_officer.name') {
-            return (v['customer']) ? v['customer']['assigned_officer']['name'] : '';
+          if (j === 'relating_officer') {
+            return (v['customer']['assigned_officer']) ? v['customer']['assigned_officer']['name'] : '';
+          }
+          if (j === 'created_at') {
+            return moment(v['created_at']).fromNow();
+          }
+          if (j === 'balance') {
+            return v['total_amount_due'] - v['total_amount_paid'];
+          }
+          if (j === 'date') {
+            return moment(v['created_at']).format('lll');
           }
           return v[j];
         }),

@@ -34,6 +34,7 @@ class PaymentsController extends Controller
     public function index(Request $request)
     {
         $user = $this->getUser();
+        $paginate_option = $request->paginate_option;
         $date_from = Carbon::now()->startOfMonth();
         $date_to = Carbon::now()->endOfMonth();
         $panel = 'quarter';
@@ -48,38 +49,39 @@ class PaymentsController extends Controller
         $delivery_status = $request->delivery_status;
         if ($user->hasRole('sales_rep')) {
 
-            $payments = Payment::groupBy(['payment_date', 'customer_id'])
+            $paymentsQuery = Payment::groupBy(['payment_date', 'customer_id'])
                 ->with(['customer', 'confirmer'])
                 ->where('received_by', $user->id)
                 ->where('payment_date', '<=',  $date_to)
                 ->where('payment_date', '>=',  $date_from)
                 ->where($condition)
                 ->orderBy('id', 'DESC')
-                ->select('*', \DB::raw('SUM(amount) as total_amount'))
-                ->paginate(10);
+                ->select('*', \DB::raw('SUM(amount) as total_amount'));
         } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
             // $sales_reps_ids is in array form
             list($sales_reps, $sales_reps_ids) = $this->teamMembers();
-            $payments = Payment::groupBy('payment_date', 'customer_id')
+            $paymentsQuery = Payment::groupBy('payment_date', 'customer_id')
                 ->with(['customer.assignedOfficer', 'confirmer'])
                 ->where('payment_date', '<=',  $date_to)
                 ->where('payment_date', '>=',  $date_from)
                 ->whereIn('received_by', $sales_reps_ids)
                 ->where($condition)
                 ->orderBy('id', 'DESC')
-                ->select('*', \DB::raw('SUM(amount) as total_amount'))
-                ->paginate(10);
+                ->select('*', \DB::raw('SUM(amount) as total_amount'));
         } else {
-            $payments = Payment::groupBy('payment_date', 'customer_id')
+            $paymentsQuery = Payment::groupBy('payment_date', 'customer_id')
                 ->with(['customer.assignedOfficer', 'confirmer'])
                 ->where('payment_date', '<=',  $date_to)
                 ->where('payment_date', '>=',  $date_from)
                 ->where($condition)
                 ->orderBy('id', 'DESC')
-                ->select('*', \DB::raw('SUM(amount) as total_amount'))
-                ->paginate(10);
+                ->select('*', \DB::raw('SUM(amount) as total_amount'));
         }
-
+        if ($paginate_option === 'all') {
+            $payments = $paymentsQuery->get();
+        } else {
+            $payments = $paymentsQuery->paginate(25);
+        }
         $date_from = getDateFormatWords($date_from);
         $date_to = getDateFormatWords($date_to);
         return response()->json(compact('payments', 'currency', 'date_from', 'date_to'), 200);

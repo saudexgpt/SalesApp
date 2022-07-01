@@ -32,13 +32,23 @@
           </div>
         </el-col> -->
         <el-col :lg="8" :md="8" :sm="8" :xs="24">
+          <label for="">Select Team</label>
+          <el-select v-model="form.team_id" filterable style="width: 100%">
+            <el-option
+              v-for="(team, index) in teams"
+              :key="index"
+              :label="team.name"
+              :value="team.id"
+
+            />
+          </el-select>
+        </el-col>
+        <el-col :lg="8" :md="8" :sm="8" :xs="24">
           <span class="demonstration">Select Date</span>
           <el-date-picker
             v-model="form.date"
             :picker-options="pickerOptions"
             type="date"
-            format="yyyy/MM/dd"
-            value-format="yyyy-MM-dd"
             placeholder="Pick a day"
             style="width: 100%"/>
         </el-col>
@@ -98,13 +108,13 @@
               <gmap-map
                 :center="center"
                 :zoom="zoom"
-                style="width:100%;  height: 650px"
+                style="width:100%;  height: 600px"
               >
                 <gmap-marker
                   v-for="(m, index) in markers"
                   :key="index"
                   :position="m.position"
-                  :icon="icon"
+                  :icon="m.icon"
                   @mouseout="showByIndex = null"
                   @click="center=m.position; fetchVisitReports(m.detail)"
                   @mouseover="showByIndex = index;"
@@ -113,8 +123,8 @@
                     :opened="showByIndex === index"
                   >
                     <strong>Name: </strong> {{ m.detail.name }}<br>
-                    <strong>Current Location (LNG, LAT): </strong> {{ m.detail.location.longitude + ', ' + m.detail.location.latitude }}<br>
-                    <strong>Date: </strong> {{ moment(m.detail.location.created_at).format('DD-MM-YYYY hh:mm a') }}<br>
+                    <strong>Last Position (LNG, LAT): </strong> {{ m.position.lng + ', ' + m.position.lat }}<br>
+                    <strong>Last Seen Date: </strong> {{ (m.detail.location) ? moment(m.detail.location.created_at).format('lll') : '' }}<br>
                   </gmap-info-window>
                 </gmap-marker>
 
@@ -157,14 +167,14 @@
             </div>
           </el-col>
           <el-col :lg="8" :md="8" :sm="24" :xs="24">
-            <el-alert :closable="false" type="success">Visits made by {{ selected_rep.name }}</el-alert>
-            <br>
-            <div v-loading="loadVisits" style="height: 650px; overflow: auto">
+            <div v-loading="loadVisits" style="max-height: 600px; overflow: auto">
+              <el-alert :closable="false" type="success">Visits made by {{ selected_rep.name }}</el-alert>
+              <br>
               <el-timeline v-if="visits.length > 0">
                 <el-timeline-item
                   v-for="(visit, index) in visits"
                   :key="index"
-                  :timestamp="moment(visit.created_at).format('DD-MM-YYYY hh:mm a')">
+                  :timestamp="moment(visit.created_at).format('lll')">
                   <div style="cursor: pointer;" @click="showVisitMapDetails(visit)">
                     <strong>{{ visit.customer.business_name }}</strong><br>
                     <small><strong>Customer's Coordinate: </strong> {{ visit.customer.longitude + ', ' + visit.customer.latitude }}</small><br>
@@ -178,6 +188,22 @@
               <div v-else>
                 <el-empty description="No visits made" />
               </div>
+              <hr>
+            </div>
+            <div v-if="offline_reps.length > 0" style="max-height: 650px; overflow: auto">
+              <el-alert :closable="false" type="error">These Reps are yet to use the app</el-alert>
+              <br>
+              <el-timeline >
+                <el-timeline-item
+                  v-for="(rep, index) in offline_reps"
+                  :key="index">
+                  <div style="cursor: pointer;">
+                    <span><strong>&nbsp;&nbsp;{{ rep.name }}</strong></span>
+                    <img class="pull-left" src="/images/offline-rep-image.png" >
+                  </div>
+                  <!-- <small>{{ visit.address }}</small> -->
+                </el-timeline-item>
+              </el-timeline>
             </div>
           </el-col>
         </el-row>
@@ -229,20 +255,23 @@ export default {
           },
         }],
       },
+      teams: [],
       form: {
         date: new Date(),
-        // user_id: 'all',
+        team_id: '',
       },
       // /////////////for map /////////////////
       center: { lat: 6.546935900, lng: 3.365565100 }, // default to greenlife office
       zoom: 9,
-      icon: '/images/map-image.png',
+      icon: '',
       // ////////////////////////////////////
       markers: [],
       paths: [],
       loader: false,
-      reps_located: [],
-      reps_not_located: [],
+      online_reps: [],
+      offline_reps: [],
+      date: '',
+      last_seen_time_gap: '',
       selected_rep: '',
       visits: [],
       loadVisits: false,
@@ -253,12 +282,25 @@ export default {
     };
   },
   created() {
-    this.fetchFootprint();
+    this.fetchTeams();
   },
   methods: {
     moment,
     checkPermission,
     checkRole,
+    fetchTeams() {
+      const app = this;
+      // this.load_table = true;
+      const salesRepResource = new Resource('teams');
+      salesRepResource
+        .list()
+        .then((response) => {
+          app.teams = response.teams;
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    },
     showVisitMapDetails(visit) {
       const app = this;
       const rep_position = {
@@ -291,7 +333,7 @@ export default {
     //   salesRepResource
     //     .list()
     //     .then((response) => {
-    //       app.salesReps = response.sales_reps;
+    //       app.salesReps = response.online_reps;
     //     })
     //     .catch((error) => {
     //       console.log(error);
@@ -304,26 +346,53 @@ export default {
       fetchFootprintResource
         .list(this.form)
         .then((response) => {
-          this.reps_located = response.reps_located;
-          this.reps_not_located = response.reps_not_located;
-          if (this.reps_located.length > 0) {
-            this.center = { lat: this.reps_located[0].location.latitude, lng: this.reps_located[0].location.longitude };
-          }
+          this.online_reps = response.online_reps;
+          this.offline_reps = response.offline_reps;
+          this.date = response.date;
+          this.last_seen_time_gap = response.last_seen_time_gap;
+          //   if (this.online_reps.length > 0) {
+          //     this.center = { lat: this.online_reps[0].location.latitude, lng: this.online_reps[0].location.longitude };
+          //   }
           this.addMarker();
           this.loader = false;
         }).catch(() => {
           this.loader = false;
         });
     },
+    checkPresence(repLocationDate){
+      const app = this;
+      const last_seen_time_gap = app.last_seen_time_gap;
+      const date = app.date;
+
+      var rep_date = new Date(repLocationDate);
+      var last_seen = new Date(last_seen_time_gap);
+      var today = new Date(date);
+      if (rep_date >= last_seen) {
+        return 'online';
+      }
+      if (rep_date >= today) {
+        return 'seen today';
+      }
+      return 'offline';
+    },
     addMarker() {
+      const app = this;
       var markers = [];
       var paths = [];
-      const icon = '/images/map-marker.png';
-      this.reps_located.forEach(rep => {
+      let icon = '/images/offline-rep-image.png';
+      app.online_reps.forEach(rep => {
         const position = {
           lat: rep.location.latitude,
           lng: rep.location.longitude,
         };
+        if (app.checkPresence(rep.location.created_at) === 'online') {
+          icon = '/images/map-image.png';
+        } else if (app.checkPresence(rep.location.created_at) === 'seen today'){
+          icon = '/images/last-seen-image.png';
+        } else {
+          icon = '/images/offline-rep-image.png';
+        }
+
         paths.push(position);
         markers.push({ position: position, icon: icon, detail: rep });
       });
