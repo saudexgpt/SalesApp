@@ -49,13 +49,15 @@ function addSingleElementToString($parent_string, $child_string)
         $str =  $child_string;
     } else {
         $parent_string = str_replace(',', '~', $parent_string);
-        $str =  $parent_string . '~ ' . $child_string;
+        $string_array = explode('~', $parent_string);
+        if (!in_array($child_string, $string_array)) {
+            $string_array[] = $child_string;
+        }
+        $str = implode('~', $string_array);
     }
 
 
-    $string_array = array_unique(explode('~', $str));
-
-    return $new_parent_str = implode('~', $string_array);
+    return $str;
 }
 
 /**

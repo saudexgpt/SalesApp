@@ -241,11 +241,12 @@ class VisitsController extends Controller
     public function fetchFootPrints(Request $request)
     {
         $user = $this->getUser();
-        $date = date('Y-m-d', strtotime('now')) . ' 00:00:00';
+        $today = date('Y-m-d', strtotime('now'));
+        $date = date('Y-m-d', strtotime('now'));
         $date_time = date('Y-m-d H:i:s', strtotime('now'));
         if (isset($request->date) && $request->date !== '') {
-            $date = date('Y-m-d', strtotime($request->date)) . ' 00:00:00';
-            $date_time = date('Y-m-d H:i:s', strtotime($request->date));
+            $date = date('Y-m-d', strtotime($request->date . '+1 hour'));
+            $date_time = date('Y-m-d H:i:s', strtotime($request->date . '+1 hour'));
         }
         $last_seen_time_gap = (new \DateTime($date_time))->modify('-1 hour')->format('Y-m-d H:i:s');
         $userQuery = User::query();
@@ -276,18 +277,30 @@ class VisitsController extends Controller
         $offline_reps = [];
         foreach ($sales_reps as $sales_rep) {
             $location = UserGeolocation::where('user_id',  $sales_rep->id)
-                // ->where('created_at', 'LIKE', '%' . $date . '%')
+                ->where('created_at', 'LIKE', '%' . $date . '%')
                 ->orderBy('id', 'DESC')
                 ->first();
             if ($location) {
                 $sales_rep->location = $location;
+                $seen_date_time = $location->created_at;
+                $seen_date = date('Y-m-d', strtotime($location->created_at));
+                if ($today === $seen_date) {
+                    if ($seen_date_time >= $last_seen_time_gap) {
+                        $sales_rep->presence = 'online';
+                    } else {
+                        $sales_rep->presence = 'seen';
+                    }
+                } else {
+
+                    $sales_rep->presence = 'seen';
+                }
                 $online_reps[] = $sales_rep;
             } else {
                 $offline_reps[] = $sales_rep;
             }
         }
 
-        $date = getDateFormatWords($date);
+        $date = $date_time;
         return response()->json(compact('online_reps', 'offline_reps', 'date', 'last_seen_time_gap'), 200);
     }
     public function repTodayVisits(Request $request)

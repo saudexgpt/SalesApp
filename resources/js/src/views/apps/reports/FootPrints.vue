@@ -191,7 +191,7 @@
               <hr>
             </div>
             <div v-if="offline_reps.length > 0" style="max-height: 650px; overflow: auto">
-              <el-alert :closable="false" type="error">These Reps are yet to use the app</el-alert>
+              <el-alert :closable="false" type="error">Offline Reps</el-alert>
               <br>
               <el-timeline >
                 <el-timeline-item
@@ -359,22 +359,6 @@ export default {
           this.loader = false;
         });
     },
-    checkPresence(repLocationDate){
-      const app = this;
-      const last_seen_time_gap = app.last_seen_time_gap;
-      const date = app.date;
-
-      var rep_date = new Date(repLocationDate);
-      var last_seen = new Date(last_seen_time_gap);
-      var today = new Date(date);
-      if (rep_date >= last_seen) {
-        return 'online';
-      }
-      if (rep_date >= today) {
-        return 'seen today';
-      }
-      return 'offline';
-    },
     addMarker() {
       const app = this;
       var markers = [];
@@ -385,9 +369,9 @@ export default {
           lat: rep.location.latitude,
           lng: rep.location.longitude,
         };
-        if (app.checkPresence(rep.location.created_at) === 'online') {
+        if (rep.presence === 'online') {
           icon = '/images/map-image.png';
-        } else if (app.checkPresence(rep.location.created_at) === 'seen today'){
+        } else if (rep.presence === 'seen'){
           icon = '/images/last-seen-image.png';
         } else {
           icon = '/images/offline-rep-image.png';
@@ -411,7 +395,7 @@ export default {
       app.selected_rep = rep;
       app.loadVisits = true;
       const visitsResource = new Resource('visits/fetch-today-visits');
-      const param = { rep_id: rep.id, date: app.form.date };
+      const param = { rep_id: rep.id, date: app.date };
       visitsResource.list(param)
         .then(response => {
           app.visits = response.visits;
