@@ -29,14 +29,20 @@ class TeamsController extends Controller
     }
     public function fetchTeamReps(Request $request)
     {
-        $team_id = $request->team_id;
-        $userQuery = User::query();
+        $user = $this->getUser();
 
-        $userQuery->whereHas('roles', function ($q) {
-            $q->where('name', 'sales_rep');
-        });
-        $team_reps = $userQuery->join('team_members', 'team_members.user_id', 'users.id')
-            ->where('team_id', $team_id)->select('users.*')->get();
+        $team_id = $request->team_id;
+        if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+            list($team_reps, $sales_reps_ids) = $this->teamMembers($team_id);
+        } else {
+            $userQuery = User::query();
+
+            $userQuery->whereHas('roles', function ($q) {
+                $q->where('name', 'sales_rep');
+            });
+            $team_reps = $userQuery->join('team_members', 'team_members.user_id', 'users.id')
+                ->where('team_id', $team_id)->select('users.*')->get();
+        }
         return response()->json(compact('team_reps'), 200);
     }
     public function store(Request $request)

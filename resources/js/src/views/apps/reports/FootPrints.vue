@@ -179,7 +179,8 @@
                     <strong>{{ visit.customer.business_name }}</strong><br>
                     <small><strong>Customer's Coordinate: </strong> {{ visit.customer.longitude + ', ' + visit.customer.latitude }}</small><br>
                     <small><strong>Visit Coordinate: </strong>{{ visit.rep_longitude + ', ' + visit.rep_latitude }}</small><br>
-                    <small><strong>Proximity: </strong>{{ visit.proximity }}metres</small><br>
+                    <small><strong>Purpose: </strong>{{ visit.purpose }}</small><br>
+                    <small><strong>Proximity: </strong>{{ visit.proximity }} metres</small><br>
                     <small>{{ visit.visit_type }}</small><br>
                   </div>
                   <!-- <small>{{ visit.address }}</small> -->
@@ -391,6 +392,20 @@ export default {
     //   });
     // },
     fetchVisitReports(rep) {
+      const app = this;
+      app.selected_rep = rep;
+      app.loadVisits = true;
+      const visitsResource = new Resource('visits/fetch-today-visits');
+      const param = { rep_id: rep.id, date: app.date };
+      visitsResource.list(param)
+        .then(response => {
+          app.visits = response.visits;
+          app.loadVisits = false;
+        }).catch(() => {
+          this.loadVisits = false;
+        });
+    },
+    updateCustomerLocation(rep) {
       const app = this;
       app.selected_rep = rep;
       app.loadVisits = true;
