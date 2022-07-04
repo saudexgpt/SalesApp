@@ -71,6 +71,16 @@ import Pagination from '@/components/Pagination';
 import Resource from '@/api/resource';
 export default {
   components: { Pagination },
+  props: {
+    panel: {
+      type: String,
+      default: () => 'month',
+    },
+    panels: {
+      type: Array,
+      default: () => ['range', 'week', 'month', 'quarter', 'year'],
+    },
+  },
   data() {
     return {
       teams: [],
@@ -92,9 +102,7 @@ export default {
       },
       sub_title: '',
       submitTitle: 'Fetch Report',
-      panel: 'month',
       future: false,
-      panels: ['range', 'week', 'month', 'quarter', 'year'],
       show_calendar: false,
       downloadLoading: false,
     };

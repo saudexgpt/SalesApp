@@ -21,7 +21,7 @@
         </span>
       </div>
     </div> -->
-    <filter-options @submitQuery="fetchData" />
+    <filter-options :panels="['year']" panel="year" @submitQuery="fetchData" />
     <vue-apex-charts :options="clientRetentionBar.chartOptions" :series="clientRetentionBar.series" type="bar" height="277" />
   </vx-card>
 </template>
