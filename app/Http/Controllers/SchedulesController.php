@@ -123,7 +123,7 @@ class SchedulesController extends Controller
     {
         $lat = $request->latitude;
         $long = $request->longitude;
-        $today = date('Y-m-d H:i:s', strtotime('now'));
+        $today = date('Y-m-d', strtotime('now'));
         $day = date('l', strtotime('now'));
         $user = $this->getUser();
         $schedules = Schedule::with('customer')

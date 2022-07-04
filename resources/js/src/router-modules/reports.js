@@ -6,7 +6,7 @@ const reportsRoutes = {
   icon: 'BarChart2Icon',
   i18n: 'Reports',
   meta: {
-    roles: ['super', 'admin', 'manager'],
+    permissions: ['view reports'],
   },
   children: [
     // //////////////////Settings///////////////////////////
