@@ -167,6 +167,21 @@
             </div>
           </el-col>
           <el-col :lg="8" :md="8" :sm="24" :xs="24">
+            <div v-if="offline_reps.length > 0" style="max-height: 650px; overflow: auto">
+              <el-alert :closable="false" type="error">Offline Reps</el-alert>
+              <br>
+              <el-timeline >
+                <el-timeline-item
+                  v-for="(rep, index) in offline_reps"
+                  :key="index">
+                  <div style="cursor: pointer;" @click="fetchVisitReports(rep)">
+                    <span><strong>&nbsp;&nbsp;{{ rep.name }}</strong></span>
+                    <img class="pull-left" src="/images/offline-rep-image.png" >
+                  </div>
+                  <!-- <small>{{ visit.address }}</small> -->
+                </el-timeline-item>
+              </el-timeline>
+            </div>
             <div v-loading="loadVisits" style="max-height: 600px; overflow: auto">
               <el-alert :closable="false" type="success">Visits made by {{ selected_rep.name }}</el-alert>
               <br>
@@ -190,21 +205,6 @@
                 <el-empty description="No visits made" />
               </div>
               <hr>
-            </div>
-            <div v-if="offline_reps.length > 0" style="max-height: 650px; overflow: auto">
-              <el-alert :closable="false" type="error">Offline Reps</el-alert>
-              <br>
-              <el-timeline >
-                <el-timeline-item
-                  v-for="(rep, index) in offline_reps"
-                  :key="index">
-                  <div style="cursor: pointer;">
-                    <span><strong>&nbsp;&nbsp;{{ rep.name }}</strong></span>
-                    <img class="pull-left" src="/images/offline-rep-image.png" >
-                  </div>
-                  <!-- <small>{{ visit.address }}</small> -->
-                </el-timeline-item>
-              </el-timeline>
             </div>
           </el-col>
         </el-row>

@@ -245,7 +245,7 @@ class VisitsController extends Controller
         $date = date('Y-m-d', strtotime('now'));
         $date_time = date('Y-m-d H:i:s', strtotime('now'));
         if (isset($request->date) && $request->date !== '') {
-            $date = date('Y-m-d', strtotime($request->date . '+1 hour'));
+            $date = date('Y-m-d', strtotime($request->date));
             $date_time = date('Y-m-d H:i:s', strtotime($request->date . '+1 hour'));
         }
         $last_seen_time_gap = (new \DateTime($date_time))->modify('-1 hour')->format('Y-m-d H:i:s');

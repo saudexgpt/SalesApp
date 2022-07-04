@@ -7,7 +7,7 @@ const adminRoutes = {
   i18n: 'Manage Schedules',
   slug: 'schedules',
   redirect: '/schedules/manage',
-  // roles: ['admin', 'super'],
+  permissions: ['manage schedule'],
   children: [
     {
       hidden: true,
