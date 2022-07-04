@@ -153,6 +153,7 @@ class TeamsController extends Controller
 
         $userQuery->whereHas('roles', function ($q) {
             $q->where('name', 'manager');
+            $q->orWhere('name', 'supervisor');
         });
         $managers = $userQuery->with('memberOfTeam.team', 'managerDomain')->get();
 
