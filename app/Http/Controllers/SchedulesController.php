@@ -90,7 +90,7 @@ class SchedulesController extends Controller
         $customer_ids = $request->customer_ids;
         $rep = $request->rep;
         $note = $request->note;
-        $repeat_schedule = $request->repeat_schedule;
+        $repeat_schedule = ($request->repeat_schedule) ? 'yes' : 'no';
         $day = date('l', strtotime($request->schedule_date)); // returns 'Monday' or 'Tuesday' , etc
         $day_num = workingDaysStr($day);
         foreach ($customer_ids as $customer_id) {

@@ -10,7 +10,12 @@
 <template>
   <div v-loading="loading" id="dashboard-analytics">
     <data-analysis :dashboard-data="dashboardData" />
-    <el-card>
+    <div class="vx-row">
+      <div class="vx-col w-full">
+        <transaction-chart />
+      </div>
+    </div>
+    <!-- <el-card>
       <div class="vx-row">
         <div class="vx-col lg:w-3/4 w-full">
           <div class="flex staffs-end px-3">
@@ -22,13 +27,6 @@
         <div class="vx-col lg:w-1/4 w-full">
           <div class="flex staffs-end px-3">
             <span class="pull-right">
-              <!-- <div class="block">
-              <span class="demonstration">Pick Month</span>
-              <el-date-picker
-                v-model="form.month"
-                type="month"
-                placeholder="Pick a month"/>
-            </div> -->
               <el-popover placement="right" trigger="click">
                 <date-range-picker
                   :from="$route.query.from"
@@ -82,7 +80,7 @@
           </el-row>
         </div>
       </div>
-    </el-card>
+    </el-card> -->
   </div>
 </template>
 
@@ -90,6 +88,7 @@
 import moment from 'moment';
 import Pagination from '@/components/Pagination';
 import StatisticsCardLine from '@/components/statistics-cards/StatisticsCardLine.vue';
+import TransactionChart from '@/views/dashboard/admin/partials/TransactionChart';
 import DataAnalysis from './partials/DataAnalysis';
 import Resource from '@/api/resource';
 export default {
@@ -97,6 +96,7 @@ export default {
     DataAnalysis,
     // VueApexCharts,
     StatisticsCardLine,
+    TransactionChart,
     Pagination,
   },
   data() {

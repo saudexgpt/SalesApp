@@ -1,16 +1,9 @@
 <template>
-  <vx-card title="Transactions">
+  <vx-card v-loading="load" title="Transactions">
 
-    <div class="vx-col lg:w-1/4 w-full">
+    <!-- <div class="vx-col lg:w-1/4 w-full">
       <div class="flex staffs-end px-3">
         <span class="pull-right">
-          <!-- <div class="block">
-              <span class="demonstration">Pick Month</span>
-              <el-date-picker
-                v-model="form.month"
-                type="month"
-                placeholder="Pick a month"/>
-            </div> -->
           <el-popover placement="right" trigger="click">
             <date-range-picker
               :from="$route.query.from"
@@ -27,7 +20,8 @@
           </el-popover>
         </span>
       </div>
-    </div>
+    </div> -->
+    <filter-options @submitQuery="fetchData" />
     <vue-apex-charts :options="clientRetentionBar.chartOptions" :series="clientRetentionBar.series" type="bar" height="277" />
   </vx-card>
 </template>
@@ -35,8 +29,9 @@
 
 import VueApexCharts from 'vue-apexcharts';
 import Resource from '@/api/resource';
+import FilterOptions from '@/views/apps/reports/FilterOptions';
 export default {
-  components: { VueApexCharts },
+  components: { VueApexCharts, FilterOptions },
   data() {
     return {
       clientRetentionBar: {
@@ -142,6 +137,7 @@ export default {
       future: false,
       panels: ['year'],
       show_calendar: false,
+      load: false,
     };
   },
   created() {
@@ -169,12 +165,16 @@ export default {
       app.form.panel = panel;
       app.fetchData();
     },
-    fetchData(){
+    fetchData(param){
       const app = this;
+      app.load = true;
+      app.form = param;
       const fetchResource = new Resource('dashboard/transaction-stats');
-      const param = app.form;
       fetchResource.list(param).then(response => {
         app.clientRetentionBar.series = response.series;
+        app.load = false;
+      }).catch(() => {
+        app.load = false;
       });
     },
   },

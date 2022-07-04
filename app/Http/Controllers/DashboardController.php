@@ -160,7 +160,7 @@ class DashboardController extends Controller
 
                 $date = $year . '-' . $month;
             }
-            list($sales, $collections) = $this->getSalesAndDebts($date);
+            list($sales, $collections) = $this->getSalesAndDebts($request, $date);
             $sales_array[] = $sales;
             $collections_array[] = $collections;
         }
@@ -176,10 +176,15 @@ class DashboardController extends Controller
         ];
         return response()->json(compact('series'), 200);
     }
-    private function getSalesAndDebts($date)
+    private function getSalesAndDebts($request, $date)
     {
-        $all_sales = Transaction::select(\DB::raw('SUM(amount_due) as total_amount_due'))->where('created_at', 'LIKE',  '%' . $date . '%')->first();
-        $all_collections = Payment::where('created_at', 'LIKE',  '%' . $date . '%')->select(\DB::raw('SUM(amount) as total_amount'))->first();
+        $condition1 = $this->setQueryConditions($request, 'field_staff');
+        $condition2 = $this->setQueryConditions($request, 'received_by');
+
+        $all_sales = Transaction::where($condition1)->where('created_at', 'LIKE',  '%' . $date . '%')->select(\DB::raw('SUM(amount_due) as total_amount_due'))
+            ->first();
+
+        $all_collections = Payment::where('created_at', 'LIKE',  '%' . $date . '%')->where($condition2)->select(\DB::raw('SUM(amount) as total_amount'))->first();
 
         $sales = 0;
         $collections = 0;

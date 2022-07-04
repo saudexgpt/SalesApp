@@ -110,24 +110,25 @@
                 :zoom="zoom"
                 style="width:100%;  height: 600px"
               >
-                <gmap-marker
-                  v-for="(m, index) in markers"
-                  :key="index"
-                  :position="m.position"
-                  :icon="m.icon"
-                  @mouseout="showByIndex = null"
-                  @click="center=m.position; fetchVisitReports(m.detail)"
-                  @mouseover="showByIndex = index;"
-                >
-                  <gmap-info-window
-                    :opened="showByIndex === index"
+                <gmap-cluster :zoom-on-click="true">
+                  <gmap-marker
+                    v-for="(m, index) in markers"
+                    :key="index"
+                    :position="m.position"
+                    :icon="m.icon"
+                    @mouseout="showByIndex = null"
+                    @click="center=m.position; fetchVisitReports(m.detail)"
+                    @mouseover="showByIndex = index;"
                   >
-                    <strong>Name: </strong> {{ m.detail.name }}<br>
-                    <strong>Last Position (LNG, LAT): </strong> {{ m.position.lng + ', ' + m.position.lat }}<br>
-                    <strong>Last Seen Date: </strong> {{ (m.detail.location) ? moment(m.detail.location.created_at).format('lll') : '' }}<br>
-                  </gmap-info-window>
-                </gmap-marker>
-
+                    <gmap-info-window
+                      :opened="showByIndex === index"
+                    >
+                      <strong>Name: </strong> {{ m.detail.name }}<br>
+                      <strong>Last Position (LNG, LAT): </strong> {{ m.position.lng + ', ' + m.position.lat }}<br>
+                      <strong>Last Seen Date: </strong> {{ (m.detail.location) ? moment(m.detail.location.created_at).format('lll') : '' }}<br>
+                    </gmap-info-window>
+                  </gmap-marker>
+                </gmap-cluster>
               <!-- <gmap-polyline :path.sync="paths" :options="{ strokeColor:'#000000'}" /> -->
               </gmap-map>
             </div>

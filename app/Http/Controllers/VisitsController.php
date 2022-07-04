@@ -257,8 +257,13 @@ class VisitsController extends Controller
         if (isset($request->team_id) && $request->team_id !== '') {
 
             $team_id = $request->team_id;
-            $sales_reps = $userQuery->join('team_members', 'team_members.user_id', 'users.id')
-                ->where('team_id', $team_id)->select('users.*')->get();
+            if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+                list($sales_reps, $sales_reps_ids) = $this->teamMembers($team_id);
+            } else {
+
+                $sales_reps = $userQuery->join('team_members', 'team_members.user_id', 'users.id')
+                    ->where('team_id', $team_id)->select('users.*')->get();
+            }
         } else {
 
             if (!$user->isSuperAdmin() && !$user->isAdmin()) {
