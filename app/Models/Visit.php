@@ -55,9 +55,12 @@ class Visit extends Model
             $long = (isset($unsaved_visit->rep_longitude)) ? $unsaved_visit->rep_longitude : NULL;
 
             if ($customer->latitude === NULL) {
-                $customer->latitude = $lat;
-                $customer->longitude = $long;
-                $customer->save();
+                if ($lat !== NULL && $long !== NULL) {
+
+                    $customer->latitude = $lat;
+                    $customer->longitude = $long;
+                    $customer->save();
+                }
             }
             $visit_date = date('Y-m-d', strtotime('now')); // $unsaved_visit->visit_date;
             $customer_contact_id = (isset($unsaved_visit->contact_id)) ? $unsaved_visit->contact_id : null;
