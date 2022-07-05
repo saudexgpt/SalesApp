@@ -98,21 +98,20 @@ class SalesRepDetailsRequest extends Command
     }
     public function updateAllEmptyCustomerAddresses()
     {
-        $customers = Customer::where('longitude', '!=', NULL)->where('location_updated', '0')->get();
+        $customers = Customer::whereRaw('longitude IS NULL')->where('location_updated', '0')->get();
         foreach ($customers as $customer) {
-            $lat = $customer->latitude;
-            $long = $customer->longitude;
-            if ($lat !== NULL && $long !== NULL) {
+            $first_visit = Visit::where('customer_id', $customer->id)->whereRaw('rep_latitude IS NOT NULL')->first();
+            $lat = $first_visit->rep_latitude;
+            $long = $first_visit->rep_longitude;
 
-                list($lat, $long, $formatted_address, $street, $area) = getLocationFromLatLong($lat, $long);
-                $customer->latitude =  $lat;
-                $customer->longitude = $long;
-                $customer->address = $formatted_address;
-                $customer->street = $street;
-                $customer->area = $area;
-                $customer->location_updated = '1';
-                $customer->save();
-            }
+            list($lat, $long, $formatted_address, $street, $area) = getLocationFromLatLong($lat, $long);
+            $customer->latitude =  $lat;
+            $customer->longitude = $long;
+            $customer->address = $formatted_address;
+            $customer->street = $street;
+            $customer->area = $area;
+            $customer->location_updated = '1';
+            $customer->save();
         }
     }
     public function updateAllEmptyVisitAddresses()
@@ -121,9 +120,11 @@ class SalesRepDetailsRequest extends Command
         foreach ($visits as $visit) {
             $lat = $visit->rep_latitude;
             $long = $visit->rep_longitude;
-            list($lat, $long, $formatted_address, $street, $area) = getLocationFromLatLong($lat, $long);
-            $visit->address = $formatted_address;
-            $visit->save();
+            if ($lat !== NULL && $long !== NULL) {
+                list($lat, $long, $formatted_address, $street, $area) = getLocationFromLatLong($lat, $long);
+                $visit->address = $formatted_address;
+                $visit->save();
+            }
         }
     }
     public function handle()

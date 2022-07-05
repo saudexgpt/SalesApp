@@ -95,7 +95,7 @@ const reportsRoutes = {
       slug: 'audit-trail',
       i18n: 'Audit Trail',
       meta: {
-        // roles: ['super'],
+        roles: ['super', 'admin'],
       },
 
     },

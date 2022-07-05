@@ -49,9 +49,9 @@ class UsersController extends Controller
         if (!empty($keyword)) {
             $userQuery->where(function ($q) use ($keyword) {
                 $q->where('name', 'LIKE', '%' . $keyword . '%');
-                $q->orWhere('email', 'LIKE', '%' . $keyword . '%');
-                $q->orWhere('phone', 'LIKE', '%' . $keyword . '%');
-                $q->orWhere('address', 'LIKE', '%' . $keyword . '%');
+                $q->orWhere('email', 'LIKE', $keyword . '%');
+                $q->orWhere('phone', 'LIKE', $keyword . '%');
+                $q->orWhere('address', 'LIKE', $keyword . '%');
             });
         }
         if (!empty($role)) {
@@ -342,8 +342,8 @@ class UsersController extends Controller
         $latitude = $request->latitude;
         $accuracy = $request->accuracy;
         $location = UserGeolocation::where('user_id', $user->id)
-            ->where('created_at', 'LIKE', '%' . $today . '%')
-            ->where(['longitude' => $longitude, 'latitude' => $latitude])->first();
+            ->where('created_at', 'LIKE', $today . '%')->first();
+        // ->where(['longitude' => $longitude, 'latitude' => $latitude])->first();
         if (!$location) {
             $location = new UserGeolocation();
             $location->user_id = $user->id;
@@ -360,9 +360,10 @@ class UsersController extends Controller
         }
         $user_data->gps_status = 'on';
         $user_data->save();
-        $locations = UserGeolocation::where('user_id', $user->id)
-            ->where('created_at', 'LIKE', '%' . $today . '%')->get();
-        return response()->json(compact('locations'), 200);
+        return 'success';
+        // $locations = UserGeolocation::where('user_id', $user->id)
+        //     ->where('created_at', 'LIKE', $today . '%')->get();
+        // return response()->json(compact('locations'), 200);
     }
 
     public function showLocationTrails()
