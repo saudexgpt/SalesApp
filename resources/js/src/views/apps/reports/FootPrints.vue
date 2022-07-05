@@ -281,10 +281,14 @@ export default {
         center: {},
         markers: [],
       },
+      intervalID: '',
     };
   },
   created() {
     this.fetchTeams();
+  },
+  beforeDestroy() {
+    clearInterval(this.intervalID);
   },
   methods: {
     moment,
@@ -362,9 +366,9 @@ export default {
         }).catch(() => {
           this.loader = false;
         });
-      setInterval(() => {
+      app.intervalID = setInterval(() => {
         app.fetchFootprint(false);
-      }, 60000);
+      }, 600000);
     },
     addMarker() {
       const app = this;
