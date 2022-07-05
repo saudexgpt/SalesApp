@@ -287,11 +287,11 @@ class VisitsController extends Controller
                 ->first();
             if ($location) {
                 $sales_rep->location = $location;
-                $seen_date_time = $location->created_at;
+                $seen_date_time = $location->updated_at;
                 $seen_date = date('Y-m-d', strtotime($location->created_at));
                 $sales_rep->presence = 'seen';
-                if ($today === $seen_date) {
-                    if ($seen_date_time >= $last_seen_time_gap) {
+                if ($today == $seen_date) {
+                    if (strtotime($seen_date_time) >= strtotime($last_seen_time_gap)) {
                         $sales_rep->presence = 'online';
                     }
                 }

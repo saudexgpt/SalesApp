@@ -54,7 +54,7 @@
         </el-col>
         <el-col :lg="4" :md="4" :sm="4" :xs="24">
           <span class="demonstration">&nbsp;</span>
-          <el-button type="primary" style="width: 100%" @click="fetchFootprint()">Fetch</el-button>
+          <el-button type="primary" style="width: 100%" @click="fetchFootprint(true)">Fetch</el-button>
         </el-col>
       </el-row>
       <div class="carousel-example">
@@ -125,7 +125,7 @@
                     >
                       <strong>Name: </strong> {{ m.detail.name }}<br>
                       <strong>Last Position (LNG, LAT): </strong> {{ m.position.lng + ', ' + m.position.lat }}<br>
-                      <strong>Last Seen Date: </strong> {{ (m.detail.location) ? moment(m.detail.location.created_at).format('lll') : '' }}<br>
+                      <strong>Last Seen Date: </strong> {{ (m.detail.location) ? moment(m.detail.location.updated_at).format('lll') : '' }}<br>
                     </gmap-info-window>
                   </gmap-marker>
                 </gmap-cluster>
@@ -342,6 +342,7 @@ export default {
     //     });
     // },
     fetchFootprint(load) {
+      const app = this;
       this.loader = load;
       this.visits = [];
       const fetchFootprintResource = new Resource('visits/fetch-footprints');
@@ -355,14 +356,15 @@ export default {
           //   if (this.online_reps.length > 0) {
           //     this.center = { lat: this.online_reps[0].location.latitude, lng: this.online_reps[0].location.longitude };
           //   }
+
           this.addMarker();
           this.loader = false;
         }).catch(() => {
           this.loader = false;
         });
-      setInterval(function() {
-        this.fetchFootprint(false);
-      }, 120000);
+      setInterval(() => {
+        app.fetchFootprint(false);
+      }, 60000);
     },
     addMarker() {
       const app = this;
