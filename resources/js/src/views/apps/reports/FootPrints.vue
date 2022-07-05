@@ -362,7 +362,7 @@ export default {
         });
       setInterval(function() {
         this.fetchFootprint(false);
-      }, 10000);
+      }, 120000);
     },
     addMarker() {
       const app = this;

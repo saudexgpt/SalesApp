@@ -49,8 +49,8 @@ class Visit extends Model
         $unsaved_list = [];
         foreach ($unsaved_visits as $unsaved_visit) {
 
-            $customer_id = $unsaved_visit->customer_id;
-            if ($customer_id) {
+            $customer_id = (isset($unsaved_visit->customer_id)) ? $unsaved_visit->customer_id : NULL;
+            if ($customer_id !== NULL) {
 
                 $customer = Customer::find($customer_id);
                 $lat = (isset($unsaved_visit->rep_latitude)) ? $unsaved_visit->rep_latitude : NULL;
