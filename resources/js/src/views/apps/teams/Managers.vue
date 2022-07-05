@@ -199,12 +199,18 @@
                   collapse-tags
                   @input="setDownlinkReps()"
                 >
-                  <el-option
+                  <!-- <el-option
                     v-for="(downlink, index) in downlinks"
                     :key="index"
                     :value="index"
                     :label="'(' + downlink.type.toUpperCase() + ') ' + downlink.user.name"
                     :disabled="downlink.user.id === selected_row.id"
+                  /> -->
+                  <el-option
+                    v-for="(downlink, index) in downlinks"
+                    :key="index"
+                    :value="index"
+                    :label="'(' + downlink.type.toUpperCase() + ') ' + downlink.user.name"
                   />
                 </el-select>
               </div>

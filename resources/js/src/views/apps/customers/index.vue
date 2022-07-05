@@ -111,14 +111,14 @@
         </el-row>
       </div>
       <div>
-        <el-button
+        <!-- <el-button
           :loading="downloading"
           round
           class="filter-item"
           type="primary"
           icon="el-icon-download"
           @click="handleDownload"
-        >Export</el-button>
+        >Export</el-button> -->
         <v-client-table
           v-model="list"
           :columns="columns"

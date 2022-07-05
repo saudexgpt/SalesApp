@@ -341,8 +341,8 @@ export default {
     //       console.log(error);
     //     });
     // },
-    fetchFootprint() {
-      this.loader = true;
+    fetchFootprint(load) {
+      this.loader = load;
       this.visits = [];
       const fetchFootprintResource = new Resource('visits/fetch-footprints');
       fetchFootprintResource
@@ -360,6 +360,9 @@ export default {
         }).catch(() => {
           this.loader = false;
         });
+      setInterval(function() {
+        this.fetchFootprint(false);
+      }, 10000);
     },
     addMarker() {
       const app = this;

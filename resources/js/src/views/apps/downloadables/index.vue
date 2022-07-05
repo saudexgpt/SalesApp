@@ -65,7 +65,7 @@
           </span>
         </div>
       </el-col>
-      <!-- <el-col :span="6">
+      <el-col :span="6">
         <div class="flex items-end px-3">
           <span >
             <el-button
@@ -79,7 +79,7 @@
             >Download Customers Report</el-button>
           </span>
         </div>
-      </el-col> -->
+      </el-col>
     </el-row>
   </el-card>
 </template>
@@ -143,7 +143,12 @@ export default {
       customers_columns: [
         'business_name',
         'customer_type.name',
+        'cordinate1',
         'address',
+        'cordinate2',
+        'address2',
+        'cordinate3',
+        'address3',
         'registrar.name',
         'assigned_officer.name',
         'created_at',
@@ -285,10 +290,10 @@ export default {
     },
     downloadCustomers() {
       const app = this;
-      if (app.emptyDateRange()) {
-        app.$alert('Kindly pick a date range to continue');
-        return;
-      }
+      //   if (app.emptyDateRange()) {
+      //     app.$alert('Kindly pick a date range to continue');
+      //     return;
+      //   }
       const param = app.form;
       param.paginate_option = 'all';
       const salesResource = new Resource('customers');
@@ -299,7 +304,12 @@ export default {
           const header = [
             'BUSINESS NAME',
             'TYPE',
-            'ADDRESS',
+            'COORDINATE 1',
+            'ADDRESS 1',
+            'COORDINATE 2',
+            'ADDRESS 2',
+            'COORDINATE 3',
+            'ADDRESS 3',
             'REGISTERED BY',
             'FIELD STAFF',
             'DATE REGISTERED',
@@ -312,7 +322,7 @@ export default {
     handleDownload(dataList, columns, tHeader, title) {
       this.downloadLoading = true;
       import('@/vendor/Export2Excel').then(excel => {
-        const multiHeader = [[title, '', '', '', '', '', '', '', '', '', '']];
+        const multiHeader = [[title, '', '', '', '', '', '', '', '', '', '', '', '']];
         const filterVal = columns;
         const list = dataList;
         const data = this.formatJson(filterVal, list);
@@ -380,6 +390,16 @@ export default {
           }
           if (j === 'visited_by.name') {
             return (v['visited_by']) ? v['visited_by']['name'] : '';
+          }
+
+          if (j === 'cordinate1') {
+            return v['latitude'] + ',' + v['longitude'];
+          }
+          if (j === 'cordinate2') {
+            return v['latitude2'] + ',' + v['longitude2'];
+          }
+          if (j === 'cordinate3') {
+            return v['latitude3'] + ',' + v['longitude3'];
           }
           return v[j];
         }),

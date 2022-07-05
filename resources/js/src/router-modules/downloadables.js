@@ -7,7 +7,7 @@ const downloadablesRoutes = {
   i18n: 'Downloadables',
   redirect: '/downloadables/index',
   meta: {
-    permissions: ['super'],
+    roles: ['super'],
   },
   children: [
     {
