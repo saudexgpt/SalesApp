@@ -73,7 +73,7 @@ class SalesRepDetailsRequest extends Command
             $name_array = explode(' ', $repUser->name);
             $last_name = $name_array[0];
             $first_name = (isset($name_array[1])) ? $name_array[1] : NULL;
-            $user = User::where('email', $email)->first();
+            $user = User::where('rep_ids', 'LIKE', '%' . $id . '%')->first();
             if (!$user) {
                 $user = new User();
                 $user->password = bcrypt('password');
@@ -84,8 +84,8 @@ class SalesRepDetailsRequest extends Command
             $user->first_name = $first_name;
             $user->last_name = $last_name;
             $user->name = $repUser->name;
-            $user->username = $repUser->email;
-            $user->email = $repUser->email;
+            $user->username = $email;
+            $user->email = $email;
             $user->phone = $repUser->phone;
             $user->user_type = 'staff';
 
