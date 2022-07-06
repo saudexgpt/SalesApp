@@ -143,6 +143,7 @@ export default {
       customers_columns: [
         'business_name',
         'customer_type.name',
+        'last_visit',
         'latitude',
         'longitude',
         'address',
@@ -304,10 +305,11 @@ export default {
       app.downloadLoading = true;
       salesResource.list(param)
         .then(response => {
-          const sub_title = 'Customers List from ' + response.date_from + ' to ' + response.date_to;
+          const sub_title = 'Customers List';
           const header = [
             'BUSINESS NAME',
             'TYPE',
+            'LAST VISIT',
             'LATITUDE 1',
             'LONGITUDE 1',
             'ADDRESS 1',
@@ -329,7 +331,7 @@ export default {
     handleDownload(dataList, columns, tHeader, title) {
       this.downloadLoading = true;
       import('@/vendor/Export2Excel').then(excel => {
-        const multiHeader = [[title, '', '', '', '', '', '', '', '', '', '', '', '']];
+        const multiHeader = [[title, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']];
         const filterVal = columns;
         const list = dataList;
         const data = this.formatJson(filterVal, list);
@@ -402,7 +404,25 @@ export default {
             return (v['visited_by']) ? v['visited_by']['name'] : '';
           }
           if (j === 'date_verified') {
-            return moment(v['date_verified']).format('lll');
+            return (v['date_verified']) ? moment(v['date_verified']).format('lll') : 'Not Verified';
+          }
+          if (j === 'last_visit') {
+            return (v['visits'].length > 0) ? moment(v['visits'][0]['visit_date']).format('ll') : 'Not Visited';
+          }
+          if (j === 'customer_type.name') {
+            if (v['customer_type'] !== null) {
+              return v['customer_type']['name'];
+            }
+          }
+          if (j === 'registrar.name') {
+            if (v['registrar'] !== null) {
+              return v['registrar']['name'];
+            }
+          }
+          if (j === 'assigned_officer.name') {
+            if (v['assigned_officer'] !== null) {
+              return v['assigned_officer']['name'];
+            }
           }
           return v[j];
         }),
