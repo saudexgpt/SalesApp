@@ -127,7 +127,7 @@ export default {
         'balance',
         'relating_officer',
         'date',
-        'created_at',
+        'age',
       ],
       visits_columns: [
         'customer.business_name',
@@ -143,11 +143,14 @@ export default {
       customers_columns: [
         'business_name',
         'customer_type.name',
-        'cordinate1',
+        'latitude',
+        'longitude',
         'address',
-        'cordinate2',
+        'latitude2',
+        'longitude2',
         'address2',
-        'cordinate3',
+        'latitude3',
+        'longitude3',
         'address3',
         'registrar.name',
         'assigned_officer.name',
@@ -296,6 +299,7 @@ export default {
       //   }
       const param = app.form;
       param.paginate_option = 'all';
+      param.verify_type = 'all';
       const salesResource = new Resource('customers');
       app.downloadLoading = true;
       salesResource.list(param)
@@ -304,11 +308,14 @@ export default {
           const header = [
             'BUSINESS NAME',
             'TYPE',
-            'COORDINATE 1',
+            'LATITUDE 1',
+            'LONGITUDE 1',
             'ADDRESS 1',
-            'COORDINATE 2',
+            'LATITUDE 2',
+            'LONGITUDE 2',
             'ADDRESS 2',
-            'COORDINATE 3',
+            'LATITUDE 3',
+            'LONGITUDE 3',
             'ADDRESS 3',
             'REGISTERED BY',
             'FIELD STAFF',
@@ -379,8 +386,11 @@ export default {
           if (j === 'balance') {
             return v['total_amount_due'] - v['total_amount_paid'];
           }
-          if (j === 'created_at') {
+          if (j === 'age') {
             return moment(v['created_at']).fromNow();
+          }
+          if (j === 'created_at') {
+            return moment(v['created_at']).format('lll');
           }
           if (j === 'date') {
             return moment(v['created_at']).format('lll');
@@ -391,15 +401,8 @@ export default {
           if (j === 'visited_by.name') {
             return (v['visited_by']) ? v['visited_by']['name'] : '';
           }
-
-          if (j === 'cordinate1') {
-            return v['latitude'] + ',' + v['longitude'];
-          }
-          if (j === 'cordinate2') {
-            return v['latitude2'] + ',' + v['longitude2'];
-          }
-          if (j === 'cordinate3') {
-            return v['latitude3'] + ',' + v['longitude3'];
+          if (j === 'date_verified') {
+            return moment(v['date_verified']).format('lll');
           }
           return v[j];
         }),

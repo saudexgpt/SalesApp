@@ -191,7 +191,7 @@ class Controller extends BaseController
 
         if (isset($data->rep_id) && $data->rep_id != '' && $data->rep_id != 'all') {
 
-            $condition = [$rep_field_name => $data->rep_id];
+            $condition = array_merge($condition, [$rep_field_name => $data->rep_id]);
         }
         if (isset($data->customer_id) && $data->customer_id != '' && $data->customer_id != 'all') {
             $condition = array_merge($condition, ['customer_id' => $data->customer_id]);
