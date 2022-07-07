@@ -400,6 +400,7 @@ class CustomersController extends Controller
      */
     public function store(Request $request)
     {
+        set_time_limit(0);
         $user = $this->getUser();
         $unsaved_customers = json_decode(json_encode($request->unsaved_customers));
         $customer_list = [];
