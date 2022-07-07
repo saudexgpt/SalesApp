@@ -155,6 +155,22 @@ class SubInventoriesController extends Controller
     public function store(Request $request)
     {
         $user = $this->getUser();
+        $inventory_items = json_decode(json_encode($request->inventory_items));
+        foreach ($inventory_items as $inventory_item) {
+            $sub_inventory = new SubInventory();
+            $sub_inventory->staff_id = $inventory_item->staff_id;
+            $sub_inventory->item_id = $inventory_item->item_id;
+            $sub_inventory->quantity_stocked = $inventory_item->quantity;
+            $sub_inventory->balance = $inventory_item->quantity;
+            $sub_inventory->expiry_date = date('Y-m-d', strtotime($inventory_item->expiry_date));
+            $sub_inventory->stocked_by = $user->name;
+            $sub_inventory->save();
+        }
+        return 'success';
+    }
+    public function save(Request $request)
+    {
+        $user = $this->getUser();
         $sub_inventory = new SubInventory();
         $sub_inventory->staff_id = $request->staff_id;
         $sub_inventory->item_id = $request->item_id;
@@ -311,7 +327,7 @@ class SubInventoriesController extends Controller
                     $request->quantity = $quantity;
                     $request->staff_id = $staff_id;
                     $request->expiry_date = ($expiry_date !== 'NULL') ? date('Y-m-d', strtotime($expiry_date)) : NULL;
-                    $this->store($request);
+                    $this->save($request);
                 }
             }
             // } catch (\Throwable $th) {

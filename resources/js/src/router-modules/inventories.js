@@ -6,7 +6,6 @@ const inventoryRoutes = {
   icon: 'DatabaseIcon',
   i18n: 'Inventory',
   slug: 'inventory',
-  redirect: '/inventory/view',
   meta: {
     // roles: ['sales_rep'],
   },
@@ -45,7 +44,7 @@ const inventoryRoutes = {
       },
     },
     {
-      hidden: false,
+      hidden: true,
       path: '/inventory/bulk',
       name: 'BulkUpload',
       slug: 'add-inventory',

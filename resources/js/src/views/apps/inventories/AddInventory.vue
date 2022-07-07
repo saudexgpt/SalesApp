@@ -9,7 +9,7 @@
           </div>
           <vs-divider />
         </div>
-        <div class="vx-col lg:w-1/5 w-full">
+        <!-- <div class="vx-col lg:w-1/5 w-full">
           <div class="flex items-end px-3">
             <span class="vx-col flex-1">
               <router-link
@@ -25,7 +25,7 @@
               </router-link>
             </span>
           </div>
-        </div>
+        </div> -->
       </div>
       <table class="table table-bordered">
         <thead>
@@ -34,6 +34,7 @@
             <th>Choose Staff</th>
             <th>Choose Product</th>
             <th>Quantity to stock</th>
+            <th>Expiry Date</th>
           </tr>
         </thead>
         <tbody>
@@ -86,6 +87,13 @@
                 min="1">
                 <template slot="append">{{ inventory_item.type }} </template>
               </el-input>
+            </td>
+            <td>
+              <el-date-picker
+                v-model="inventory_item.expiry_date"
+                type="date"
+                placeholder="Pick a day"
+                style="width: 100%"/>
             </td>
           </tr>
           <tr v-if="fill_fields_error">
@@ -169,7 +177,8 @@ export default {
         (detail) =>
           detail.item_id === '' ||
           detail.staff_id === '' ||
-          detail.quantity === ''
+          detail.quantity === '' ||
+          detail.expiry_date === ''
       );
 
       if (checkEmptyLines.length >= 1 && this.inventory_items.length > 0) {
@@ -184,6 +193,7 @@ export default {
           item_index: null,
           item_id: '',
           quantity: 1,
+          expiry_date: '',
           staff_id: '',
         });
       }
