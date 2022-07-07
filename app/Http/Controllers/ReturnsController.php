@@ -101,9 +101,10 @@ class ReturnsController extends Controller
                     $return->save();
                 }
             }
+
+            $visit_obj = new Visit();
+            $visit_obj->saveAsVisits($user, $unsaved_return);
         }
-        $visit_obj = new Visit();
-        $visit_obj->saveAsVisits($user, $unsaved_returns);
         return response()->json(['unsaved_list' => [], 'message' => 'success'], 200);
     }
 }

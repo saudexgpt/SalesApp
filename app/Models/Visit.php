@@ -44,97 +44,96 @@ class Visit extends Model
     {
         return $this->belongsTo(User::class, 'visiting_partner_id', 'id');
     }
-    public function saveAsVisits($user, $unsaved_visits)
+    public function saveAsVisits($user, $unsaved_visit)
     {
-        $unsaved_list = [];
-        foreach ($unsaved_visits as $unsaved_visit) {
+        //foreach ($unsaved_visits as $unsaved_visit) {
+        $unsaved_list = '';
+        $customer_id = (isset($unsaved_visit->customer_id)) ? $unsaved_visit->customer_id : NULL;
+        if ($customer_id !== NULL) {
 
-            $customer_id = (isset($unsaved_visit->customer_id)) ? $unsaved_visit->customer_id : NULL;
-            if ($customer_id !== NULL) {
+            $customer = Customer::find($customer_id);
+            $lat = (isset($unsaved_visit->rep_latitude)) ? $unsaved_visit->rep_latitude : NULL;
+            $long = (isset($unsaved_visit->rep_longitude)) ? $unsaved_visit->rep_longitude : NULL;
 
-                $customer = Customer::find($customer_id);
-                $lat = (isset($unsaved_visit->rep_latitude)) ? $unsaved_visit->rep_latitude : NULL;
-                $long = (isset($unsaved_visit->rep_longitude)) ? $unsaved_visit->rep_longitude : NULL;
+            if ($customer->latitude === NULL) {
+                if ($lat !== NULL && $long !== NULL) {
 
-                if ($customer->latitude === NULL) {
-                    if ($lat !== NULL && $long !== NULL) {
-
-                        $customer->latitude = $lat;
-                        $customer->longitude = $long;
-                        $customer->save();
-                    }
-                }
-                $visit_date = date('Y-m-d', strtotime('now')); // $unsaved_visit->visit_date;
-                $customer_contact_id = (isset($unsaved_visit->contact_id)) ? $unsaved_visit->contact_id : null;
-
-                // $purposes = json_decode(json_encode($unsaved_visit->purpose));
-                $purpose = (isset($unsaved_visit->purpose)) ? $unsaved_visit->purpose : 'Detailing';
-                $visit_type = 'off site';
-                $distance = NULL;
-                if ($lat != NULL && $lat != '') {
-
-                    $distance = haversineGreatCircleDistanceBetweenTwoPoints(
-                        $customer->latitude,
-                        $customer->longitude,
-                        $lat,
-                        $long,
-                    );
-                    // we are giving 100 meter allowance
-                    if ($distance < 100) {
-                        $visit_type = 'on site';
-                    }
-                }
-                try {
-                    $date = $visit_date;
-                    $visit = Visit::where(['customer_id' => $customer_id, 'visitor' => $user->id, 'visit_date' => $date])->first();
-
-                    if (!$visit) {
-
-                        $visit = new Visit();
-                        $visit->customer_id = $customer_id;
-                        $visit->visitor = $user->id;
-                        $visit->visit_date = $date;
-                        $visit->rep_latitude = $lat;
-                        $visit->rep_longitude = $long;
-                        $visit->address = NULL; //$formatted_address;
-                        $visit->accuracy = $unsaved_visit->accuracy;
-                        $visit->proximity = $distance;
-                        $visit->visiting_partner_id = (isset($unsaved_visit->visiting_partner_id)) ? $unsaved_visit->visiting_partner_id : NULL;
-                        $visit->customer_contact_id = $customer_contact_id;
-                        $visit->visit_type = $visit_type;
-                        $visit->purpose = $purpose;
-                        $visit->description = (isset($unsaved_visit->description)) ? $unsaved_visit->description : NULL;
-                        $visit->visit_duration = (isset($unsaved_visit->description)) ? $unsaved_visit->visit_duration : NULL;
-                    } else {
-                        $visit->purpose = str_replace('~', ',', addSingleElementToString($visit->purpose, $purpose));
-                    }
-
-                    $visit->save();
-                    // $this->saveVisitDetails($unsaved_visit, $visit);
-
-                    if (isset($unsaved_visit->hospital_follow_up_schedule) && $unsaved_visit->hospital_follow_up_schedule != null) {
-                        $visit->next_appointment_date = date('Y-m-d H:i:s', strtotime($unsaved_visit->hospital_follow_up_schedule));
-                        $visit->save();
-                        $this->saveSchedule($customer_id, $unsaved_visit->hospital_follow_up_schedule);
-                    }
-
-                    if (isset($unsaved_visit->prescriptions) && !empty($unsaved_visit->prescriptions)) {
-                        $this->savePrescriptions($unsaved_visit, $visit);
-                    }
-                    if (isset($unsaved_visit->detailed_products) && !empty($unsaved_visit->detailed_products)) {
-                        $this->saveDetailedProducts($unsaved_visit, $visit);
-                    }
-                    if (isset($unsaved_visit->stock_balances) && !empty($unsaved_visit->stock_balances)) {
-                        $this->saveStockBalances($unsaved_visit, $visit);
-                    }
-                    if (isset($unsaved_visit->samples) && !empty($unsaved_visit->samples)) {
-                        $this->saveSamples($unsaved_visit, $visit);
-                    }
-                } catch (\Throwable $th) {
-                    $unsaved_list[] = $unsaved_visit;
+                    $customer->latitude = $lat;
+                    $customer->longitude = $long;
+                    $customer->save();
                 }
             }
+            $visit_date = date('Y-m-d', strtotime('now')); // $unsaved_visit->visit_date;
+            $customer_contact_id = (isset($unsaved_visit->contact_id)) ? $unsaved_visit->contact_id : null;
+
+            // $purposes = json_decode(json_encode($unsaved_visit->purpose));
+            $purpose = (isset($unsaved_visit->purpose)) ? $unsaved_visit->purpose : 'Detailing';
+            $visit_type = 'off site';
+            $distance = NULL;
+            if ($lat != NULL && $lat != '') {
+
+                $distance = haversineGreatCircleDistanceBetweenTwoPoints(
+                    $customer->latitude,
+                    $customer->longitude,
+                    $lat,
+                    $long,
+                );
+                // we are giving 100 meter allowance
+                if ($distance < 100) {
+                    $visit_type = 'on site';
+                }
+            }
+            try {
+                $date = $visit_date;
+                $visit = Visit::where(['customer_id' => $customer_id, 'visitor' => $user->id, 'visit_date' => $date])->first();
+
+                if (!$visit) {
+
+                    $visit = new Visit();
+                    $visit->customer_id = $customer_id;
+                    $visit->visitor = $user->id;
+                    $visit->visit_date = $date;
+                    $visit->rep_latitude = $lat;
+                    $visit->rep_longitude = $long;
+                    $visit->address = NULL; //$formatted_address;
+                    $visit->accuracy = $unsaved_visit->accuracy;
+                    $visit->proximity = $distance;
+                    $visit->visiting_partner_id = (isset($unsaved_visit->visiting_partner_id)) ? $unsaved_visit->visiting_partner_id : NULL;
+                    $visit->customer_contact_id = $customer_contact_id;
+                    $visit->visit_type = $visit_type;
+                    $visit->purpose = $purpose;
+                    $visit->description = (isset($unsaved_visit->description)) ? $unsaved_visit->description : NULL;
+                    $visit->visit_duration = (isset($unsaved_visit->description)) ? $unsaved_visit->visit_duration : NULL;
+                } else {
+                    $visit->purpose = str_replace('~', ',', addSingleElementToString($visit->purpose, $purpose));
+                }
+
+                $visit->save();
+                // $this->saveVisitDetails($unsaved_visit, $visit);
+
+                if (isset($unsaved_visit->hospital_follow_up_schedule) && $unsaved_visit->hospital_follow_up_schedule != null) {
+                    $visit->next_appointment_date = date('Y-m-d H:i:s', strtotime($unsaved_visit->hospital_follow_up_schedule));
+                    $visit->save();
+                    $this->saveSchedule($customer_id, $unsaved_visit->hospital_follow_up_schedule);
+                }
+
+                if (isset($unsaved_visit->prescriptions) && !empty($unsaved_visit->prescriptions)) {
+                    $this->savePrescriptions($unsaved_visit, $visit);
+                }
+                if (isset($unsaved_visit->detailed_products) && !empty($unsaved_visit->detailed_products)) {
+                    $this->saveDetailedProducts($unsaved_visit, $visit);
+                }
+                if (isset($unsaved_visit->stock_balances) && !empty($unsaved_visit->stock_balances)) {
+                    $this->saveStockBalances($unsaved_visit, $visit);
+                }
+                if (isset($unsaved_visit->samples) && !empty($unsaved_visit->samples)) {
+                    $this->saveSamples($unsaved_visit, $visit);
+                }
+            } catch (\Throwable $th) {
+                $unsaved_list = $unsaved_visit;
+            }
         }
+        // }
         return $unsaved_list;
     }
 

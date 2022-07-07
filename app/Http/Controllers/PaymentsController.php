@@ -128,6 +128,9 @@ class PaymentsController extends Controller
                     $payment->received_by = $user->id;
                     if ($payment->save()) {
 
+                        $visit_obj = new Visit();
+                        $visit_obj->saveAsVisits($user, $collection);
+
                         $customer_debt_obj = new CustomerDebt();
                         $customer_debt_obj->settleDebt($customer_id);
 
@@ -140,8 +143,6 @@ class PaymentsController extends Controller
                 $unsaved_list[] = $collection;
             }
         }
-        $visit_obj = new Visit();
-        $visit_obj->saveAsVisits($user, $unsaved_collections);
         return response()->json(['unsaved_list' => $unsaved_list, 'message' => 'success'], 200);
     }
 

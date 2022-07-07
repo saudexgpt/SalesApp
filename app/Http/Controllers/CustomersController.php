@@ -410,14 +410,15 @@ class CustomersController extends Controller
             try {
                 $customer = $this->saveCustomersDetails($unsaved_customer);
                 $unsaved_customer->customer_id = $customer->id;
+
+                $visit_obj = new Visit();
+                $visit_obj->saveAsVisits($user, $unsaved_customer);
                 $customer_list[] = $this->show($customer);
             } catch (\Throwable $th) {
                 $unsaved_list[] =  $unsaved_customer;
                 $error[] =  $th;
             }
         }
-        $visit_obj = new Visit();
-        $visit_obj->saveAsVisits($user, $unsaved_customers);
         return response()->json(['customers' => $customer_list, 'unsaved_list' => $unsaved_list, 'message' => 'success', 'error' => $error], 200);
     }
 

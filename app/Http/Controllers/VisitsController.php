@@ -326,7 +326,11 @@ class VisitsController extends Controller
         $unsaved_visits = json_decode(json_encode($request->unsaved_visits));
         $visit_list = [];
         $visit_obj = new Visit();
-        $unsaved_list = $visit_obj->saveAsVisits($user, $unsaved_visits);
+        $unsaved_list = [];
+        foreach ($unsaved_visits as $unsaved_visit) {
+
+            $unsaved_list[] = $visit_obj->saveAsVisits($user, $unsaved_visit);
+        }
 
         $visits = $user->visits()->with('customer', 'visitedBy', 'details.contact')->orderBy('id', 'DESC')->take(100)->get();
         return response()->json(compact('visits', 'unsaved_list'), 200);
