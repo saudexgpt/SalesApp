@@ -288,12 +288,13 @@ class VisitsController extends Controller
             if ($location) {
                 $sales_rep->location = $location;
                 $seen_date_time = $location->updated_at;
-
-                $last_seen_time_gap = (new \DateTime($seen_date_time))->modify('-1 hour')->format('Y-m-d H:i:s');
                 $seen_date = date('Y-m-d', strtotime($location->created_at));
                 $sales_rep->presence = 'seen';
-                if (strtotime($seen_date_time) >= strtotime($last_seen_time_gap)) {
-                    $sales_rep->presence = 'online';
+                if ($today == $seen_date) {
+
+                    if (strtotime($seen_date_time) >= strtotime($last_seen_time_gap)) {
+                        $sales_rep->presence = 'online';
+                    }
                 }
                 $online_reps[] = $sales_rep;
             } else {
