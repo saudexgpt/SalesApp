@@ -69,30 +69,33 @@ class SalesRepDetailsRequest extends Command
         foreach ($reps as $rep) {
             $id = $rep->id;
             $repUser = $rep->user;
-            $email = $repUser->email;
-            $name_array = explode(' ', $repUser->name);
-            $last_name = $name_array[0];
-            $first_name = (isset($name_array[1])) ? $name_array[1] : NULL;
-            $user = User::where('email', $email)->first();
-            if (!$user) {
-                $user = new User();
-                $user->password = bcrypt('password');
-                $user->password_status = 'default';
-                $user->rep_ids = addSingleElementToString('', $id);
-            }
-            $user->rep_ids = addSingleElementToString($user->rep_ids, $id);
-            $user->first_name = $first_name;
-            $user->last_name = $last_name;
-            $user->name = $repUser->name;
-            $user->username = $email;
-            $user->email = $email;
-            $user->phone = $repUser->phone;
-            $user->user_type = 'staff';
+            if ($repUser) {
 
-            if ($user->save()) {
-                // $role = Role::where('name', $request->role)->first();
-                $user->syncRoles(['sales_rep']);
-                $user->flushCache();
+                $email = $repUser->email;
+                $name_array = explode(' ', $repUser->name);
+                $last_name = $name_array[0];
+                $first_name = (isset($name_array[1])) ? $name_array[1] : NULL;
+                $user = User::where('email', $email)->first();
+                if (!$user) {
+                    $user = new User();
+                    $user->password = bcrypt('password');
+                    $user->password_status = 'default';
+                    $user->rep_ids = addSingleElementToString('', $id);
+                }
+                $user->rep_ids = addSingleElementToString($user->rep_ids, $id);
+                $user->first_name = $first_name;
+                $user->last_name = $last_name;
+                $user->name = $repUser->name;
+                $user->username = $email;
+                $user->email = $email;
+                $user->phone = $repUser->phone;
+                $user->user_type = 'staff';
+
+                if ($user->save()) {
+                    // $role = Role::where('name', $request->role)->first();
+                    $user->syncRoles(['sales_rep']);
+                    $user->flushCache();
+                }
             }
         }
     }
