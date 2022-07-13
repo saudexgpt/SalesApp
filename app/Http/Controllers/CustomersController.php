@@ -413,7 +413,7 @@ class CustomersController extends Controller
 
                 $visit_obj = new Visit();
                 $visit_obj->saveAsVisits($user, $unsaved_customer);
-                $customer_list[] = $this->show($customer);
+                // $customer_list[] = $this->show($customer);
             } catch (\Throwable $th) {
                 $unsaved_list[] =  $unsaved_customer;
                 $error[] =  $th;
