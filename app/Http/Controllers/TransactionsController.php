@@ -254,7 +254,7 @@ class TransactionsController extends Controller
                         $visit_obj = new Visit();
                         $visit_obj->saveAsVisits($user, $unsaved_order);
 
-                        $order_list[] = $this->show($invoice);
+                        // $order_list[] = $this->show($invoice);
 
                         $customer = Customer::find($unsaved_order->customer_id);
                         $title = "New Sales made";

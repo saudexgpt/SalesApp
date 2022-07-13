@@ -166,6 +166,11 @@ export default {
   methods: {
     moment,
     checkPermission,
+    showDetails(visit) {
+      const app = this;
+      app.selected_visit = visit;
+      app.page = 'details';
+    },
     fetchReports(param) {
       const app = this;
       app.form = param;
