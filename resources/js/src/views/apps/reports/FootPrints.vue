@@ -287,9 +287,9 @@ export default {
   created() {
     this.fetchTeams();
   },
-  beforeDestroy() {
-    clearInterval(this.intervalID);
-  },
+  //   beforeDestroy() {
+  //     clearInterval(this.intervalID);
+  //   },
   methods: {
     moment,
     checkPermission,
@@ -347,28 +347,28 @@ export default {
     // },
     fetchFootprint(load) {
       const app = this;
-      this.loader = load;
-      this.visits = [];
+      app.loader = load;
+      app.visits = [];
       const fetchFootprintResource = new Resource('visits/fetch-footprints');
       fetchFootprintResource
         .list(this.form)
         .then((response) => {
-          this.online_reps = response.online_reps;
-          this.offline_reps = response.offline_reps;
-          this.date = response.date;
-          this.last_seen_time_gap = response.last_seen_time_gap;
+          app.online_reps = response.online_reps;
+          app.offline_reps = response.offline_reps;
+          app.date = response.date;
+          app.last_seen_time_gap = response.last_seen_time_gap;
           //   if (this.online_reps.length > 0) {
           //     this.center = { lat: this.online_reps[0].location.latitude, lng: this.online_reps[0].location.longitude };
           //   }
 
-          this.addMarker();
-          this.loader = false;
+          app.addMarker();
+          app.loader = false;
         }).catch(() => {
-          this.loader = false;
+          app.loader = false;
         });
-      app.intervalID = setInterval(() => {
-        app.fetchFootprint(false);
-      }, 600000);
+    //   app.intervalID = setInterval(() => {
+    //     app.fetchFootprint(false);
+    //   }, 600000);
     },
     addMarker() {
       const app = this;

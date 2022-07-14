@@ -128,11 +128,12 @@ class PaymentsController extends Controller
                     $payment->received_by = $user->id;
                     if ($payment->save()) {
 
-                        $visit_obj = new Visit();
-                        $visit_obj->saveAsVisits($user, $collection);
 
                         $customer_debt_obj = new CustomerDebt();
                         $customer_debt_obj->settleDebt($customer_id);
+
+                        $visit_obj = new Visit();
+                        $visit_obj->saveAsVisits($user, $collection);
 
                         $title = "Payment Received";
                         $description = $user->name . " successfully received ₦$original_amount from $collection->business_name";
