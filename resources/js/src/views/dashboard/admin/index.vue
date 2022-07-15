@@ -130,9 +130,15 @@ export default {
     this.user = this.$store.getters.name;
     this.fetchDashboard();
     this.fetchDebts();
+    this.fetchWarehouseProduct();
   },
   methods: {
     moment,
+    fetchWarehouseProduct(){
+      const fetchResource = new Resource('products/fetch-warehouse-products');
+      fetchResource.list().then(() => {
+      });
+    },
     fetchDashboard(){
       const app = this;
       // this.$store.dispatch('dashboard/fetchDashboardData', 'debts-rep')

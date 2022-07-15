@@ -189,6 +189,8 @@ class ItemsController extends Controller
             $package_type = $warehouse_item->package_type;
             $quantity_per_carton = $warehouse_item->quantity_per_carton;
             $description = $warehouse_item->description;
+            $basic_unit = $warehouse_item->basic_unit;
+            $basic_unit_quantity_per_package_type = $warehouse_item->basic_unit_quantity_per_package_type;
             $picture = $warehouse_item->picture;
             $item = Item::where('name', $name)->first();
             if (!$item) {
@@ -200,6 +202,8 @@ class ItemsController extends Controller
             $item->package_type = $package_type;
             $item->quantity_per_carton = $quantity_per_carton;
             $item->category_id = $category_id;
+            $item->basic_unit = $basic_unit;
+            $item->basic_unit_quantity_per_package_type = $basic_unit_quantity_per_package_type;
             // $item->sku = $sku;
             $item->description = $description;
             $item->picture = $picture;
@@ -232,13 +236,13 @@ class ItemsController extends Controller
 
                 $basic_unit = ucwords(strtolower(trim($data->BASIC_UNIT)));
                 // $email =  trim($data->EMAIL);
-                $quantity_per_package_type =  trim($data->BASIC_UNIT_QUANTITY_PER_PACKAGE_TYPE);
+                $basic_unit_quantity_per_package_type =  trim($data->BASIC_UNIT_QUANTITY_PER_PACKAGE_TYPE);
 
                 // let's fetch the state_id and lga_id
                 $item = Item::where('name', $product)->first();
                 if ($item) {
                     $item->basic_unit = $basic_unit;
-                    $item->basic_unit_quantity_per_package_type = $quantity_per_package_type;
+                    $item->basic_unit_basic_unit_quantity_per_package_type = $basic_unit_quantity_per_package_type;
                     $item->save();
                 }
             } catch (\Throwable $th) {

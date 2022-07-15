@@ -40,7 +40,7 @@
         <div
           slot="payment_date"
           slot-scope="props"
-        >{{ moment(props.row.payment_date).format('lll') }}</div>
+        >{{ moment(props.row.payment_date).format('ll') }}</div>
         <div
           slot="created_at"
           slot-scope="props"
