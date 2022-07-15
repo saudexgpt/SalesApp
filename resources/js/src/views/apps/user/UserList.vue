@@ -63,7 +63,9 @@
         <template slot="role" slot-scope="scope">
           <span :id="scope.row.id">{{ scope.row.roles.join(', ') }}</span>
         </template>
-
+        <template slot="last_login" slot-scope="{row}">
+          <span>{{ (row.last_login) ? moment(row.last_login).format('lll') : 'Never' }}</span>
+        </template>
         <template slot="product_dealing" slot-scope="{ row }">
           <el-select
             v-if="row.roles.includes('sales_rep')"
@@ -246,6 +248,7 @@
 </template>
 
 <script>
+import moment from 'moment';
 import Pagination from '@/components/Pagination'; // Secondary package based on el-pagination
 import UserResource from '@/api/user';
 import Resource from '@/api/resource';
@@ -275,6 +278,7 @@ export default {
         'email',
         'phone',
         'role',
+        'last_login',
         'assign_role',
         'product_dealing',
         'action',
@@ -350,6 +354,7 @@ export default {
     this.resetNewUser();
   },
   methods: {
+    moment,
     checkPermission,
     fetchNecessaryParams() {
       const app = this;
@@ -595,11 +600,12 @@ export default {
     export(export_data) {
       import('@/vendor/Export2Excel').then((excel) => {
         const tHeader = [
-          'name',
-          'email',
-          'phone',
-          'address',
-          'role',
+          'NAME',
+          'EMAIL',
+          'PHONE',
+          'ADDRESS',
+          'ROLE',
+          'LAST LOGIN',
         ];
         const filterVal = [
           'name',
@@ -607,6 +613,7 @@ export default {
           'phone',
           'address',
           'role',
+          'last_login',
         ];
         const data = this.formatJson(filterVal, export_data);
         excel.export_json_to_excel({
