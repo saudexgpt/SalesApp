@@ -60,7 +60,11 @@ class SchedulesController extends Controller
     {
         $user = $this->getUser();
         $schedule_date = date('Y-m-d', strtotime($request->schedule_date));
-        $schedule_time = date('H:i:s', strtotime($request->schedule_time));
+        $schedule_time = $request->schedule_time;
+        if ($schedule_time === '') {
+            $schedule_time = 'now';
+        }
+        $schedule_time = date('H:i:s', strtotime($schedule_time));
         $customer_id = $request->customer_id;
         $rep = $request->rep;
         $note = $request->note;
