@@ -119,7 +119,9 @@ class AuthController extends Controller
         }
 
         $user = $request->user();
+        // $loggedInUser = User::find($user->id);
         $user->last_login = date('Y-m-d H:i:s', strtotime('now'));
+        $user->save();
         $user_resource = new UserResource($user);
         $tokenResult = $user->createToken('Personal Access Token');
         $token = $tokenResult->plainTextToken;
