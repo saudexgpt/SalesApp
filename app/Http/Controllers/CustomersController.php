@@ -83,7 +83,7 @@ class CustomersController extends Controller
             'customerType', 'registrar', 'assignedOfficer',
 
             'visits' => function ($q) {
-                $q->orderBy('id', 'DESC')->paginate(5);
+                $q->orderBy('id', 'DESC')->first();
             },
 
         ];

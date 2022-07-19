@@ -20,6 +20,13 @@ const adminRoutes = {
       name: 'notifications',
       component: () => import('@/views/apps/Notifications.vue'),
     },
+    {
+      hidden: true,
+      path: '/default-password',
+      name: 'DefaultPassword',
+      slug: 'default-password',
+      component: () => import('@/views/apps/user/ChangeDefaultPassword.vue'),
+    },
   ],
 };
 

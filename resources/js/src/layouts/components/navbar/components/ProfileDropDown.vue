@@ -21,7 +21,7 @@
         <br>
         <vs-row>
           <vs-col vs-type="flex" vs-justify="center" vs-align="center" vs-w="7">
-            <vs-button color="danger" type="border" @click="$router.push('/settings/default-password').catch(() => {})">
+            <vs-button color="danger" type="border" @click="$router.push('/default-password').catch(() => {})">
               <feather-icon icon="KeyIcon" svg-classes="w-4 h-4" />
               <span class="ml-2">Update Password</span>
             </vs-button>

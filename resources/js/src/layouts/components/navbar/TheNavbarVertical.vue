@@ -20,7 +20,7 @@
 
         <!-- <search-bar /> -->
         <!-- <bookmarks :navbarColor="navbarColor" v-if="windowWidth >= 992" /> -->
-        <vs-button v-if="pStatus === 'default'" color="danger" @click="$router.push('/settings/default-password').catch(() => {})">
+        <vs-button v-if="pStatus === 'default'" color="danger" @click="$router.push('/default-password').catch(() => {})">
           <feather-icon icon="KeyIcon" svg-classes="w-4 h-4" />
           <span class="ml-2">Update Password</span>
         </vs-button>

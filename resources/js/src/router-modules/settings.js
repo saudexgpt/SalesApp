@@ -10,14 +10,6 @@ const settingsRoutes = {
   },
   children: [
     // //////////////////Settings///////////////////////////
-
-    {
-      hidden: true,
-      path: '/settings/default-password',
-      name: 'DefaultPassword',
-      slug: 'default-password',
-      component: () => import('@/views/apps/user/ChangeDefaultPassword.vue'),
-    },
     {
       hidden: false,
       component: () => import('@/views/apps/user/index.vue'),
