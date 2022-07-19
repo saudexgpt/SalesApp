@@ -8,30 +8,31 @@ const inventoryRoutes = {
   slug: 'inventory',
   meta: {
     // roles: ['sales_rep'],
+    permissions: ['add-stock'],
   },
   children: [
-    {
-      hidden: false,
-      path: '/my-inventory',
-      name: 'MyInventory',
-      slug: 'my-inventory',
-      i18n: 'Manage Inventory',
-      component: () => import('@/views/apps/inventories/SalesRepInventory'),
-      meta: {
-        roles: ['sales_rep'],
-      },
-    },
-    {
-      hidden: false,
-      component: () => import('@/views/apps/inventories/AddWarehouseSupplies'),
-      path: '/inventory/warehouse',
-      name: 'AddSupplies',
-      slug: 'add-supplied',
-      i18n: 'Warehouse Supplies',
-      meta: {
-        roles: ['sales_rep'],
-      },
-    },
+    // {
+    //   hidden: false,
+    //   path: '/my-inventory',
+    //   name: 'MyInventory',
+    //   slug: 'my-inventory',
+    //   i18n: 'Manage Inventory',
+    //   component: () => import('@/views/apps/inventories/SalesRepInventory'),
+    //   meta: {
+    //     roles: ['sales_rep'],
+    //   },
+    // },
+    // {
+    //   hidden: false,
+    //   component: () => import('@/views/apps/inventories/AddWarehouseSupplies'),
+    //   path: '/inventory/warehouse',
+    //   name: 'AddSupplies',
+    //   slug: 'add-supplied',
+    //   i18n: 'Warehouse Supplies',
+    //   meta: {
+    //     roles: ['sales_rep'],
+    //   },
+    // },
     {
       hidden: false,
       component: () => import('@/views/apps/inventories/AddInventory'),

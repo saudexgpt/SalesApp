@@ -137,19 +137,23 @@ class VisitsController extends Controller
                 ->where('created_at', '<=',  $date_to)
                 ->where('created_at', '>=',  $date_from)
                 ->where($condition);
-        } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
-            // $sales_reps_ids is in array form
-            list($sales_reps, $sales_reps_ids) = $this->teamMembers();
+        }
+        // else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+        //     // $sales_reps_ids is in array form
+        //     list($sales_reps, $sales_reps_ids) = $this->teamMembers();
+        //     $visitsQuery = Visit::with('visitedBy', 'visitPartner', 'customer', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
+        //         ->where('created_at', '<=',  $date_to)
+        //         ->where('created_at', '>=',  $date_from)
+        //         ->where($condition)
+        //         ->whereIn('visits.visitor', $sales_reps_ids);
+        // }
+        else {
+            list($sales_reps, $sales_reps_ids) = $this->teamMembers($request->team_id);
             $visitsQuery = Visit::with('visitedBy', 'visitPartner', 'customer', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
                 ->where('created_at', '<=',  $date_to)
                 ->where('created_at', '>=',  $date_from)
                 ->where($condition)
                 ->whereIn('visits.visitor', $sales_reps_ids);
-        } else {
-            $visitsQuery = Visit::with('visitedBy', 'visitPartner', 'customer', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
-                ->where('created_at', '<=',  $date_to)
-                ->where('created_at', '>=',  $date_from)
-                ->where($condition);
         }
         if ($paginate_option === 'all') {
             $visits = $visitsQuery->get();
@@ -330,7 +334,7 @@ class VisitsController extends Controller
         $unsaved_list = [];
         foreach ($unsaved_visits as $unsaved_visit) {
 
-            $unsaved_list[] = $visit_obj->saveAsVisits($user, $unsaved_visit);
+            $visit_obj->saveAsVisits($user, $unsaved_visit);
         }
 
         // $visits = $user->visits()->with('customer', 'visitedBy', 'details.contact')->orderBy('id', 'DESC')->take(100)->get();

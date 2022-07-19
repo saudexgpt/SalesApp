@@ -57,22 +57,26 @@ class PaymentsController extends Controller
                 ->where($condition)
                 ->orderBy('id', 'DESC')
                 ->select('*', \DB::raw('SUM(amount) as total_amount'));
-        } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
-            // $sales_reps_ids is in array form
-            list($sales_reps, $sales_reps_ids) = $this->teamMembers();
+        }
+        // else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+        //     // $sales_reps_ids is in array form
+        //     list($sales_reps, $sales_reps_ids) = $this->teamMembers();
+        //     $paymentsQuery = Payment::groupBy('payment_date', 'customer_id')
+        //         ->with(['customer.assignedOfficer', 'confirmer'])
+        //         ->where('payment_date', '<=',  $date_to)
+        //         ->where('payment_date', '>=',  $date_from)
+        //         ->whereIn('received_by', $sales_reps_ids)
+        //         ->where($condition)
+        //         ->orderBy('id', 'DESC')
+        //         ->select('*', \DB::raw('SUM(amount) as total_amount'));
+        // }
+        else {
+            list($sales_reps, $sales_reps_ids) = $this->teamMembers($request->team_id);
             $paymentsQuery = Payment::groupBy('payment_date', 'customer_id')
                 ->with(['customer.assignedOfficer', 'confirmer'])
                 ->where('payment_date', '<=',  $date_to)
                 ->where('payment_date', '>=',  $date_from)
                 ->whereIn('received_by', $sales_reps_ids)
-                ->where($condition)
-                ->orderBy('id', 'DESC')
-                ->select('*', \DB::raw('SUM(amount) as total_amount'));
-        } else {
-            $paymentsQuery = Payment::groupBy('payment_date', 'customer_id')
-                ->with(['customer.assignedOfficer', 'confirmer'])
-                ->where('payment_date', '<=',  $date_to)
-                ->where('payment_date', '>=',  $date_from)
                 ->where($condition)
                 ->orderBy('id', 'DESC')
                 ->select('*', \DB::raw('SUM(amount) as total_amount'));
