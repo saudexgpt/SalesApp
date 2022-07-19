@@ -102,16 +102,16 @@ class CustomersController extends Controller
 
             // $sales_reps_ids is in array form
             list($sales_reps, $sales_reps_ids) = $this->teamMembers();
-            $customers = $userQuery->with($relationships)->where($condition)->whereIn('relating_officer', $sales_reps_ids)->orderBy('id', 'DESC');
+            $userQuery = $userQuery->with($relationships)->where($condition)->whereIn('relating_officer', $sales_reps_ids)->orderBy('id', 'DESC');
         } else {
             // admin and super admin only
-            $customers = $userQuery->with($relationships)->where($condition)->orderBy('id', 'DESC');
+            $userQuery = $userQuery->with($relationships)->where($condition)->orderBy('id', 'DESC');
         }
         $paginate_option = $request->paginate_option;
         if ($paginate_option === 'all') {
-            $customers = $customers->get();
+            $customers = $userQuery->get();
         } else {
-            $customers = $customers->paginate($limit);
+            $customers = $userQuery->paginate($limit);
         }
         $customer_types = CustomerType::get();
         $states = State::with('lgas')->get();
