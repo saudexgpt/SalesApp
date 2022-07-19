@@ -82,8 +82,8 @@ class CustomersController extends Controller
             'lga',
             'customerType', 'registrar', 'assignedOfficer',
 
-            'visits' => function ($q) {
-                $q->orderBy('id', 'DESC')->first();
+            'lastVisited' => function ($q) {
+                $q->orderBy('id', 'DESC');
             },
 
         ];

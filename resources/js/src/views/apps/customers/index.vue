@@ -142,8 +142,8 @@
             </el-select>
             <span v-else>{{ (props.row.assigned_officer !== null) ? props.row.assigned_officer.name : 'Not Assigned' }}</span>
           </template>
-          <template slot="visits" slot-scope="scope">
-            <span>{{ (scope.row.visits.length > 0) ? moment(scope.row.visits[0].visit_date).format('ll') : 'Not visited' }}</span>
+          <template slot="last_visited" slot-scope="scope">
+            <span>{{ (scope.row.last_visited) ? moment(scope.row.last_visited.visit_date).format('ll') : 'Not visited' }}</span>
           </template>
           <template slot="created_at" slot-scope="scope">
             <span>{{ moment(scope.row.created_at).format('ll') }}</span>
@@ -350,7 +350,7 @@ export default {
         'business_name',
         'customer_type.name',
         // 'area',
-        'visits',
+        'last_visited',
         'registrar.name',
         'assigned_officer',
         'address',
@@ -363,7 +363,7 @@ export default {
         headings: {
           business_name: 'Name',
           'customer_type.name': 'Type',
-          'visits': 'Last Visit',
+          'last_visited': 'Last Visit',
           'registrar.name': 'Registered By',
           'assigned_officer': 'Field Staff',
           'verifier.name': 'Verified By',
@@ -384,7 +384,7 @@ export default {
         //   filter: 'Search:',
         // },
         // editableColumns:['name', 'category.name', 'sku'],
-        sortable: ['business_name', 'customer_type.name', 'created_at', 'date_verified'],
+        sortable: ['business_name', 'last_visited', 'customer_type.name', 'created_at', 'date_verified'],
         filterable: ['business_name', 'customer_type.name', 'registrar.name'],
       },
       total: 0,

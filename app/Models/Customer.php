@@ -86,6 +86,11 @@ class Customer extends Model
     {
         return $this->hasMany(Visit::class, 'customer_id', 'id');
     }
+    public function lastVisited()
+    {
+        return $this->hasOne(Visit::class, 'customer_id', 'id');
+    }
+
     public function verifications()
     {
         return $this->hasMany(CustomerVerification::class);
