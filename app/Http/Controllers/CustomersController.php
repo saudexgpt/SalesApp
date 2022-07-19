@@ -109,9 +109,9 @@ class CustomersController extends Controller
         }
         $paginate_option = $request->paginate_option;
         if ($paginate_option === 'all') {
-            $customers = $userQuery->get();
+            $customers = $customers->get();
         } else {
-            $customers = $userQuery->paginate($limit);
+            $customers = $customers->paginate($limit);
         }
         $customer_types = CustomerType::get();
         $states = State::with('lgas')->get();
