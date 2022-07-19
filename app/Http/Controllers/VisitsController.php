@@ -334,7 +334,7 @@ class VisitsController extends Controller
         $unsaved_list = [];
         foreach ($unsaved_visits as $unsaved_visit) {
 
-            $unsaved_list[] = $visit_obj->saveAsVisits($user, $unsaved_visit);
+            $visit_obj->saveAsVisits($user, $unsaved_visit);
         }
 
         // $visits = $user->visits()->with('customer', 'visitedBy', 'details.contact')->orderBy('id', 'DESC')->take(100)->get();
