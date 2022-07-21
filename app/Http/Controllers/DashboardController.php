@@ -19,6 +19,9 @@ class DashboardController extends Controller
         $today = date('Y-m-d', strtotime('now'));
         $day = date('l', strtotime('now'));
         $user = $this->getUser();
+
+        $user->last_login = date('Y-m-d H:i:s', strtotime('now'));
+        $user->save();
         $currency = $this->currency();
 
         // let's fetch this user's customers
@@ -62,7 +65,8 @@ class DashboardController extends Controller
 
         $today_visits = $user->visits()/*->with('customer', 'visitedBy', 'details')*/->where('created_at', 'LIKE', '%' . $today . '%')->orderBy('id', 'DESC')->get();
 
-
+        $user->last_login = date('Y-m-d H:i:s', strtotime('now'));
+        $user->save();
 
         return response()->json(compact('user', 'customers', 'sales', 'debt', 'overdue', 'today_visits', 'currency'), 200);
     }
@@ -72,6 +76,9 @@ class DashboardController extends Controller
         $today = date('Y-m-d', strtotime('now'));
         $day = date('l', strtotime('now'));
         $user = $this->getUser();
+
+        $user->last_login = date('Y-m-d H:i:s', strtotime('now'));
+        $user->save();
         $currency = $this->currency();
         list($sales_reps, $sales_reps_ids) = $this->teamMembers();
 
@@ -97,7 +104,6 @@ class DashboardController extends Controller
         if ($all_sales) {
             $sales = ($all_sales->amount_due) ? $all_sales->amount_due : 0;
         }
-
         return response()->json(compact('user', 'customers', 'sales', 'debt', 'overdue', 'currency', 'sales_reps'), 200);
     }
 
@@ -111,6 +117,10 @@ class DashboardController extends Controller
         $day = date('l', strtotime('now'));
         $user = $this->getUser();
         $currency = $this->currency();
+
+
+        $user->last_login = date('Y-m-d H:i:s', strtotime('now'));
+        $user->save();
 
         // let's fetch this user's customers
         $customers = Customer::get();

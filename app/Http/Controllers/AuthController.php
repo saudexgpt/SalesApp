@@ -139,9 +139,6 @@ class AuthController extends Controller
      */
     public function user()
     {
-        $user = User::find(Auth::user()->id);
-        $user->last_login = date('Y-m-d H:i:s', strtotime('now'));
-        $user->save();
         return new UserResource(Auth::user());
         // return response()->json($request->user());
     }
