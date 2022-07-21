@@ -56,7 +56,7 @@
           :total="total"
           :page.sync="form.page"
           :limit.sync="form.limit"
-          @pagination="fetchReports"
+          @pagination="fetchReports(form)"
         />
       </el-row>
     </div>

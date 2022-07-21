@@ -57,6 +57,21 @@
               :loading="downloadLoading"
               round
               style="margin:0 0 20px 20px;"
+              type="default"
+              icon="el-icon-download"
+              size="large"
+              @click="downloadReturns()"
+            >Download Returns Report</el-button>
+          </span>
+        </div>
+      </el-col>
+      <el-col :span="6">
+        <div class="flex items-end px-3">
+          <span >
+            <el-button
+              :loading="downloadLoading"
+              round
+              style="margin:0 0 20px 20px;"
               type="warning"
               icon="el-icon-download"
               size="large"
@@ -157,6 +172,18 @@ export default {
         'assigned_officer.name',
         'created_at',
         'date_verified',
+      ],
+      returns_columns: [
+        'customer.business_name',
+        'item.name',
+        'quantity',
+        'rate',
+        'amount',
+        'batch_no',
+        'expiry_date',
+        'reason',
+        'rep.name', // field staff
+        'created_at',
       ],
       form: {
         from: '',
@@ -328,6 +355,36 @@ export default {
           app.downloadLoading = false;
         });
     },
+    downloadReturns() {
+      const app = this;
+      //   if (app.emptyDateRange()) {
+      //     app.$alert('Kindly pick a date range to continue');
+      //     return;
+      //   }
+      const param = app.form;
+      param.paginate_option = 'all';
+      param.verify_type = 'all';
+      const salesResource = new Resource('reports/fetch-returned-products');
+      app.downloadLoading = true;
+      salesResource.list(param)
+        .then(response => {
+          const sub_title = 'Products Returned List';
+          const header = [
+            'CUSTOMER',
+            'PRODUCT',
+            'QUANTITY',
+            'RATE',
+            'AMOUNT',
+            'BATCH NO.',
+            'EXPIRY DATE',
+            'REASON',
+            'FIELD STAFF',
+            'CREATED AT',
+          ];
+          app.handleDownload(response.returns, app.returns_columns, header, sub_title);
+          app.downloadLoading = false;
+        });
+    },
     handleDownload(dataList, columns, tHeader, title) {
       this.downloadLoading = true;
       import('@/vendor/Export2Excel').then(excel => {
@@ -423,6 +480,9 @@ export default {
             if (v['assigned_officer'] !== null) {
               return v['assigned_officer']['name'];
             }
+          }
+          if (j === 'rep.name') {
+            return v['rep']['name'];
           }
           return v[j];
         }),

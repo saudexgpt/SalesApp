@@ -24,6 +24,7 @@ class ReturnsController extends Controller
     public function fetchReturnedProducts(Request $request)
     {
         $user = $this->getUser();
+        $paginate_option = $request->paginate_option;
         $date_from = Carbon::now()->startOfMonth();
         $date_to = Carbon::now()->endOfMonth();
         $panel = 'quarter';
@@ -44,33 +45,35 @@ class ReturnsController extends Controller
             //     $q->orderBy('id', 'DESC');
             // }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(10);
 
-            $returns = ReturnedProduct::with('customer', 'rep', 'item')
+            $returnsQuery = ReturnedProduct::with('customer', 'rep', 'item')
                 ->where('stocked_by', $user->id)
                 ->where('created_at', '<=',  $date_to)
                 ->where('created_at', '>=',  $date_from)
                 ->where($condition)
-                ->orderBy('id', 'DESC')
-                ->paginate(10);
+                ->orderBy('id', 'DESC');
         } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
             // $sales_reps_ids is in array form
             list($sales_reps, $sales_reps_ids) = $this->teamMembers();
-            $returns = ReturnedProduct::with('customer', 'rep', 'item')
+            $returnsQuery = ReturnedProduct::with('customer', 'rep', 'item')
                 ->where('created_at', '<=',  $date_to)
                 ->where('created_at', '>=',  $date_from)
                 ->where($condition)
                 ->whereIn('stocked_by', $sales_reps_ids)
-                ->orderBy('id', 'DESC')
-                ->paginate(10);
+                ->orderBy('id', 'DESC');
         } else {
-            $returns = ReturnedProduct::with('customer', 'rep', 'item')
+            $returnsQuery = ReturnedProduct::with('customer', 'rep', 'item')
                 ->where('created_at', '<=',  $date_to)
                 ->where('created_at', '>=',  $date_from)
                 ->where($condition)
-                ->orderBy('id', 'DESC')
-                ->paginate(10);
+                ->orderBy('id', 'DESC');
             // $sales = Transaction::with(['customer.assignedOfficer', 'payments' => function ($q) {
             //     $q->orderBy('id', 'DESC');
             // }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(10);
+        }
+        if ($paginate_option === 'all') {
+            $returns = $returnsQuery->get();
+        } else {
+            $returns = $returnsQuery->paginate(10);
         }
 
         $date_from = getDateFormatWords($date_from);

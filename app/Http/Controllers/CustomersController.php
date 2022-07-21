@@ -614,7 +614,7 @@ class CustomersController extends Controller
             $this->saveCustomerContact($customer_id, $contacts);
 
             $title = "Customer Contacts Added";
-            $description = "Contacts added for $customer->business_name";
+            $description = "Contacts added for $customer->business_name by $user->name";
             $this->logUserActivity($title, $description, $user);
         }
         $contacts = CustomerContact::where('customer_id', $customer_id)->get();

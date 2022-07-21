@@ -1,22 +1,30 @@
 <template>
-
-  <div v-loading="load">
-    <div slot="header" class="clearfix">
-      <feather-icon svg-classes="w-6 h-6" icon="ShoppingBagIcon" class="mr-2" />
-      <strong class="font-medium text-lg">Returned Products {{ sub_title }}</strong>
-      <span style="float: right">
-        <el-button
-          :loading="downloadLoading"
-          round
-          style="margin:0 0 20px 20px;"
-          type="success"
-          icon="el-icon-download"
-          size="small"
-          @click="handleDownload"
-        >Export Excel</el-button>
-      </span>
+  <vx-card>
+    <div class="vx-row">
+      <div class="vx-col lg:w-3/4 w-full">
+        <div class="flex items-end px-3">
+          <feather-icon svg-classes="w-6 h-6" icon="ShoppingBagIcon" class="mr-2" />
+          <span class="font-medium text-lg">Returned Products {{ sub_title }}</span>
+        </div>
+        <vs-divider />
+      </div>
+      <div class="vx-col lg:w-1/4 w-full">
+        <div class="flex items-end px-3">
+          <span class="pull-right">
+            <el-button
+              :loading="downloadLoading"
+              round
+              style="margin:0 0 20px 20px;"
+              type="success"
+              icon="el-icon-download"
+              size="small"
+              @click="handleDownload"
+            >Export Excel</el-button>
+          </span>
+        </div>
+      </div>
     </div>
-    <el-row :gutter="10">
+    <!-- <el-row :gutter="10">
       <el-col :lg="12" :md="12" :sm="12" :xs="24">
         <label for="">Select Customer</label>
         <el-select v-model="form.customer_id" style="width: 100%" @input="fetchReturnedProducts">
@@ -49,8 +57,9 @@
           </el-button>
         </el-popover>
       </el-col>
-    </el-row>
-    <el-row :gutter="10">
+    </el-row> -->
+    <filter-options @submitQuery="fetchReturnedProducts" />
+    <el-row v-loading="load" :gutter="10">
       <v-client-table v-model="returns" :columns="returns_columns" :options="returns_options">
         <div
           slot="quantity"
@@ -82,17 +91,18 @@
         :total="total"
         :page.sync="form.page"
         :limit.sync="form.limit"
-        @pagination="fetchReturnedProducts"
+        @pagination="fetchReturnedProducts(form)"
       />
     </el-row>
-  </div>
+  </vx-card>
 </template>
 <script>
 import moment from 'moment';
 import Pagination from '@/components/Pagination';
 import Resource from '@/api/resource';
+import FilterOptions from '@/views/apps/reports/FilterOptions';
 export default {
-  components: { Pagination },
+  components: { Pagination, FilterOptions },
   props: {
     customers: {
       type: Array,
@@ -158,8 +168,8 @@ export default {
     };
   },
   created() {
-    this.fetchReturnedProducts();
-    this.fetchCustomers();
+    // this.fetchReturnedProducts();
+    // this.fetchCustomers();
   },
   methods: {
     moment,
@@ -192,12 +202,13 @@ export default {
       app.form.panel = panel;
       app.fetchReturnedProducts();
     },
-    fetchReturnedProducts() {
+    fetchReturnedProducts(param) {
       const app = this;
+      app.form = param;
       const { limit, page } = app.form;
       app.returns_options.perPage = limit;
       const returnsResource = new Resource('reports/fetch-returned-products');
-      const param = app.form;
+      // const param = app.form;
       app.load = true;
       returnsResource.list(param)
         .then(response => {

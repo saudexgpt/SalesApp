@@ -72,7 +72,7 @@
         :total="total"
         :page.sync="form.page"
         :limit.sync="form.limit"
-        @pagination="fetchSales"
+        @pagination="fetchSales(form)"
       />
     </el-row>
   </vx-card>

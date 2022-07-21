@@ -45,6 +45,17 @@ const reportsRoutes = {
     },
     {
       hidden: false,
+      component: () => import('@/views/apps/transactions/Returns'),
+      path: '/reports/returns',
+      name: 'Returns',
+      slug: 'returns',
+      i18n: 'Returns',
+      meta: {
+        // permissions: [],
+      },
+    },
+    {
+      hidden: false,
       path: '/reports/inventory',
       name: 'InventoryReport',
       slug: 'inventory',
