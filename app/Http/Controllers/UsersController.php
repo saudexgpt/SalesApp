@@ -341,17 +341,8 @@ class UsersController extends Controller
         $longitude = $request->longitude;
         $latitude = $request->latitude;
         $accuracy = $request->accuracy;
-        $location = UserGeolocation::where('user_id', $user->id)
-            ->where('created_at', 'LIKE', $today . '%')->first();
-        // ->where(['longitude' => $longitude, 'latitude' => $latitude])->first();
-        if (!$location) {
-            $location = new UserGeolocation();
-        }
-        $location->user_id = $user->id;
-        $location->longitude = $longitude;
-        $location->latitude = $latitude;
-        $location->accuracy = $accuracy;
-        $location->save();
+        $location_obj = new UserGeolocation();
+        $location_obj->updateLocation($user->id, $latitude, $longitude, $accuracy);
         $user_data = User::find($user->id);
         // save the battery level
         if (isset($request->battery_level)) {
