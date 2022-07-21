@@ -57,7 +57,7 @@ class Controller extends BaseController
 
     public function setUser()
     {
-        $this->user  = new UserResource(Auth::user());
+        $this->user  = User::find(Auth::user()->id); // new UserResource(Auth::user());
     }
 
     public function getUser()
