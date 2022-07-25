@@ -217,7 +217,8 @@ class DashboardController extends Controller
         $request->rep_id = $this->getUser()->id;
         $condition1 = $this->setQueryConditions($request, 'field_staff');
         $condition2 = $this->setQueryConditions($request, 'received_by');
-        $this_year = date('Y', strtotime($request->year));
+        $year = $request->year;
+        $this_year = ($year == 'now') ? date('Y', strtotime('now')) : $year;
         $customer_sales = Transaction::where($condition1)
             ->where('created_at', 'LIKE', '%' . $this_year . '%')
             ->get();
