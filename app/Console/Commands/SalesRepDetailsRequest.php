@@ -96,7 +96,7 @@ class SalesRepDetailsRequest extends Command
                 $item_price = new ItemPrice();
             }
             $sale_price = $warehouse_item->price->sale_price;
-            if ($item->basic_unit_quantity_per_package_type > 0) {
+            if ($basic_unit_quantity_per_package_type > 0) {
                 $sale_price = $sale_price / $item->basic_unit_quantity_per_package_type;
             }
             $item_price->id = $warehouse_item->price->id;
