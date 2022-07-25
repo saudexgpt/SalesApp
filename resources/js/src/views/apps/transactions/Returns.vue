@@ -267,6 +267,9 @@ export default {
           if (j === 'rep.name') {
             return v['rep']['name'];
           }
+          if (j === 'item.name') {
+            return v['item']['name'];
+          }
           if (j === 'quantity') {
             return v['quantity'] + ' ' + v['item']['package_type'];
           }

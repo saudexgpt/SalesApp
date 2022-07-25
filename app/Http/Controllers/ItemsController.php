@@ -123,8 +123,17 @@ class ItemsController extends Controller
             $waybill_no = $warehouse_item->waybill_item->waybill->waybill_no;
             $invoice_no = $warehouse_item->waybill_item->invoice->invoice_number;
             $item_stock_sub_batch_id = $warehouse_item->item_stock_sub_batch_id;
+
+            $quantity_supplied = $warehouse_item->total_quantity_supplied;
+            $item = Item::with('price')->find($warehouse_item->item_stock->item_id);
+            $basic_unit_quantity_per_package_type = $item->basic_unit_quantity_per_package_type;
+            if ($basic_unit_quantity_per_package_type > 0) {
+                $quantity_supplied = $quantity_supplied * $basic_unit_quantity_per_package_type;
+            }
+
+
             $stock = WarehouseStock::where(['dispatched_product_id' => $id, 'waybill_item_id' => $waybill_item_id, 'item_stock_sub_batch_id' => $item_stock_sub_batch_id])->first();
-            $item = Item::find($warehouse_item->item_stock->item_id);
+
             if (!$stock) {
                 $stock = new WarehouseStock();
                 $stock->dispatched_product_id = $id;
@@ -135,7 +144,8 @@ class ItemsController extends Controller
 
                 $stock->user_id = $user_id;
                 $stock->item_id = $warehouse_item->item_stock->item_id;
-                $stock->quantity_supplied = $warehouse_item->total_quantity_supplied;
+                $stock->unconverted_quantity_supplied = $warehouse_item->total_quantity_supplied;
+                $stock->quantity_supplied = $quantity_supplied;
                 // $stock->sku = $sku;
                 $stock->batch_no = $warehouse_item->item_stock->batch_no;
                 $stock->sub_batch_no = $warehouse_item->item_stock->sub_batch_no;

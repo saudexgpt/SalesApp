@@ -119,6 +119,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('manager', [DashboardController::class, 'managerDashboard']);
 
         Route::get('transaction-stats', [DashboardController::class, 'transactionStat']);
+        Route::get('rep-sales-and-debt-report', [DashboardController::class, 'repSalesAndDebtReport']);
     });
     Route::group(['prefix' => 'daily-report'], function () {
         Route::get('index', [ReportsController::class, 'index']);

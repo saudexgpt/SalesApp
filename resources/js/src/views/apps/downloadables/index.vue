@@ -177,8 +177,8 @@ export default {
         'customer.business_name',
         'item.name',
         'quantity',
-        'rate',
-        'amount',
+        // 'rate',
+        // 'amount',
         'batch_no',
         'expiry_date',
         'reason',
@@ -373,8 +373,8 @@ export default {
             'CUSTOMER',
             'PRODUCT',
             'QUANTITY',
-            'RATE',
-            'AMOUNT',
+            // 'RATE',
+            // 'AMOUNT',
             'BATCH NO.',
             'EXPIRY DATE',
             'REASON',
@@ -419,7 +419,11 @@ export default {
             return v['transaction']['invoice_no'];
           }
           if (j === 'quantity') {
-            return v['quantity'] + ' ' + v['packaging'];
+            if (v['packaging']) {
+              return v['quantity'] + ' ' + v['packaging'];
+            } else {
+              return v['quantity'] + ' ' + v['item']['package_type'];
+            }
           }
           if (j === 'updated_at') {
             return (v['confirmer']) ? moment(v['updated_at']).format('lll') : 'Pending';
@@ -483,6 +487,9 @@ export default {
           }
           if (j === 'rep.name') {
             return v['rep']['name'];
+          }
+          if (j === 'item.name') {
+            return v['item']['name'];
           }
           return v[j];
         }),
