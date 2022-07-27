@@ -222,13 +222,13 @@ class TransactionsController extends Controller
         $order_list = [];
         $unsaved_list = [];
         foreach ($unsaved_orders as $unsaved_order) {
-            try {
-                $date = $unsaved_order->due_date;
-                $invoice_items = $unsaved_order->invoice_items;
-                $entry_exist = Transaction::where('unique_sales_id', $unsaved_order->unique_sales_id)->first();
-                if (!$entry_exist) {
-                    # code...
 
+            $date = $unsaved_order->due_date;
+            $invoice_items = $unsaved_order->invoice_items;
+            $entry_exist = Transaction::where('unique_sales_id', $unsaved_order->unique_sales_id)->first();
+            if (!$entry_exist) {
+                # code...
+                try {
                     $invoice = new Transaction();
                     $invoice->customer_id    = $unsaved_order->customer_id;
                     $invoice->unique_sales_id    = $unsaved_order->unique_sales_id;
@@ -273,9 +273,9 @@ class TransactionsController extends Controller
                     //log this action to invoice history
                     // $this->createInvoiceHistory($invoice, $title, $description);
                     //create items invoiceed for
+                } catch (\Throwable $th) {
+                    $unsaved_list[] = $unsaved_order;
                 }
-            } catch (\Throwable $th) {
-                $unsaved_list[] = $unsaved_order;
             }
         }
         //////update next invoice number/////

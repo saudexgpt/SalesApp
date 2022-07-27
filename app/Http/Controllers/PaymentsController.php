@@ -112,16 +112,16 @@ class PaymentsController extends Controller
         $unsaved_collections = json_decode(json_encode($request->unsaved_collections));
         $unsaved_list = [];
         foreach ($unsaved_collections as $collection) {
-            try {
-                $original_amount = $collection->amount_collected;
-                $amount = $collection->amount_collected;
-                $user = $this->getUser();
-                $customer_id = $collection->customer_id;
 
-                $date = date('Y-m-d', strtotime('now'));
-                $entry_exist = Payment::where('unique_collection_id', $collection->unique_collection_id)->first();
-                if (!$entry_exist) {
+            $original_amount = $collection->amount_collected;
+            $amount = $collection->amount_collected;
+            $user = $this->getUser();
+            $customer_id = $collection->customer_id;
 
+            $date = date('Y-m-d', strtotime('now'));
+            $entry_exist = Payment::where('unique_collection_id', $collection->unique_collection_id)->first();
+            if (!$entry_exist) {
+                try {
                     $payment = new Payment();
                     $payment->customer_id = $customer_id;
                     $payment->unique_collection_id = $collection->unique_collection_id;
@@ -143,9 +143,9 @@ class PaymentsController extends Controller
                         $description = $user->name . " successfully received ₦$original_amount from $collection->business_name";
                         $this->logUserActivity($title, $description, $user);
                     }
+                } catch (\Throwable $th) {
+                    $unsaved_list[] = $collection;
                 }
-            } catch (\Throwable $th) {
-                $unsaved_list[] = $collection;
             }
         }
         return response()->json(['unsaved_list' => $unsaved_list, 'message' => 'success'], 200);
