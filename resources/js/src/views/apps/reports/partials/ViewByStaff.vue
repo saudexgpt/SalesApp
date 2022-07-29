@@ -1,21 +1,29 @@
 <template>
   <div v-loading="load_table" v-if="page==='list'">
     <div class="vx-row">
-      <div class="vx-col lg:w-3/4 w-full">
+      <div class="vx-col lg:w-1/2 w-full">
         <div class="flex items-end px-3">
           <feather-icon svg-classes="w-6 h-6" icon="ShoppingBagIcon" class="mr-2" />
           <span class="font-medium text-lg">Inventory of Products {{ sub_title }}</span>
         </div>
         <vs-divider />
       </div>
-      <div class="vx-col lg:w-1/4 w-full">
+      <div class="vx-col lg:w-1/2 w-full">
         <div class="flex items-end px-3">
           <span class="pull-right">
+            <el-select v-model="team_id" filterable @change="fetchTeamReps">
+              <el-option
+                v-for="(team, index) in teams"
+                :key="index"
+                :label="team.name"
+                :value="team.id"
+
+              />
+            </el-select>
             <el-select
               v-model="selected_staff_index"
               placeholder="Select Staff"
               clearable
-              style="width: 100%"
               class="filter-item"
               filterable
               @change="viewByStaff"
@@ -67,7 +75,7 @@ import InventoryDetail from './InventoryDetail'; // Secondary package based on e
 import Resource from '@/api/resource';
 import permission from '@/directive/permission'; // Permission directive
 import checkPermission from '@/utils/permission'; // Permission checking
-const salesRepResource = new Resource('users/fetch-sales-reps');
+// const salesRepResource = new Resource('users/fetch-sales-reps');
 const staffResource = new Resource('inventory/view-by-staff');
 export default {
   name: 'Customers',
@@ -80,42 +88,17 @@ export default {
       sub_title: '',
       inventories: [],
       sub_inventories: [],
-      columns: [
-        'item.name',
-        'total_stocked',
-        'total_sold',
-        'total_balance',
-        'action',
-      ],
-
-      options: {
-        headings: {
-          'item.name': 'Product',
-          total_stocked: 'Total Stocked',
-          total_sold: 'Total Sold',
-          total_balance: 'Total Balance',
-        },
-        pagination: {
-          dropdown: true,
-          chunk: 10,
-        },
-        perPage: 10,
-        filterByColumn: true,
-        // texts: {
-        //   filter: 'Search:',
-        // },
-        // editableColumns:['name', 'category.name', 'sku'],
-        sortable: ['item.name'],
-        filterable: ['item.name'],
-      },
+      load_table: false,
       page: 'list',
       popupActive: false,
       details_title: '',
       selected_detail_item: '',
+      teams: [],
+      team_id: '',
     };
   },
   created() {
-    this.fetchSalesReps();
+    this.fetchTeams();
   },
   methods: {
     moment,
@@ -126,19 +109,49 @@ export default {
       app.selected_detail_item = selected_item;
       app.popupActive = true;
     },
-    fetchSalesReps() {
-      this.load_table = true;
+    fetchTeams() {
+      const app = this;
+      // this.load_table = true;
+      const salesRepResource = new Resource('teams');
       salesRepResource
         .list()
         .then((response) => {
-          this.sales_reps = response.sales_reps;
-          this.load_table = false;
+          app.teams = response.teams;
+          if (app.teams.length > 0) {
+            app.team_id = app.teams[0].id;
+            app.fetchTeamReps(app.team_id);
+          }
         })
         .catch((error) => {
           console.log(error);
-          this.load_table = false;
         });
     },
+    fetchTeamReps(teamId) {
+      const app = this;
+      // this.load_table = true;
+      const salesRepResource = new Resource('teams/fetch-reps');
+      salesRepResource
+        .list({ team_id: teamId })
+        .then((response) => {
+          app.sales_reps = response.team_reps;
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    },
+    // fetchSalesReps() {
+    //   this.load_table = true;
+    //   salesRepResource
+    //     .list()
+    //     .then((response) => {
+    //       this.sales_reps = response.sales_reps;
+    //       this.load_table = false;
+    //     })
+    //     .catch((error) => {
+    //       console.log(error);
+    //       this.load_table = false;
+    //     });
+    // },
     viewByStaff() {
       const app = this;
       const staff = app.sales_reps[app.selected_staff_index];

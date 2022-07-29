@@ -116,6 +116,11 @@ class TransactionsController extends Controller
             //     $q->orderBy('id', 'DESC');
             // }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->whereRaw('amount_due - amount_paid > 0')->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(50);
         }
+        $total_debts = CustomerDebt::where('created_at', '<=',  $date_to)
+            ->where('created_at', '>=',  $date_from)
+            ->where($condition)
+            ->whereIn('field_staff', $sales_reps_ids)
+            ->select(\DB::raw('SUM(amount - paid) as total_amount'))->first();
         if ($paginate_option === 'all' || $user->hasRole('sales_rep')) {
             $debts = $debtsQuery->get();
         } else {
@@ -124,7 +129,7 @@ class TransactionsController extends Controller
 
         $date_from = getDateFormatWords($date_from);
         $date_to = getDateFormatWords($date_to);
-        return response()->json(compact('debts', 'currency', 'date_from', 'date_to'), 200);
+        return response()->json(compact('debts', 'currency', 'total_debts', 'date_from', 'date_to'), 200);
     }
     public function fetchSales(Request $request)
     {
@@ -143,18 +148,41 @@ class TransactionsController extends Controller
         $delivery_status = $request->delivery_status;
         if ($user->hasRole('sales_rep')) {
 
-            $sales = $user->transactions()->with(['customer.assignedOfficer', 'details'])->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(50);
-        } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
-            // $sales_reps_ids is in array form
-            list($sales_reps, $sales_reps_ids) = $this->teamMembers();
-            $sales = Transaction::with(['customer.assignedOfficer', 'details'])->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->whereIn('field_staff', $sales_reps_ids)->orderBy('id', 'DESC')->paginate(50);
+            $salesQuery = $user->transactions()
+                ->with(['customer.assignedOfficer', 'details'])
+                ->where('created_at', '<=',  $date_to)
+                ->where('created_at', '>=',  $date_from)
+                ->where($condition)
+                ->orderBy('id', 'DESC');
         } else {
-            $sales = Transaction::with(['customer.assignedOfficer', 'details'])->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(50);
+            list($sales_reps, $sales_reps_ids) = $this->teamMembers($request->team_id);
+            // $sales_reps_ids is in array form
+            // list($sales_reps, $sales_reps_ids) = $this->teamMembers();
+            $salesQuery = Transaction::with(['customer', 'staff'])
+                ->where('created_at', '<=',  $date_to)
+                ->where('created_at', '>=',  $date_from)
+                ->where($condition)
+                ->whereIn('field_staff', $sales_reps_ids)
+                ->orderBy('id', 'DESC');
+        }
+        $total_sales = Transaction::where('created_at', '<=',  $date_to)
+            ->where('created_at', '>=',  $date_from)
+            ->where($condition)
+            ->whereIn('field_staff', $sales_reps_ids)
+            ->select(\DB::raw('SUM(amount_due) as total_amount'))->first();
+        // else {
+        //     $salesQuery = Transaction::with(['customer.assignedOfficer', 'details'])->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC');
+        // }
+        $paginate_option = $request->paginate_option;
+        if ($paginate_option === 'all') {
+            $sales = $salesQuery->get();
+        } else {
+            $sales = $salesQuery->paginate(25);
         }
 
         $date_from = getDateFormatWords($date_from);
         $date_to = getDateFormatWords($date_to);
-        return response()->json(compact('sales', 'currency', 'date_from', 'date_to'), 200);
+        return response()->json(compact('sales', 'currency', 'date_from', 'date_to', 'total_sales'), 200);
     }
     public function fetchProductSales(Request $request)
     {
@@ -173,8 +201,14 @@ class TransactionsController extends Controller
         $delivery_status = $request->delivery_status;
         if ($user->hasRole('sales_rep')) {
 
-            $salesQuery = TransactionDetail::with('transaction.customer')->join('transactions', 'transactions.id', 'transaction_details.transaction_id')
-                ->join('users', 'transactions.field_staff', 'users.id')->where('transactions.field_staff', $user->id)->where('transaction_details.created_at', '<=',  $date_to)->where('transaction_details.created_at', '>=',  $date_from)->where($condition)->orderBy('transaction_details.id', 'DESC');
+            $salesQuery = TransactionDetail::with('transaction.customer')
+                ->join('transactions', 'transactions.id', 'transaction_details.transaction_id')
+                ->join('users', 'transactions.field_staff', 'users.id')
+                ->where('transactions.field_staff', $user->id)
+                ->where('transaction_details.created_at', '<=',  $date_to)
+                ->where('transaction_details.created_at', '>=',  $date_from)
+                ->where($condition)
+                ->orderBy('transaction_details.id', 'DESC');
         }
         // else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
         //     // $sales_reps_ids is in array form
@@ -184,12 +218,23 @@ class TransactionsController extends Controller
         // }
         else {
             list($sales_reps, $sales_reps_ids) = $this->teamMembers($request->team_id);
-            $salesQuery = TransactionDetail::with('transaction.customer')->join('transactions', 'transactions.id', 'transaction_details.transaction_id')
-                ->join('users', 'transactions.field_staff', 'users.id')->where('transaction_details.created_at', '<=',  $date_to)->where('transaction_details.created_at', '>=',  $date_from)->where($condition)->whereIn('transactions.field_staff', $sales_reps_ids)->orderBy('transaction_details.id', 'DESC');
+            $salesQuery = TransactionDetail::with('transaction.customer')
+                ->join('transactions', 'transactions.id', 'transaction_details.transaction_id')
+                ->join('users', 'transactions.field_staff', 'users.id')
+                ->where('transaction_details.created_at', '<=',  $date_to)
+                ->where('transaction_details.created_at', '>=',  $date_from)
+                ->where($condition)
+                ->whereIn('transactions.field_staff', $sales_reps_ids)
+                ->orderBy('transaction_details.id', 'DESC');
             // $sales = Transaction::with(['customer.assignedOfficer', 'payments' => function ($q) {
             //     $q->orderBy('id', 'DESC');
             // }, 'details'])->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(50);
         }
+        $total_sales = TransactionDetail::where('created_at', '<=',  $date_to)
+            ->where('created_at', '>=',  $date_from)
+            ->where($condition)
+            ->whereIn('field_staff', $sales_reps_ids)
+            ->select(\DB::raw('SUM(amount) as total_amount'))->first();
         if ($paginate_option === 'all') {
             $sales = $salesQuery->get();
         } else {
@@ -197,7 +242,7 @@ class TransactionsController extends Controller
         }
         $date_from = getDateFormatWords($date_from);
         $date_to = getDateFormatWords($date_to);
-        return response()->json(compact('sales', 'currency', 'date_from', 'date_to'), 200);
+        return response()->json(compact('sales', 'total_sales', 'currency', 'date_from', 'date_to'), 200);
     }
 
     /**

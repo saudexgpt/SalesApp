@@ -27,6 +27,10 @@
     </div>
     <filter-options @submitQuery="fetchPayments" />
     <el-row v-loading="load" :gutter="10">
+      <br>
+      <el-col :md="8">
+        <el-alert :closable="false" type="success"><h4>Total Collections: {{ currency }}{{ (total_collections.total_amount) ? total_collections.total_amount.toLocaleString() : 0 }}</h4></el-alert>
+      </el-col>
       <v-client-table v-model="payments" :columns="payments_columns" :options="payments_options">
         <div
           slot="confirmer.name"
@@ -131,6 +135,9 @@ export default {
       downloadLoading: false,
       customers: [],
       reps: [],
+      total_collections: {
+        total_amount: 0,
+      },
     };
   },
   created() {
@@ -151,6 +158,7 @@ export default {
       paymentsResource.list(param)
         .then(response => {
           app.payments = response.payments.data;
+          app.total_collections = response.total_collections;
           app.currency = response.currency;
           app.sub_title = ' from ' + response.date_from + ' to ' + response.date_to;
           this.payments.forEach((element, index) => {

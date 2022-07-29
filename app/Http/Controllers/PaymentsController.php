@@ -81,6 +81,11 @@ class PaymentsController extends Controller
                 ->orderBy('id', 'DESC')
                 ->select('*', \DB::raw('SUM(amount) as total_amount'));
         }
+        $total_collections = Payment::where('payment_date', '<=',  $date_to)
+            ->where('payment_date', '>=',  $date_from)
+            ->where($condition)
+            ->whereIn('received_by', $sales_reps_ids)
+            ->select(\DB::raw('SUM(amount) as total_amount'))->first();
         if ($paginate_option === 'all') {
             $payments = $paymentsQuery->get();
         } else {
@@ -88,7 +93,7 @@ class PaymentsController extends Controller
         }
         $date_from = getDateFormatWords($date_from);
         $date_to = getDateFormatWords($date_to);
-        return response()->json(compact('payments', 'currency', 'date_from', 'date_to'), 200);
+        return response()->json(compact('payments', 'currency', 'total_collections', 'date_from', 'date_to'), 200);
     }
 
     /**

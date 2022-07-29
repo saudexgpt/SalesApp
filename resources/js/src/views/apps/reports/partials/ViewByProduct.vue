@@ -1,21 +1,29 @@
 <template>
   <div v-loading="load_table" v-if="page==='list'">
     <div class="vx-row">
-      <div class="vx-col lg:w-3/4 w-full">
+      <div class="vx-col lg:w-1/2 w-full">
         <div class="flex staffs-end px-3">
           <feather-icon svg-classes="w-6 h-6" icon="ShoppingBagIcon" class="mr-2" />
           <span class="font-medium text-lg">Inventory {{ sub_title }}</span>
         </div>
         <vs-divider />
       </div>
-      <div class="vx-col lg:w-1/4 w-full">
+      <div class="vx-col lg:w-1/2 w-full">
         <div class="flex staffs-end px-3">
           <span class="pull-right">
+            <el-select v-model="team_id" filterable @change="viewByProduct">
+              <el-option
+                v-for="(team, index) in teams"
+                :key="index"
+                :label="team.name"
+                :value="team.id"
+
+              />
+            </el-select>
             <el-select
               v-model="selected_item_index"
               placeholder="Select Product"
               clearable
-              style="width: 100%"
               class="filter-staff"
               filterable
               @change="viewByProduct"
@@ -51,13 +59,13 @@
             :options="options"
           >
             <template slot="total_stocked" slot-scope="scope">
-              <span>{{ scope.row.total_stocked + ' ' + scope.row.item.package_type }}</span>
+              <span>{{ scope.row.total_stocked }} {{ (scope.row.item.basic_unit) ? scope.row.item.basic_unit : scope.row.item.package_type }}</span>
             </template>
             <template slot="van_quantity" slot-scope="scope">
-              <span>{{ scope.row.van_quantity + ' ' + scope.row.item.package_type }}</span>
+              <span>{{ scope.row.van_quantity }} {{ (scope.row.item.basic_unit) ? scope.row.item.basic_unit : scope.row.item.package_type }}</span>
             </template>
             <template slot="total_balance" slot-scope="scope">
-              <span>{{ scope.row.total_balance + ' ' + scope.row.item.package_type }}</span>
+              <span>{{ scope.row.total_balance }} {{ (scope.row.item.basic_unit) ? scope.row.item.basic_unit : scope.row.item.package_type }}</span>
             </template>
           </v-client-table>
         </div>
@@ -72,13 +80,13 @@
             :options="options"
           >
             <template slot="total_stocked" slot-scope="scope">
-              <span>{{ scope.row.total_stocked + ' ' + scope.row.item.package_type }}</span>
+              <span>{{ scope.row.total_stocked }} {{ (scope.row.item.basic_unit) ? scope.row.item.basic_unit : scope.row.item.package_type }}</span>
             </template>
             <template slot="total_sold" slot-scope="scope">
-              <span>{{ scope.row.total_sold + ' ' + scope.row.item.package_type }}</span>
+              <span>{{ scope.row.total_sold }} {{ (scope.row.item.basic_unit) ? scope.row.item.basic_unit : scope.row.item.package_type }}</span>
             </template>
             <template slot="total_balance" slot-scope="scope">
-              <span>{{ scope.row.total_balance + ' ' + scope.row.item.package_type }}</span>
+              <span>{{ scope.row.total_balance }} {{ (scope.row.item.basic_unit) ? scope.row.item.basic_unit : scope.row.item.package_type }}</span>
             </template>
           </v-client-table>
         </div>
@@ -108,20 +116,23 @@ export default {
       sub_inventories: [],
       columns: [
         'staff.name',
-        'total_stocked',
-        'van_quantity',
+        'item.name',
+        // 'total_stocked',
+        // 'van_quantity',
         'total_balance',
       ],
       columns_2: [
         'staff.name',
-        'total_stocked',
-        'total_sold',
+        'item.name',
+        // 'total_stocked',
+        // 'total_sold',
         'total_balance',
       ],
 
       options: {
         headings: {
-          'staff.name': 'Staff',
+          'staff.name': 'Rep',
+          'item.name': 'Product',
           total_stocked: 'Total Stocked',
           total_sold: 'Total Sold',
           van_quantity: 'Van Quantity',
@@ -141,14 +152,33 @@ export default {
         filterable: ['staff.name'],
       },
       page: 'list',
+      teams: [],
+      team_id: '',
     };
   },
   created() {
+    this.fetchTeams();
     this.fetchProducts();
   },
   methods: {
     moment,
     checkPermission,
+    fetchTeams() {
+      const app = this;
+      // this.load_table = true;
+      const salesRepResource = new Resource('teams');
+      salesRepResource
+        .list()
+        .then((response) => {
+          app.teams = response.teams;
+          if (app.teams.length > 0) {
+            app.team_id = app.teams[0].id;
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    },
     fetchProducts() {
       this.load_table = true;
       productsResource
@@ -165,8 +195,17 @@ export default {
     viewByProduct() {
       const app = this;
       const product = app.products[app.selected_item_index];
-      const param = { item_id: product.id };
+      const team_id = app.team_id;
+      const param = { team_id: team_id, item_id: product.id };
       app.sub_title = 'of ' + product.name;
+      if (team_id === '') {
+        app.$alert('Please select a team');
+        return;
+      }
+      if (app.selected_item_index === '') {
+        app.$alert('Please select a product');
+        return;
+      }
       app.$vs.loading();
       productInventoryResource
         .list(param)

@@ -16,7 +16,7 @@
           :statistic="subscribersGained.analyticsData.subscribers | k_formatter"
           :chart-data="subscribersGained.series"
           icon="UsersIcon"
-          statistic-title="Members"
+          statistic-title="Customers"
           color="dark"
           type="area" />
       </div>

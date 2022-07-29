@@ -121,6 +121,10 @@ export default {
         .list()
         .then((response) => {
           app.teams = response.teams;
+          if (app.teams.length > 0) {
+            app.form.team_id = app.teams[0].id;
+            app.fetchTeamReps(app.form.team_id);
+          }
         })
         .catch((error) => {
           console.log(error);

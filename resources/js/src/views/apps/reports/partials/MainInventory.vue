@@ -43,7 +43,7 @@
         <span>{{ scope.row.van_quantity + ' ' + scope.row.item.package_type }}</span>
       </template> -->
       <template slot="total_balance" slot-scope="scope">
-        <span>{{ scope.row.total_balance + ' ' + scope.row.item.package_type }}</span>
+        <span>{{ scope.row.total_balance }} {{ (scope.row.item.basic_unit) ? scope.row.item.basic_unit : scope.row.item.package_type }}</span>
       </template>
       <template slot="action" slot-scope="props">
         <el-button
@@ -78,7 +78,8 @@ export default {
       sub_title: '',
       list: [],
       columns: [
-        'action',
+        // 'action',
+        'staff.name',
         'item.name',
         // 'total_stocked',
         // 'van_quantity',
@@ -87,7 +88,8 @@ export default {
 
       options: {
         headings: {
-          action: '',
+          // action: '',
+          'staff.name': 'Rep',
           'item.name': 'Product',
           //   total_stocked: 'Total Stocked',
           //   van_quantity: 'Moved To Van',

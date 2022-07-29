@@ -27,6 +27,10 @@
     </div>
     <filter-options @submitQuery="fetchDebts" />
     <el-row v-loading="load" :gutter="10">
+      <br>
+      <el-col :md="8">
+        <el-alert :closable="false" type="success"><h4>Total Debts: {{ currency }}{{ (total_debts.total_amount) ? total_debts.total_amount.toLocaleString() : 0 }}</h4></el-alert>
+      </el-col>
       <v-client-table v-model="debts" :columns="debts_columns" :options="debts_options">
         <!-- <div slot="child_row" slot-scope="props" style="background: #000">
           <table class="table table-bordered">
@@ -160,6 +164,9 @@ export default {
       downloadLoading: false,
       reps: [],
       customers: [],
+      total_debts: {
+        total_amount: 0,
+      },
     };
   },
   created() {
@@ -179,6 +186,7 @@ export default {
         .then(response => {
           app.load = false;
           app.debts = response.debts.data;
+          app.total_debts = response.total_debts;
           app.currency = response.currency;
           app.sub_title = ' from ' + response.date_from + ' to ' + response.date_to;
           this.debts.forEach((element, index) => {

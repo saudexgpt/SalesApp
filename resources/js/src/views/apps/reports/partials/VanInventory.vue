@@ -37,13 +37,13 @@
       :options="options"
     >
       <template slot="total_stocked" slot-scope="scope">
-        <span>{{ scope.row.total_stocked + ' ' + scope.row.item.package_type }}</span>
+        <span>{{ scope.row.total_stocked }} {{ (scope.row.item.basic_unit) ? scope.row.item.basic_unit : scope.row.item.package_type }}</span>
       </template>
       <template slot="total_sold" slot-scope="scope">
-        <span>{{ scope.row.total_sold + ' ' + scope.row.item.package_type }}</span>
+        <span>{{ scope.row.total_sold }} {{ (scope.row.item.basic_unit) ? scope.row.item.basic_unit : scope.row.item.package_type }}</span>
       </template>
       <template slot="total_balance" slot-scope="scope">
-        <span>{{ scope.row.total_balance + ' ' + scope.row.item.package_type }}</span>
+        <span>{{ scope.row.total_balance }} {{ (scope.row.item.basic_unit) ? scope.row.item.basic_unit : scope.row.item.package_type }}</span>
       </template>
     </v-client-table>
   </div>
@@ -66,17 +66,19 @@ export default {
       sub_title: '',
       list: [],
       columns: [
+        'staff.name',
         'item.name',
-        'total_stocked',
-        'total_sold',
+        // 'total_stocked',
+        // 'total_sold',
         'total_balance',
       ],
 
       options: {
         headings: {
+          'staff.name': 'Rep',
           'item.name': 'Product',
-          total_stocked: 'Total Stocked',
-          total_sold: 'Total Sold',
+          //   total_stocked: 'Total Stocked',
+          //   total_sold: 'Total Sold',
           total_balance: 'Total Balance',
         },
         pagination: {

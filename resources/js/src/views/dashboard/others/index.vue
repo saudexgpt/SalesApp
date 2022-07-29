@@ -162,7 +162,7 @@ export default {
   created() {
     this.user = this.$store.getters.name;
     this.fetchDashboard();
-    this.fetchDebts();
+    // this.fetchDebts();
   },
   methods: {
     moment,
@@ -202,24 +202,24 @@ export default {
       app.form.panel = panel;
       app.fetchDebts();
     },
-    fetchDebts(){
-      const app = this;
-      const { limit, page } = app.query;
-      app.options.perPage = limit;
-      app.load_table = true;
-      const param = app.form;
-      const fetchResource = new Resource('sales/fetch-debts');
-      fetchResource.list(param).then(response => {
-        app.debts = response.debts.data;
-        app.debts.forEach((element, index) => {
-          element['index'] = (page - 1) * limit + index + 1;
-        });
-        app.total = response.debts.total;
-        app.currency = response.currency;
-        app.sub_title = ' from ' + response.date_from + ' to ' + response.date_to;
-        app.load_table = false;
-      });
-    },
+    // fetchDebts(){
+    //   const app = this;
+    //   const { limit, page } = app.query;
+    //   app.options.perPage = limit;
+    //   app.load_table = true;
+    //   const param = app.form;
+    //   const fetchResource = new Resource('sales/fetch-debts');
+    //   fetchResource.list(param).then(response => {
+    //     app.debts = response.debts.data;
+    //     app.debts.forEach((element, index) => {
+    //       element['index'] = (page - 1) * limit + index + 1;
+    //     });
+    //     app.total = response.debts.total;
+    //     app.currency = response.currency;
+    //     app.sub_title = ' from ' + response.date_from + ' to ' + response.date_to;
+    //     app.load_table = false;
+    //   });
+    // },
   },
 };
 </script>

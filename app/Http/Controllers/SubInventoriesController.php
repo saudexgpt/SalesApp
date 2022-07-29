@@ -130,13 +130,13 @@ class SubInventoriesController extends Controller
     public function viewByStaff(Request $request)
     {
         $staff_id = $request->staff_id;
-        $inventories = SubInventory::with('item')
+        $inventories = SubInventory::with('staff', 'item')
             ->groupBy('item_id', 'batch_no')
             ->where('staff_id', $staff_id)
             ->where('balance', '>', 0)
             ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(moved_to_van) as van_quantity'), \DB::raw('SUM(balance) as total_balance'))
             ->get();
-        $sub_inventories = VanInventory::with('item')
+        $sub_inventories = VanInventory::with('staff', 'item')
             ->groupBy('item_id', 'batch_no')
             ->where('staff_id', $staff_id)
             ->where('balance', '>', 0)

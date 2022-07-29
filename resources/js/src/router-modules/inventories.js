@@ -7,8 +7,8 @@ const inventoryRoutes = {
   i18n: 'Inventory',
   slug: 'inventory',
   meta: {
-    // roles: ['sales_rep'],
-    permissions: ['add-stock'],
+    roles: ['admin', 'super'],
+    // permissions: ['add-stock'],
   },
   children: [
     // {
@@ -45,7 +45,7 @@ const inventoryRoutes = {
       },
     },
     {
-      hidden: true,
+      hidden: false,
       path: '/inventory/bulk',
       name: 'BulkUpload',
       slug: 'add-inventory',
