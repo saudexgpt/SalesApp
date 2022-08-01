@@ -45,7 +45,7 @@ const inventoryRoutes = {
       },
     },
     {
-      hidden: false,
+      hidden: true,
       path: '/inventory/bulk',
       name: 'BulkUpload',
       slug: 'add-inventory',

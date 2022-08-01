@@ -51,13 +51,13 @@
       <vs-tab label="Main Inventory">
         <div class="tab-text">
           <br>
-          <main-inventory :inventories="inventories" />
+          <main-inventory :inventories="inventories" @download="downloadMain" />
         </div>
       </vs-tab>
       <vs-tab label="Van Inventory">
         <div class="tab-text">
           <br>
-          <van-inventory :van-inventories="sub_inventories" />
+          <van-inventory :van-inventories="sub_inventories" @download="downloadVan" />
         </div>
       </vs-tab>
     </vs-tabs>
@@ -170,47 +170,52 @@ export default {
           app.$vs.loading.close();
         });
     },
-    handleDownload(){
+    downloadVan(data){
       const app = this;
-      app.export(app.list);
-    //   const param = { staff_id: app.selected_staff.id };
-    //   this.downloading = true;
-    //   staffResource.list(param)
-    //     .then(response => {
-    //       this.export(response.data);
-
-    //       this.downloading = false;
-    //     });
+      app.download(data, 'Van');
     },
-    export(export_data) {
+    downloadMain(data){
+      const app = this;
+      app.download(data, 'Main');
+    },
+    download(export_data, type) {
       import('@/vendor/Export2Excel').then((excel) => {
+        // const multiHeader = [[`${type} Inventory ${this.sub_title}`, '', '', '', '', '', '', '', '', '']];
         const tHeader = [
+          // 'REP',
           'PRODUCT',
-          'TOTAL STOCKED',
-          'TOTAL SOLD',
-          'TOTAL BALANCE',
+          'BATCH NO',
+          'EXPIRY DATE',
+          'QUANTITY',
         ];
         const filterVal = [
+          // 'staff.name',
           'item.name',
-          'total_stocked',
-          'total_sold',
+          'batch_no',
+          'expiry_date',
           'total_balance',
         ];
         const data = this.formatJson(filterVal, export_data);
         excel.export_json_to_excel({
+          // multiHeader,
           header: tHeader,
           data,
-          filename: 'inventory-by-staff',
+          filename: `${type} Inventory ${this.sub_title}`,
+          autoWidth: true,
+          bookType: 'csv',
         });
-        this.downloading = false;
       });
     },
     formatJson(filterVal, jsonData) {
       return jsonData.map((v) =>
         filterVal.map((j) => {
           if (j === 'item.name') {
-            return v['item']['name'];
+            const package_type = (v['item']['basic_unit']) ? v['item']['basic_unit'] : v['item']['package_type']
+            return v['item']['name'] + ' ' + package_type;
           }
+          //   if (j === 'staff.name') {
+          //     return v['staff']['name'];
+          //   }
           return v[j];
         }),
       );

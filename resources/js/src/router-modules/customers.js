@@ -10,7 +10,7 @@ const customersRoutes = {
   // permissions: ['read-customers'],
   children: [
     {
-      hidden: false,
+      hidden: true,
       path: '/customers/bulk',
       name: 'BulkUpload',
       slug: 'add-customers',

@@ -451,7 +451,6 @@ class CustomersController extends Controller
         $bulk_data = json_decode(json_encode($request->bulk_data));
         $unsaved_customers = [];
         $error = [];
-        // try {
         foreach ($bulk_data as $data) {
             try {
 
@@ -460,38 +459,44 @@ class CustomersController extends Controller
                 $business_type = strtolower(trim($data->BUSINESS_TYPE));
                 // $email =  trim($data->EMAIL);
                 $address =  trim($data->ADDRESS);
-                $cordinate =  (isset($data->COORDINATE)) ? trim($data->COORDINATE) : '';
-                $area =  (isset($data->AREA)) ? trim($data->AREA) : NULL;
-                $lga_text =  (isset($data->LGA)) ? strtolower(trim($data->LGA)) : NULL;
-                $contact_name =  (isset($data->CONTACT_PERSON)) ? trim($data->CONTACT_PERSON) : NULL;
-                $contact_no = (isset($data->CONTACT_NUMBER)) ? trim($data->CONTACT_NUMBER) : NULL;
-                $relating_officer = (isset($data->REP_ID)) ? trim($data->REP_ID) : NULL;
+                $cordinate =  (isset($data->COORDINATE)) ? trim($data->COORDINATE) : 'NULL';
+                $area =  (isset($data->AREA)) ? trim($data->AREA) : 'NULL';
+                $lga_text =  (isset($data->LGA)) ? strtolower(trim($data->LGA)) : 'NULL';
+                $contact_name =  (isset($data->CONTACT_PERSON)) ? trim($data->CONTACT_PERSON) : 'NULL';
+                $contact_no = (isset($data->CONTACT_NUMBER)) ? trim($data->CONTACT_NUMBER) : 'NULL';
+                $relating_officer = (isset($data->REP_ID)) ? trim($data->REP_ID) : 'NULL';
                 $request->business_name = $business_name;
                 $request->address = $address;
                 $request->relating_officer = $relating_officer;
                 $request->area = $area;
                 $request->lga_text = $lga_text;
                 // let's fetch the state_id and lga_id
-                $lga = LocalGovernmentArea::where('name', 'LIKE', '%' . ucwords($lga_text) . '%')->first();
-                if ($lga) {
-                    $request->lga_id = $lga->id;
-                    $request->state_id = $lga->state_id;
+                if ($lga_text !== 'NULL') {
+                    $lga = LocalGovernmentArea::where('name', 'LIKE', '%' . ucwords($lga_text) . '%')->first();
+                    if ($lga) {
+                        $request->lga_id = $lga->id;
+                        $request->state_id = $lga->state_id;
+                    }
                 }
 
                 // let's extract the latitude and longitude from cordinate
-                if ($cordinate !== '') {
+                if ($cordinate !== 'NULL') {
                     $cordinate_array = explode(',', $cordinate); // since cordinate is in form of (lat, lng)
                     $request->customer_latitude = str_replace(' ', '', $cordinate_array[0]);
                     $request->customer_longitude = str_replace(' ', '', $cordinate_array[1]);
                 }
                 // fetch the customer type
+                $business_type = ($business_type == 'null') ? 'Pharmacy' : $business_type;
+
                 $customer_type = CustomerType::where('name', 'LIKE', '%' . ucwords($business_type) . '%')->first();
                 if (!$customer_type) {
                     $customer_type = new CustomerType();
                     $customer_type->name = ucwords($business_type);
                     $customer_type->save();
                 }
+
                 $request->customer_type_id = $customer_type->id;
+
 
                 $request->customer_contacts = [['name' => $contact_name, 'phone1' => $contact_no, 'phone2' => NULL, 'role' => NULL]];
 

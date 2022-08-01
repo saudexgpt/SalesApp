@@ -80,33 +80,33 @@ class ItemsController extends Controller
 
     public function stockProductsFromWarehouse()
     {
-        // $user = $this->getUser();
-        // // Create a stream
-        // set_time_limit(0);
-        // $parameters = [
-        //     "rep_ids" => $user->rep_ids
-        // ];
+        $user = $this->getUser();
+        // Create a stream
+        set_time_limit(0);
+        $parameters = [
+            "rep_ids" => $user->rep_ids
+        ];
 
-        // $params =  http_build_query($parameters);
+        $params =  http_build_query($parameters);
 
-        // $opts = array(
-        //     'http' => [
-        //         'method'  => 'POST',
-        //         'header'  => 'Content-type: application/x-www-form-urlencoded',
-        //         'content' => $params
-        //     ]
-        // );
+        $opts = array(
+            'http' => [
+                'method'  => 'POST',
+                'header'  => 'Content-type: application/x-www-form-urlencoded',
+                'content' => $params
+            ]
+        );
 
-        // // DOCS: https://www.php.net/manual/en/function.stream-context-create.php
-        // $context = stream_context_create($opts);
+        // DOCS: https://www.php.net/manual/en/function.stream-context-create.php
+        $context = stream_context_create($opts);
 
-        // // Open the file using the HTTP headers set above
-        // // DOCS: https://www.php.net/manual/en/function.file-get-contents.php
-        // $products =  file_get_contents('https://gpl.3coretechnology.com/api/rep-stock', false, $context);
-        // // $products =  file_get_contents('http://localhost:8001/api/rep-stock', false, $context);
-        // $products_in_json =  json_decode($products);
-        // $items = $products_in_json->items;
-        // $this->storeWarehouseStock($user->id, $items);
+        // Open the file using the HTTP headers set above
+        // DOCS: https://www.php.net/manual/en/function.file-get-contents.php
+        $products =  file_get_contents('https://gpl.3coretechnology.com/api/rep-stock', false, $context);
+        // $products =  file_get_contents('http://localhost:8001/api/rep-stock', false, $context);
+        $products_in_json =  json_decode($products);
+        $items = $products_in_json->items;
+        $this->storeWarehouseStock($user->id, $items);
 
         return 'success';
         // return $this->showWarehouseStock();
@@ -125,7 +125,7 @@ class ItemsController extends Controller
             $item_stock_sub_batch_id = $warehouse_item->item_stock_sub_batch_id;
 
             $quantity_supplied = $warehouse_item->total_quantity_supplied;
-            $item = Item::with('price')->find($warehouse_item->item_stock->item_id);
+            $item = Item::find($warehouse_item->item_stock->item_id);
             $basic_unit_quantity_per_package_type = $item->basic_unit_quantity_per_package_type;
             if ($basic_unit_quantity_per_package_type > 0) {
                 $quantity_supplied = $quantity_supplied * $basic_unit_quantity_per_package_type;

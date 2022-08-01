@@ -6,6 +6,16 @@
           <feather-icon svg-classes="w-6 h-6" icon="ShoppingBagIcon" class="mr-2" />
           <span class="font-medium text-lg">Main Inventory</span>
         </div>
+        <span style="float: right">
+          <el-button
+            round
+            style="margin:0 0 20px 20px;"
+            type="success"
+            icon="el-icon-download"
+            size="small"
+            @click="handleDownload"
+          >Export Main Inventory</el-button>
+        </span>
         <vs-divider />
       </div>
       <!-- <div class="vx-col lg:w-1/4 w-full">
@@ -81,6 +91,8 @@ export default {
         // 'action',
         'staff.name',
         'item.name',
+        'batch_no',
+        'expiry_date',
         // 'total_stocked',
         // 'van_quantity',
         'total_balance',
@@ -93,7 +105,7 @@ export default {
           'item.name': 'Product',
           //   total_stocked: 'Total Stocked',
           //   van_quantity: 'Moved To Van',
-          total_balance: 'Total Balance',
+          total_balance: 'Quantity',
         },
         pagination: {
           dropdown: true,
@@ -151,48 +163,7 @@ export default {
     },
     handleDownload(){
       const app = this;
-      app.export(app.list);
-    //   const param = { staff_id: app.selected_staff.id };
-    //   this.downloading = true;
-    //   staffResource.list(param)
-    //     .then(response => {
-    //       this.export(response.data);
-
-    //       this.downloading = false;
-    //     });
-    },
-    export(export_data) {
-      import('@/vendor/Export2Excel').then((excel) => {
-        const tHeader = [
-          'STAFF',
-          'TOTAL STOCKED',
-          'TOTAL SOLD',
-          'TOTAL BALANCE',
-        ];
-        const filterVal = [
-          'staff.name',
-          'total_stocked',
-          'total_sold',
-          'total_balance',
-        ];
-        const data = this.formatJson(filterVal, export_data);
-        excel.export_json_to_excel({
-          header: tHeader,
-          data,
-          filename: 'inventory-by-product',
-        });
-        this.downloading = false;
-      });
-    },
-    formatJson(filterVal, jsonData) {
-      return jsonData.map((v) =>
-        filterVal.map((j) => {
-          if (j === 'staff.name') {
-            return v['staff']['name'];
-          }
-          return v[j];
-        }),
-      );
+      app.$emit('download', app.inventories);
     },
   },
 };
