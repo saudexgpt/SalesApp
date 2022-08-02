@@ -47,6 +47,7 @@ class PaymentsController extends Controller
         $rep_field_name = 'received_by';
         $condition = $this->setQueryConditions($request, $rep_field_name);
         $delivery_status = $request->delivery_status;
+        $total_collections = 0;
         if ($user->hasRole('sales_rep')) {
 
             $paymentsQuery = Payment::groupBy(['payment_date', 'customer_id'])
@@ -80,12 +81,13 @@ class PaymentsController extends Controller
                 ->where($condition)
                 ->orderBy('id', 'DESC')
                 ->select('*', \DB::raw('SUM(amount) as total_amount'));
+
+            $total_collections = Payment::where('payment_date', '<=',  $date_to)
+                ->where('payment_date', '>=',  $date_from)
+                ->where($condition)
+                ->whereIn('received_by', $sales_reps_ids)
+                ->select(\DB::raw('SUM(amount) as total_amount'))->first();
         }
-        $total_collections = Payment::where('payment_date', '<=',  $date_to)
-            ->where('payment_date', '>=',  $date_from)
-            ->where($condition)
-            ->whereIn('received_by', $sales_reps_ids)
-            ->select(\DB::raw('SUM(amount) as total_amount'))->first();
         if ($paginate_option === 'all') {
             $payments = $paymentsQuery->get();
         } else {

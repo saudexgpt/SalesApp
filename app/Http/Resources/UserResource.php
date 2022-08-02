@@ -67,6 +67,8 @@ class UserResource extends JsonResource
             'can_edit' => $can_edit,
             'p_status' => $this->password_status,
             'disable_debtors_creation' => false,
+            'add_initial_stock' => ($this->add_initial_stock === 1) ? true : false,
+            'add_initial_debtors' => ($this->add_initial_debtors === 1) ? true : false,
         ];
     }
 }

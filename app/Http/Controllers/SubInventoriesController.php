@@ -320,30 +320,26 @@ class SubInventoriesController extends Controller
     public function storeBulkMainInventory(Request $request)
     {
         set_time_limit(0);
-        // $actor = $this->getUser();
-        $bulk_data = json_decode(json_encode($request->bulk_data));
+        $actor = $this->getUser();
+        $bulk_data = json_decode(json_encode($request->bulk_inventory));
         $unsaved_inventory = [];
         $error = [];
         // try {
         foreach ($bulk_data as $data) {
             //try {
 
-            $item_name =  trim($data->ITEM_NAME);
+            $item_id =  $data->item_id;
 
-            $quantity = trim($data->QUANTITY);
-            $expiry_date =  trim($data->EXPIRY_DATE);
-            $staff_id =  trim($data->REP_ID);
+            $quantity = $data->quantity;
+            $expiry_date =  $data->expiry_date;
+            $staff_id =  $actor->id;
             // let's fetch the state_id and lga_id
             if ($quantity > 1) {
-
-                $item = Item::where('name', $item_name)->first();
-                if ($item) {
-                    $request->item_id = $item->id;
-                    $request->quantity = $quantity;
-                    $request->staff_id = $staff_id;
-                    $request->expiry_date = ($expiry_date !== 'NULL') ? date('Y-m-d', strtotime($expiry_date)) : NULL;
-                    $this->save($request);
-                }
+                $request->item_id = $item_id;
+                $request->quantity = $quantity;
+                $request->staff_id = $staff_id;
+                $request->expiry_date = ($expiry_date !== 'NULL') ? date('Y-m-d', strtotime($expiry_date)) : NULL;
+                $this->save($request);
             }
             // } catch (\Throwable $th) {
 

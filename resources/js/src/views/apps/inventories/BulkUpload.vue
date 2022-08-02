@@ -10,7 +10,7 @@
           <ol style="list-style-type: display;">
             <li>Make sure your file follows the header names as stated in the sample below</li>
             <li>Each column should contain only the information that the header name suggests</li>
-            <li>When all fields are correctly filled, upload the file, preview and then click SUMBIT</li>
+            <li>When all fields are correctly filled, upload the file, preview and then click SUBMIT</li>
           </ol> <br>
           <!-- <label>Sample</label>
           <div class="table-responsive">
