@@ -762,9 +762,14 @@ class CustomersController extends Controller
         $unassigned_customers = '';
         foreach ($customer_ids as $customer_id) {
             $customer = Customer::find($customer_id);
-            $customer->relating_officer = NULL;
-            $customer->save();
-            $unassigned_customers .= $customer->business_name . ', ';
+            $name = $customer->business_name;
+            $address = $customer->address;
+            $duplicate = Customer::where(['business_name' => $name, 'relating_officer' => $user->id])->where('address', 'LIKE', '%' . $address . '%')->count();
+            if ($duplicate > 1) {
+                $customer->relating_officer = NULL;
+                $customer->save();
+                $unassigned_customers .= $customer->business_name . ', ';
+            }
         }
 
         $title = "Customers Unassigned from Rep";
