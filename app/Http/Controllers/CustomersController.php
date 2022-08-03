@@ -764,6 +764,26 @@ class CustomersController extends Controller
         // return $this->prospectiveCustomers($request);
     }
 
+    public function unassignCustomersaThatAreNotMine(Request $request)
+    {
+        $today  = date('Y-m-d', strtotime('now'));
+        $user = $this->getUser();
+        $customer_ids = json_decode(json_encode($request->customer_ids));
+        $unassigned_customers = '';
+        foreach ($customer_ids as $customer_id) {
+            $customer = Customer::find($customer_id);
+            $customer->relating_officer = NULL;
+            $customer->save();
+            $unassigned_customers .= $customer->business_name . ', ';
+        }
+
+        $title = "Customers Unassigned from Rep";
+        $description = $user->name . " was unassigned from $unassigned_customers on $today";
+        $this->logUserActivity($title, $description, $user);
+
+        // return $this->prospectiveCustomers($request);
+    }
+
     /**
      * Remove the specified resource from storage.
      *

@@ -105,6 +105,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         Route::put('assign-field-staff/{relating_officer}', [CustomersController::class, 'assignFieldStaff'])->middleware('permission:assign-field-staff');
 
+        Route::post('unassign-customers-that-are-not-mine', [CustomersController::class, 'unassignCustomersaThatAreNotMine']);
+
 
 
         Route::delete('remove/{customer}', [CustomersController::class, 'destroy'])->middleware('permission:delete-customers');
