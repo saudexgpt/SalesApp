@@ -211,6 +211,7 @@ class CustomersController extends Controller
             return response()->json(compact('customers'), 200);
         }
     }
+    // fetch a particular rep customers. Queried by managera/ admin
     public function repCustomers(Request $request)
     {
         $rep_id = $request->rep_id;
@@ -218,19 +219,7 @@ class CustomersController extends Controller
         return response()->json(compact('customers'), 200);
     }
 
-    // public function schedules(Customer $customer)
-    // {
-    //     $today = date('Y-m-d', strtotime('now'));
-    //     $schedules = Schedule::where('customer_id', $customer->id)
-    //         ->where(function ($q) use ($today) {
-    //             $q->where('schedule_date', '>=', $today);
-    //             $q->orWhere('repeat_schedule', 'yes');
-    //         })
-    //         ->orderBy('day_num')
-    //         ->get()
-    //         ->groupBy('day');
-    //     return response()->json(compact('schedules'), 200);
-    // }
+    // Fetch the details of a particular customer
     public function customerDetails(Request $request, Customer $customer)
     {
         $year = $request->year;
@@ -272,6 +261,7 @@ class CustomersController extends Controller
         $debt = $customer->customerDebtReport($customer);
         return response()->json(compact('sales', 'debt', 'schedules', 'customer'), 200);
     }
+    // Fetch Rep's own Customers
     public function myCustomers(Request $request)
     {
         //
