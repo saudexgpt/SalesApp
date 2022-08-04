@@ -268,7 +268,7 @@ class CustomersController extends Controller
         $today  = date('Y-m-d', strtotime('now'));
         $user = $this->getUser();
         $condition = ['relating_officer' => $user->id];
-        $paginate = $request->paginate;
+        $paginate = 500; // $request->paginate;
         if ($paginate < 1) {
             $paginate = 100;
         }
