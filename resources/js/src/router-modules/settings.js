@@ -5,6 +5,7 @@ const settingsRoutes = {
   name: 'Settings',
   icon: 'SettingsIcon',
   i18n: 'Admin Settings',
+  slug: 'settings',
   meta: {
     roles: ['super', 'admin'],
   },

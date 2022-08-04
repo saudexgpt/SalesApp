@@ -289,6 +289,8 @@ class TransactionsController extends Controller
 
                     $invoice->due_date       = ($unsaved_order->payment_mode == 'later') ? date('Y-m-d', strtotime($date)) : date('Y-m-d', strtotime('now'));
                     $invoice->entry_date = ($request->entry_date != '') ? date('Y-m-d H:i:s', strtotime($request->entry_date)) : date('Y-m-d H:i:s', strtotime('now'));
+                    $invoice->created_at = $invoice->entry_date;
+                    $invoice->updated_at = $invoice->entry_date;
                     if ($invoice->save()) {
 
                         $invoice->invoice_no = $this->getInvoiceNo($prefix, $invoice->id);
