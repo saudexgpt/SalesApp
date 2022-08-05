@@ -31,7 +31,7 @@
       </el-col>
       <el-col :lg="6" :md="6" :sm="6" :xs="24">
         <label for="">Select Customer</label>
-        <el-select v-model="form.customer_id" filterable style="width: 100%">
+        <el-select :loading="load_customer" v-model="form.customer_id" loading-text filterable style="width: 100%" @change="loadPage()">
           <el-option
             v-if="customers.length > 0"
             label="All"
@@ -105,6 +105,7 @@ export default {
       future: false,
       show_calendar: false,
       downloadLoading: false,
+      load_customer: false,
     };
   },
   created() {
@@ -113,6 +114,12 @@ export default {
   },
   methods: {
     moment,
+    loadPage() {
+      const app = this;
+      if (app.form.from !== '') {
+        app.$emit('submitQuery', app.form);
+      }
+    },
     fetchTeams() {
       const app = this;
       // this.load_table = true;
@@ -145,6 +152,7 @@ export default {
     },
     fetchCustomers(rep_id) {
       const app = this;
+      app.loadPage();
       app.form.rep_id = rep_id;
       app.form.customer_id = 'all';
       app.load_customer = true;

@@ -29,7 +29,10 @@
     <el-row v-loading="load" :gutter="10">
       <br>
       <el-col :md="8">
-        <el-alert :closable="false" type="success"><h4>Total Debts: {{ currency }}{{ (total_debts.total_amount) ? total_debts.total_amount.toLocaleString() : 0 }}</h4></el-alert>
+        <el-alert :closable="false" type="error"><h4>Total Debts: {{ currency }}{{ (total_debts.total_amount) ? total_debts.total_amount.toLocaleString() : 0 }}</h4></el-alert>
+      </el-col>
+      <el-col :md="8">
+        <el-alert :closable="false" type="warning"><h4>Selected Date Debts: {{ currency }}{{ (dated_debts.total_amount) ? dated_debts.total_amount.toLocaleString() : 0 }}</h4></el-alert>
       </el-col>
       <v-client-table v-model="debts" :columns="debts_columns" :options="debts_options">
         <!-- <div slot="child_row" slot-scope="props" style="background: #000">
@@ -59,7 +62,7 @@
           slot="relating_officer"
           slot-scope="props"
           class="alert alert-info"
-        >{{ (props.row.customer.relating_officer) ? props.row.customer.assigned_officer.name : '' }}</div>
+        >{{ (props.row.staff) ? props.row.staff.name : '' }}</div>
         <div
           slot="total_amount_due"
           slot-scope="props"
@@ -91,7 +94,7 @@
         :total="total"
         :page.sync="form.page"
         :limit.sync="form.limit"
-        @pagination="fetchDebts"
+        @pagination="fetchDebts(form)"
       />
     </el-row>
   </vx-card>
@@ -139,7 +142,7 @@ export default {
         //   filter: 'Search:',
         // },
         // editableColumns:['name', 'category.name', 'sku'],
-        sortable: ['created_at'],
+        sortable: ['customer.business_name', 'created_at'],
         filterable: ['customer.business_name'],
       },
       load: false,
@@ -167,6 +170,9 @@ export default {
       total_debts: {
         total_amount: 0,
       },
+      dated_debts: {
+        total_amount: 0,
+      },
     };
   },
   created() {
@@ -187,6 +193,7 @@ export default {
           app.load = false;
           app.debts = response.debts.data;
           app.total_debts = response.total_debts;
+          app.dated_debts = response.dated_debts;
           app.currency = response.currency;
           app.sub_title = ' from ' + response.date_from + ' to ' + response.date_to;
           this.debts.forEach((element, index) => {
@@ -229,7 +236,7 @@ export default {
             return v['customer']['business_name'];
           }
           if (j === 'relating_officer') {
-            return (v['customer']['assigned_officer']) ? v['customer']['assigned_officer']['name'] : '';
+            return (v['staff']) ? v['staff']['name'] : '';
           }
           if (j === 'created_at') {
             return moment(v['created_at']).fromNow();

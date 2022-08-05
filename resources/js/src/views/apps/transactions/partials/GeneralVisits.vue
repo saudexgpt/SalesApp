@@ -16,7 +16,7 @@
         >Export Excel</el-button>
       </span>
     </div>
-    <el-row :gutter="10">
+    <!-- <el-row :gutter="10">
       <el-col :lg="12" :md="12" :sm="12" :xs="24">
         <label for="">Select Customer</label>
         <el-select v-model="form.customer_id" style="width: 100%" @input="fetchGeneralVisitReports">
@@ -49,7 +49,8 @@
           </el-button>
         </el-popover>
       </el-col>
-    </el-row>
+    </el-row> -->
+    <filter-options @submitQuery="fetchGeneralVisitReports" />
     <el-row :gutter="10">
       <v-client-table v-model="visit_details" :columns="visit_details_columns" :options="visit_details_options">
         <div
@@ -64,7 +65,7 @@
         :total="total"
         :page.sync="form.page"
         :limit.sync="form.limit"
-        @pagination="fetchGeneralVisitReports"
+        @pagination="fetchGeneralVisitReports(form)"
       />
     </el-row>
   </div>
@@ -136,7 +137,7 @@ export default {
     };
   },
   created() {
-    this.fetchGeneralVisitReports();
+    // this.fetchGeneralVisitReports();
   },
   methods: {
     moment,
@@ -162,12 +163,12 @@ export default {
       app.form.panel = panel;
       app.fetchGeneralVisitReports();
     },
-    fetchGeneralVisitReports() {
+    fetchGeneralVisitReports(param) {
       const app = this;
+      app.form = param;
       const { limit, page } = app.form;
       app.visit_details_options.perPage = limit;
       const visit_detailsResource = new Resource('visits/fetch-general-visits');
-      const param = app.form;
       visit_detailsResource.list(param)
         .then(response => {
           app.visit_details = response.visit_details.data;

@@ -60,6 +60,7 @@ class TransactionsController extends Controller
         $condition = $this->setQueryConditions($request, $rep_field_name);
         $delivery_status = $request->delivery_status;
         $total_debts = 0;
+        $dated_debts = 0;
         if ($user->hasRole('sales_rep')) {
 
             $debtsQuery = $user->debts()
@@ -101,7 +102,7 @@ class TransactionsController extends Controller
             $debtsQuery = CustomerDebt::groupBy('customer_id')
                 ->with([
                     'staff',
-                    'customer.assignedOfficer',
+                    'customer',
                     'payments' => function ($q) {
                         $q->orderBy('id', 'DESC');
                     },
@@ -109,17 +110,21 @@ class TransactionsController extends Controller
                 ->whereRaw('amount - paid > 0')
                 ->where('created_at', '<=',  $date_to)
                 ->where('created_at', '>=',  $date_from)
-                ->where($condition)
                 ->whereIn('field_staff', $sales_reps_ids)
+                ->where($condition)
                 ->select('*', \DB::raw('SUM(amount) as total_amount_due'), \DB::raw('SUM(paid) as total_amount_paid'));
             // $debts = Transaction::with(['customer', 'payments' => function ($q) {
             //     $q->orderBy('id', 'DESC');
             // }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->whereRaw('amount_due - amount_paid > 0')->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(50);
 
-            $total_debts = CustomerDebt::where('created_at', '<=',  $date_to)
+            $dated_debts = CustomerDebt::where('created_at', '<=',  $date_to)
                 ->where('created_at', '>=',  $date_from)
-                ->where($condition)
                 ->whereIn('field_staff', $sales_reps_ids)
+                ->where($condition)
+                ->select(\DB::raw('SUM(amount - paid) as total_amount'))->first();
+
+            $total_debts = CustomerDebt::whereIn('field_staff', $sales_reps_ids)
+                ->where($condition)
                 ->select(\DB::raw('SUM(amount - paid) as total_amount'))->first();
         }
         if ($paginate_option === 'all' || $user->hasRole('sales_rep')) {
@@ -130,7 +135,7 @@ class TransactionsController extends Controller
 
         $date_from = getDateFormatWords($date_from);
         $date_to = getDateFormatWords($date_to);
-        return response()->json(compact('debts', 'currency', 'total_debts', 'date_from', 'date_to'), 200);
+        return response()->json(compact('debts', 'currency', 'total_debts', 'dated_debts', 'date_from', 'date_to'), 200);
     }
     public function fetchSales(Request $request)
     {
