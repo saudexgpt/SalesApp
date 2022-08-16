@@ -65,8 +65,8 @@
           <div
             slot="customer.business_name"
             slot-scope="props">
-            {{ props.row.customer.business_name }} <br>
-            <small>{{ props.row.customer.address }}</small>
+            {{ (props.row.customer) ? props.row.customer.business_name : '' }} <br>
+            <small>{{ (props.row.customer) ? props.row.customer.address : '' }}</small>
           </div>
           <div
             slot="next_appointment_date"

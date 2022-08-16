@@ -120,6 +120,7 @@ class VisitsController extends Controller
         //     ->count();
 
         $company_customers_visits = Visit::join('customers', 'customers.id', 'visits.customer_id')
+            ->groupBy('customer_id', 'visit_date')
             ->where('customers.registered_by', 1)
             ->where('visits.visitor', $rep_id)
             ->where('visits.created_at', '<=',  $date_to)
@@ -140,6 +141,7 @@ class VisitsController extends Controller
 
 
         $reps_customers_visits = Visit::join('customers', 'customers.id', 'visits.customer_id')
+            ->groupBy('customer_id', 'visit_date')
             ->where('customers.registered_by', $rep_id)
             ->where('visits.visitor', $rep_id)
             ->where('visits.created_at', '<=',  $date_to)
