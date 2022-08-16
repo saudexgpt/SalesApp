@@ -4,8 +4,53 @@
       <div slot="header" class="clearfix">
         <feather-icon svg-classes="w-6 h-6" icon="HomeIcon" class="mr-2" />
         <strong class="font-medium text-lg">Sales Rep Visits Report {{ sub_title }}</strong>
+      </div>
+      <filter-options @submitQuery="fetchReports" />
+      <el-row v-if="show_chart" :gutter="20">
+        <el-col :md="12">
+          <vue-apex-charts
+            :options="chartOptions1"
+            :series="series1"
+            width="99%"
+            type="pie"
+          />
+        </el-col>
+        <el-col :md="12">
+          <vue-apex-charts
+            :options="chartOptions2"
+            :series="series2"
+            width="99%"
+            type="pie"
+          />
+        </el-col>
+        <!-- <el-col :md="12">
+          <h4>All Visits made</h4>
+          <aside>
+            <p>Company's Customers: {{ visited_company_customers }}</p>
+            <p>Rep's Customers: {{ visited_rep_customers }}</p>
+          </aside>
+          <h4>Visits {{ sub_title }}</h4>
+          <aside>
+            <p>Company's Customers: {{ company_customers_visits }}</p>
+            <p>Rep's Customers: {{ reps_customers_visits }}</p>
+          </aside>
+        </el-col> -->
+        <!-- <el-col :md="12">
+
+          <vue-apex-charts
+            v-if="show_chart"
+            :options="chartOptions3"
+            :series="series3"
+            width="99%"
+            type="pie"
+          />
+        </el-col> -->
+      </el-row>
+      <el-row v-loading="load" :gutter="10">
+
         <span style="float: right">
           <el-button
+            v-if="visits.length > 0"
             :loading="downloadLoading"
             round
             style="margin:0 0 20px 20px;"
@@ -15,11 +60,14 @@
             @click="handleDownload"
           >Export Excel</el-button>
         </span>
-      </div>
-      <filter-options @submitQuery="fetchReports" />
-      <el-row v-loading="load" :gutter="10">
         <br>
         <v-client-table v-model="visits" :columns="visits_columns" :options="visits_options">
+          <div
+            slot="customer.business_name"
+            slot-scope="props">
+            {{ props.row.customer.business_name }} <br>
+            <small>{{ props.row.customer.address }}</small>
+          </div>
           <div
             slot="next_appointment_date"
             slot-scope="props"
@@ -80,6 +128,7 @@
   </vx-card>
 </template>
 <script>
+import VueApexCharts from 'vue-apexcharts';
 import moment from 'moment';
 import Pagination from '@/components/Pagination';
 import Resource from '@/api/resource';
@@ -87,7 +136,7 @@ import checkPermission from '@/utils/permission'; // Permission checking
 import VisitDetails from './partials/VisitDetails';
 import FilterOptions from '@/views/apps/reports/FilterOptions';
 export default {
-  components: { Pagination, VisitDetails, FilterOptions },
+  components: { Pagination, VisitDetails, FilterOptions, VueApexCharts },
   //   props: {
   //     reps: {
   //       type: Array,
@@ -96,6 +145,107 @@ export default {
   //   },
   data() {
     return {
+      show_chart: false,
+      series1: [0, 0],
+      series2: [0, 0],
+      chartOptions1: {
+        chart: {
+          width: 350,
+          type: 'pie',
+        },
+        plotOptions: {
+          pie: {
+            startAngle: -90,
+            endAngle: 270,
+          },
+        },
+        labels: ['Company\'s Visited Customers', 'Company\'s Unvisited Customers'],
+        colors: ['#1fa30e', '#D12929'],
+        dataLabels: {
+          enabled: true,
+        },
+        fill: {
+          type: 'gradient',
+        },
+        legend: {
+          formatter: function(val, opts) {
+            return val + ': ' + opts.w.globals.series[opts.seriesIndex];
+          },
+          // position: 'bottom',
+          labels: {
+            colors: ['#000000'],
+          },
+        },
+        title: {
+          text: 'Company\'s Customers Stat',
+          align: 'center',
+          style: {
+            color: '#000000',
+          },
+        },
+        responsive: [{
+          breakpoint: 480,
+          options: {
+            chart: {
+              width: 350,
+            },
+            legend: {
+              position: 'bottom',
+            },
+          },
+        }],
+      },
+      chartOptions2: {
+        chart: {
+          width: 350,
+          type: 'pie',
+        },
+        plotOptions: {
+          pie: {
+            startAngle: -90,
+            endAngle: 270,
+          },
+        },
+        labels: ['Rep\'s Visited Customers', 'Rep\'s Unvisited Customers'],
+        colors: ['#1fa30e', '#D12929'],
+        dataLabels: {
+          enabled: true,
+        },
+        fill: {
+          type: 'gradient',
+        },
+        legend: {
+          formatter: function(val, opts) {
+            return val + ': ' + opts.w.globals.series[opts.seriesIndex];
+          },
+          // position: 'bottom',
+          labels: {
+            colors: ['#000000'],
+          },
+        },
+        title: {
+          text: 'Rep\'s Customers Stat',
+          align: 'center',
+          style: {
+            color: '#000000',
+          },
+        },
+        responsive: [{
+          breakpoint: 480,
+          options: {
+            chart: {
+              width: 350,
+            },
+            legend: {
+              position: 'bottom',
+            },
+          },
+        }],
+      },
+      visited_company_customers: 0,
+      visited_rep_customers: 0,
+      company_customers_visits: 0,
+      reps_customers_visits: 0,
       reps: [],
       customers: [],
       visits: [],
@@ -107,6 +257,7 @@ export default {
         'contact.name',
         'purpose',
         // 'market_feedback',
+        'customer.registrar.name',
         'visited_by.name',
         'visit_duration',
         'created_at',
@@ -118,6 +269,7 @@ export default {
           next_appointment_date: 'Next Appointment',
           proximity: 'Proximity (M)',
           'customer.business_name': 'Customer',
+          'customer.registrar.name': 'Registered By',
           'visited_by.name': 'Visited By',
           'contact.name': 'Personnel Contacted',
           created_at: 'Date',
@@ -173,6 +325,7 @@ export default {
     },
     fetchReports(param) {
       const app = this;
+      app.fetchVisitStat(param);
       app.form = param;
       app.load = true;
       const { limit, page } = app.form;
@@ -191,10 +344,32 @@ export default {
           app.load = false;
         });
     },
+    fetchVisitStat(param) {
+      const app = this;
+      app.show_chart = false;
+      const visitsResource = new Resource('visits/customer-visit-stat');
+      // const param = app.form;
+      app.series1[0] = app.series1[1] = 0;
+      visitsResource.list(param)
+        .then(response => {
+          app.series1[0] = response.company_customers_visits;
+          app.series1[1] = response.notvisited_company_customers;
+
+          app.series2[0] = response.reps_customers_visits;
+          app.series2[1] = response.notvisited_rep_customers;
+
+          //   app.company_customers_visits = response.company_customers_visits;
+          //   app.reps_customers_visits = response.reps_customers_visits;
+
+          //   app.visited_company_customers = response.visited_company_customers;
+          //   app.visited_rep_customers = response.visited_rep_customers;
+          app.show_chart = true;
+        });
+    },
     handleDownload() {
       this.downloadLoading = true;
       import('@/vendor/Export2Excel').then(excel => {
-        const multiHeader = [['Visits ' + this.sub_title, '', '', '', '', '', '', '', '', '']];
+        const multiHeader = [['Visits ' + this.sub_title, '', '', '', '', '', '', '', '', '', '']];
         const tHeader = [
           'CUSTOMER',
           'VISIT TYPE',
@@ -202,6 +377,7 @@ export default {
           'FOLLOW-UP SCHEDULE',
           'CONTACTED PERSONNEL',
           'PURPOSE',
+          'REGISTERED BY',
           'RELATING OFFICER',
           'VISIT DURATION',
           'CREATED AT',
@@ -213,6 +389,7 @@ export default {
           'next_appointment_date',
           'contact.name',
           'purpose',
+          'customer.registrar.name',
           'visited_by.name',
           'visit_duration',
           'created_at',
@@ -238,6 +415,9 @@ export default {
           }
           if (j === 'customer.business_name') {
             return (v['customer']) ? v['customer']['business_name'] : '';
+          }
+          if (j === 'customer.registrar.name') {
+            return (v['customer']) ? v['customer']['registrar']['name'] : '';
           }
           if (j === 'contact.name') {
             return (v['contact']) ? v['contact']['name'] : '';

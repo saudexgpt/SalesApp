@@ -78,6 +78,17 @@ const reportsRoutes = {
     },
     {
       hidden: false,
+      path: '/reports/detailings',
+      name: 'DetailedProducts',
+      slug: 'detailings',
+      i18n: 'Detailed Products',
+      component: () => import('@/views/apps/reports/Detailing'),
+    //   meta: {
+    //     permissions: ['read-inventories'],
+    //   },
+    },
+    {
+      hidden: false,
       path: '/reports/footprints',
       name: 'FootPrints',
       slug: 'foot-prints',

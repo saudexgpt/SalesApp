@@ -61,7 +61,7 @@ class VisitsController extends Controller
         $date_to = Carbon::now()->endOfMonth();
         $panel = 'quarter';
         $currency = $this->currency();
-        if (isset($request->from, $request->to, $request->panel)) {
+        if (isset($request->from, $request->to)) {
             $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
             $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
             $panel = $request->panel;
@@ -104,6 +104,122 @@ class VisitsController extends Controller
         return response()->json(compact('hospital_reports', 'currency', 'date_from', 'date_to'), 200);
     }
 
+    public function customerVisitStat(Request $request)
+    {
+        $rep_id = $request->rep_id;
+        $date_from = Carbon::now()->startOfMonth();
+        $date_to = Carbon::now()->endOfMonth();
+        if (isset($request->from, $request->to)) {
+            $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
+            $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
+        }
+        // $company_customers = Customer::where(['registered_by' => 1, 'relating_officer' => $rep_id])
+        //     ->count();
+
+        // $reps_customers = Customer::where(['registered_by' => $rep_id, 'relating_officer' => $rep_id])
+        //     ->count();
+
+        $company_customers_visits = Visit::join('customers', 'customers.id', 'visits.customer_id')
+            ->where('customers.registered_by', 1)
+            ->where('visits.visitor', $rep_id)
+            ->where('visits.created_at', '<=',  $date_to)
+            ->where('visits.created_at', '>=',  $date_from)
+            ->count();
+
+        $notvisited_company_customers = Customer::select('id')
+            ->where('customers.registered_by', 1)
+            ->where('customers.relating_officer', $rep_id)
+            ->whereNotExists(function ($query) use ($date_to, $date_from) {
+                $query->select(\DB::raw(1))
+                    ->from('visits')
+
+                    ->where('visits.created_at', '<=',  $date_to)
+                    ->where('visits.created_at', '>=',  $date_from)
+                    ->whereRaw('customers.id = visits.customer_id');
+            })->count();
+
+
+        $reps_customers_visits = Visit::join('customers', 'customers.id', 'visits.customer_id')
+            ->where('customers.registered_by', $rep_id)
+            ->where('visits.visitor', $rep_id)
+            ->where('visits.created_at', '<=',  $date_to)
+            ->where('visits.created_at', '>=',  $date_from)
+            ->count();
+        $notvisited_rep_customers = Customer::select('id')
+            ->where('customers.registered_by', $rep_id)
+            ->where('customers.relating_officer', $rep_id)
+            ->whereNotExists(function ($query) use ($date_to, $date_from) {
+                $query->select(\DB::raw(1))
+                    ->from('visits')
+
+                    ->where('visits.created_at', '<=',  $date_to)
+                    ->where('visits.created_at', '>=',  $date_from)
+                    ->whereRaw('customers.id = visits.customer_id');
+            })->count();
+
+        // return response()->json(compact('company_customers', 'reps_customers', 'company_customers_visits', 'reps_customers_visits', 'visited_company_customers', 'visited_rep_customers'), 200);
+
+        return response()->json(compact('company_customers_visits', 'notvisited_company_customers', 'reps_customers_visits', 'notvisited_rep_customers'), 200);
+    }
+    public function fetchDetailedProducts(Request $request)
+    {
+        $user = $this->getUser();
+        $paginate_option = $request->paginate_option;
+        $date_from = Carbon::now()->startOfMonth();
+        $date_to = Carbon::now()->endOfMonth();
+        $limit = 25;
+        if (isset($request->limit) && $request->limit != '') {
+            $limit = $request->limit;
+        }
+        if (isset($request->from, $request->to)) {
+            $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
+            $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
+            $panel = $request->panel;
+        }
+        $condition = [];
+        if (isset($request->customer_id) && $request->customer_id != 'all') {
+            $condition['customer_id'] = $request->customer_id;
+        }
+        if (isset($request->rep_id) && $request->rep_id != 'all') {
+            $condition['visitor'] = $request->rep_id;
+        }
+
+        if ($user->hasRole('sales_rep')) {
+
+            $visitsQuery = VisitDetailedProduct::with('visit.visitedBy', 'customer', 'item')
+                ->join('visits', 'visits.id', 'visit_detailed_products.visit_id')
+                ->where('visits.visitor',  $user->id)
+                ->where('created_at', '<=',  $date_to)
+                ->where('created_at', '>=',  $date_from)
+                ->where($condition);
+        }
+        // else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+        //     // $sales_reps_ids is in array form
+        //     list($sales_reps, $sales_reps_ids) = $this->teamMembers();
+        //     $visitsQuery = Visit::with('visitedBy', 'visitPartner', 'customer', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
+        //         ->where('created_at', '<=',  $date_to)
+        //         ->where('created_at', '>=',  $date_from)
+        //         ->where($condition)
+        //         ->whereIn('visits.visitor', $sales_reps_ids);
+        // }
+        else {
+            list($sales_reps, $sales_reps_ids) = $this->teamMembers($request->team_id);
+            $visitsQuery = VisitDetailedProduct::with('visit.visitedBy', 'customer', 'item')
+                ->rightJoin('visits', 'visits.id', 'visit_detailed_products.visit_id')
+                ->where('visit_detailed_products.created_at', '<=',  $date_to)
+                ->where('visit_detailed_products.created_at', '>=',  $date_from)
+                ->where($condition)
+                ->whereIn('visits.visitor', $sales_reps_ids);
+        }
+        if ($paginate_option === 'all') {
+            $detailings = $visitsQuery->get();
+        } else {
+            $detailings = $visitsQuery->paginate($limit);
+        }
+        $date_from = getDateFormatWords($date_from);
+        $date_to = getDateFormatWords($date_to);
+        return response()->json(compact('detailings', 'date_from', 'date_to'), 200);
+    }
     /**
      * Show the form for creating a new resource.
      *
@@ -117,7 +233,11 @@ class VisitsController extends Controller
         $date_to = Carbon::now()->endOfMonth();
         $panel = 'quarter';
         $currency = $this->currency();
-        if (isset($request->from, $request->to, $request->panel)) {
+        $limit = 25;
+        if (isset($request->limit) && $request->limit != '') {
+            $limit = $request->limit;
+        }
+        if (isset($request->from, $request->to)) {
             $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
             $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
             $panel = $request->panel;
@@ -149,7 +269,7 @@ class VisitsController extends Controller
         // }
         else {
             list($sales_reps, $sales_reps_ids) = $this->teamMembers($request->team_id);
-            $visitsQuery = Visit::with('visitedBy', 'visitPartner', 'customer', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
+            $visitsQuery = Visit::with('visitedBy', 'visitPartner', 'customer.registrar', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
                 ->where('created_at', '<=',  $date_to)
                 ->where('created_at', '>=',  $date_from)
                 ->where($condition)
@@ -158,7 +278,7 @@ class VisitsController extends Controller
         if ($paginate_option === 'all') {
             $visits = $visitsQuery->get();
         } else {
-            $visits = $visitsQuery->paginate(25);
+            $visits = $visitsQuery->paginate($limit);
         }
         $date_from = getDateFormatWords($date_from);
         $date_to = getDateFormatWords($date_to);
@@ -172,7 +292,7 @@ class VisitsController extends Controller
     //     $date_to = Carbon::now()->endOfMonth();
     //     $panel = 'quarter';
     //     $currency = $this->currency();
-    //     if (isset($request->from, $request->to, $request->panel)) {
+    //     if (isset($request->from, $request->to)) {
     //         $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
     //         $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
     //         $panel = $request->panel;

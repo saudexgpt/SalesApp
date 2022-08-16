@@ -52,10 +52,11 @@ class Visit extends Model
         if ($customer_id !== NULL) {
 
             $customer = Customer::find($customer_id);
+            $first_visit = Visit::where('customer_id', $customer_id)->first();
             $lat = (isset($unsaved_visit->rep_latitude)) ? $unsaved_visit->rep_latitude : NULL;
             $long = (isset($unsaved_visit->rep_longitude)) ? $unsaved_visit->rep_longitude : NULL;
 
-            if ($customer->latitude === NULL) {
+            if ($customer->latitude === NULL || (!$first_visit)) {
                 if ($lat !== NULL && $long !== NULL) {
 
                     $customer->latitude = $lat;

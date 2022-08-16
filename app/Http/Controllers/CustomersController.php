@@ -350,7 +350,10 @@ class CustomersController extends Controller
             $customer->business_name = $unsaved_customer->business_name;
             // $customer->email = $unsaved_customer->email;
             // $customer->phone1 = $unsaved_customer->phone1;
-            $customer->photo = $this->uploadPhoto($unsaved_customer->avatar);
+            if (isset($unsaved_customer->avatar) && $unsaved_customer->avatar !== '') {
+
+                $customer->photo = $this->uploadPhoto($unsaved_customer->avatar);
+            }
             // $customer->base64_encoded_image = $unsaved_customer->avatar;
             $customer->address = $formatted_address;
             $customer->street = $street;
@@ -399,10 +402,13 @@ class CustomersController extends Controller
         foreach ($unsaved_customers as $unsaved_customer) {
             try {
                 $customer = $this->saveCustomersDetails($unsaved_customer);
-                $unsaved_customer->customer_id = $customer->id;
+                if (!isset($unsaved_customer->id)) {
 
-                $visit_obj = new Visit();
-                $visit_obj->saveAsVisits($user, $unsaved_customer);
+                    $unsaved_customer->customer_id = $customer->id;
+                    // we want to record visitation only if it is a new entry
+                    $visit_obj = new Visit();
+                    $visit_obj->saveAsVisits($user, $unsaved_customer);
+                }
                 // $customer_list[] = $this->show($customer);
             } catch (\Throwable $th) {
                 $unsaved_list[] =  $unsaved_customer;

@@ -56,6 +56,10 @@ class TransactionsController extends Controller
             $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
             $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
         }
+        $limit = 25;
+        if (isset($request->limit) && $request->limit != '') {
+            $limit = $request->limit;
+        }
         $rep_field_name = 'field_staff';
         $condition = $this->setQueryConditions($request, $rep_field_name);
         $delivery_status = $request->delivery_status;
@@ -130,7 +134,7 @@ class TransactionsController extends Controller
         if ($paginate_option === 'all' || $user->hasRole('sales_rep')) {
             $debts = $debtsQuery->get();
         } else {
-            $debts = $debtsQuery->paginate(25);
+            $debts = $debtsQuery->paginate($limit);
         }
 
         $date_from = getDateFormatWords($date_from);
@@ -153,6 +157,10 @@ class TransactionsController extends Controller
         $condition = $this->setQueryConditions($request, $rep_field_name);
         $delivery_status = $request->delivery_status;
         $total_sales = 0;
+        $limit = 25;
+        if (isset($request->limit) && $request->limit != '') {
+            $limit = $request->limit;
+        }
         if ($user->hasRole('sales_rep')) {
 
             $salesQuery = $user->transactions()
@@ -185,7 +193,7 @@ class TransactionsController extends Controller
         if ($paginate_option === 'all') {
             $sales = $salesQuery->get();
         } else {
-            $sales = $salesQuery->paginate(25);
+            $sales = $salesQuery->paginate($limit);
         }
 
         $date_from = getDateFormatWords($date_from);
@@ -202,6 +210,10 @@ class TransactionsController extends Controller
         if (isset($request->from, $request->to)) {
             $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
             $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
+        }
+        $limit = 25;
+        if (isset($request->limit) && $request->limit != '') {
+            $limit = $request->limit;
         }
         $rep_field_name = 'transaction_details.field_staff';
         $condition = $this->setQueryConditions($request, $rep_field_name);
@@ -248,7 +260,7 @@ class TransactionsController extends Controller
         if ($paginate_option === 'all') {
             $sales = $salesQuery->get();
         } else {
-            $sales = $salesQuery->paginate(25);
+            $sales = $salesQuery->paginate($limit);
         }
         $date_from = getDateFormatWords($date_from);
         $date_to = getDateFormatWords($date_to);

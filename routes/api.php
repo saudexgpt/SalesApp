@@ -244,6 +244,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('fetch-general-visits', [VisitsController::class, 'fetchGeneralVisits']);
         Route::get('fetch-footprints', [VisitsController::class, 'fetchFootPrints']);
         Route::get('fetch-today-visits', [VisitsController::class, 'repTodayVisits']);
+        Route::get('customer-visit-stat', [VisitsController::class, 'customerVisitStat']);
+        Route::get('fetch-detailed-products', [VisitsController::class, 'fetchDetailedProducts']);
     });
 
     Route::group(['prefix' => 'reports'], function () {

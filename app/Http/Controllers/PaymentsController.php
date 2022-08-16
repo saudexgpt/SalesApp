@@ -44,6 +44,10 @@ class PaymentsController extends Controller
             $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
             $panel = $request->panel;
         }
+        $limit = 25;
+        if (isset($request->limit) && $request->limit != '') {
+            $limit = $request->limit;
+        }
         $rep_field_name = 'received_by';
         $condition = $this->setQueryConditions($request, $rep_field_name);
         $delivery_status = $request->delivery_status;
@@ -91,7 +95,7 @@ class PaymentsController extends Controller
         if ($paginate_option === 'all') {
             $payments = $paymentsQuery->get();
         } else {
-            $payments = $paymentsQuery->paginate(25);
+            $payments = $paymentsQuery->paginate($limit);
         }
         $date_from = getDateFormatWords($date_from);
         $date_to = getDateFormatWords($date_to);
