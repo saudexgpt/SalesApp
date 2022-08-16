@@ -122,6 +122,7 @@ class VisitsController extends Controller
         $company_customers_visits = Visit::join('customers', 'customers.id', 'visits.customer_id')
             ->groupBy(['customer_id', 'visit_date'])
             ->where('customers.registered_by', 1)
+            ->where('customers.relating_officer', $rep_id)
             ->where('visits.visitor', $rep_id)
             ->where('visits.created_at', '<=',  $date_to)
             ->where('visits.created_at', '>=',  $date_from)
@@ -130,10 +131,10 @@ class VisitsController extends Controller
         $notvisited_company_customers = Customer::select('id')
             ->where('customers.registered_by', 1)
             ->where('customers.relating_officer', $rep_id)
-            ->whereNotExists(function ($query) use ($date_to, $date_from) {
+            ->whereNotExists(function ($query) use ($date_to, $date_from, $rep_id) {
                 $query->select(\DB::raw(1))
                     ->from('visits')
-
+                    ->where('visits.visitor', $rep_id)
                     ->where('visits.created_at', '<=',  $date_to)
                     ->where('visits.created_at', '>=',  $date_from)
                     ->whereRaw('customers.id = visits.customer_id');
@@ -143,17 +144,19 @@ class VisitsController extends Controller
         $reps_customers_visits = Visit::join('customers', 'customers.id', 'visits.customer_id')
             ->groupBy(['customer_id', 'visit_date'])
             ->where('customers.registered_by', $rep_id)
+            ->where('customers.relating_officer', $rep_id)
             ->where('visits.visitor', $rep_id)
             ->where('visits.created_at', '<=',  $date_to)
             ->where('visits.created_at', '>=',  $date_from)
             ->get()->count();
+
         $notvisited_rep_customers = Customer::select('id')
             ->where('customers.registered_by', $rep_id)
             ->where('customers.relating_officer', $rep_id)
-            ->whereNotExists(function ($query) use ($date_to, $date_from) {
+            ->whereNotExists(function ($query) use ($date_to, $date_from, $rep_id) {
                 $query->select(\DB::raw(1))
                     ->from('visits')
-
+                    ->where('visits.visitor', $rep_id)
                     ->where('visits.created_at', '<=',  $date_to)
                     ->where('visits.created_at', '>=',  $date_from)
                     ->whereRaw('customers.id = visits.customer_id');
