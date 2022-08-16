@@ -119,8 +119,8 @@ class VisitsController extends Controller
         // $reps_customers = Customer::where(['registered_by' => $rep_id, 'relating_officer' => $rep_id])
         //     ->count();
 
-        $company_customers_visits = Visit::join('customers', 'customers.id', 'visits.customer_id')
-            ->groupBy('customer_id', 'visit_date')
+        $company_customers_visits = Visit::groupBy('customer_id', 'visit_date')
+            ->join('customers', 'customers.id', 'visits.customer_id')
             ->where('customers.registered_by', 1)
             ->where('visits.visitor', $rep_id)
             ->where('visits.created_at', '<=',  $date_to)
@@ -140,8 +140,8 @@ class VisitsController extends Controller
             })->count();
 
 
-        $reps_customers_visits = Visit::join('customers', 'customers.id', 'visits.customer_id')
-            ->groupBy('customer_id', 'visit_date')
+        $reps_customers_visits = Visit::groupBy('customer_id', 'visit_date')
+            ->join('customers', 'customers.id', 'visits.customer_id')
             ->where('customers.registered_by', $rep_id)
             ->where('visits.visitor', $rep_id)
             ->where('visits.created_at', '<=',  $date_to)
