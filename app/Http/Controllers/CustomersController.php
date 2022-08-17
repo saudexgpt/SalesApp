@@ -17,6 +17,7 @@ use App\Models\User;
 use App\Models\Visit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Carbon\Carbon;
 
 class CustomersController extends Controller
 {
@@ -215,7 +216,19 @@ class CustomersController extends Controller
     public function repCustomers(Request $request)
     {
         $rep_id = $request->rep_id;
-        $customers = Customer::where(['relating_officer' => $rep_id])->where('latitude', '!=', null)->orderBy('latitude')->get();
+        $date_from = Carbon::now()->startOfWeek();
+        $date_to = Carbon::now()->endOfWeek();
+        $customers = Customer::where(['relating_officer' => $rep_id])
+            ->where('latitude', '!=', null)
+            ->orderBy('latitude')
+            ->whereNotExists(function ($query) use ($date_to, $date_from, $rep_id) {
+                $query->select(\DB::raw(1))
+                    ->from('visits')
+                    ->where('visits.visitor', $rep_id)
+                    ->where('visits.created_at', '<=',  $date_to)
+                    ->where('visits.created_at', '>=',  $date_from)
+                    ->whereRaw('customers.id = visits.customer_id');
+            })->get();
         return response()->json(compact('customers'), 200);
     }
 
