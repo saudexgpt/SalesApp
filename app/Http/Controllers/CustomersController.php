@@ -215,7 +215,7 @@ class CustomersController extends Controller
     public function repCustomers(Request $request)
     {
         $rep_id = $request->rep_id;
-        $customers = Customer::where(['relating_officer' => $rep_id])->orderBy('business_name')->get();
+        $customers = Customer::where(['relating_officer' => $rep_id])->orderBy('latitude')->get();
         return response()->json(compact('customers'), 200);
     }
 
