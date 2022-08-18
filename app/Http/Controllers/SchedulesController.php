@@ -130,7 +130,7 @@ class SchedulesController extends Controller
         $today = date('Y-m-d', strtotime('now'));
         $day = date('l', strtotime('now'));
         $user = $this->getUser();
-        $schedules = Schedule::with('customer')
+        $schedules = Schedule::with('customer', 'scheduledBy', 'rep')
             ->where('rep', $user->id)
             ->where(function ($q) use ($day, $today) {
 
