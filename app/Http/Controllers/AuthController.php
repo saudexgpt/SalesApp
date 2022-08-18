@@ -127,6 +127,7 @@ class AuthController extends Controller
         $title = "Login Activity";
         $description = $user->name . " successfully logged into the system at " . date('Y-m-d H:i:s', strtotime('now'));
         $this->logUserActivity($title, $description);
+        $this->sendFirebaseMessage($title, $description);
         // return response()->json([
         //     'user_data' => $user_resource
         // ])->header('Authorization', $token);

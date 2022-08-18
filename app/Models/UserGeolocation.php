@@ -17,7 +17,7 @@ class UserGeolocation extends Model
     {
         $today = todayDate();
         $location = UserGeolocation::where('user_id', $user_id)
-            ->where('created_at', 'LIKE', $today . '%')->first();
+            ->where('created_at', 'LIKE', '%' . $today . '%')->first();
         // ->where(['longitude' => $longitude, 'latitude' => $latitude])->first();
         if (!$location) {
             $location = new UserGeolocation();

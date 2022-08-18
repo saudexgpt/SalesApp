@@ -14,6 +14,7 @@
             width="99%"
             type="pie"
           />
+          <h4 align="center">Company's Assigned Customers: {{ series1[0] + series1[1] }}</h4>
         </el-col>
         <el-col :md="12">
           <vue-apex-charts
@@ -22,6 +23,7 @@
             width="99%"
             type="pie"
           />
+          <h4 align="center">Rep's Own Customers: {{ series2[0] + series2[1] }}</h4>
         </el-col>
         <!-- <el-col :md="12">
           <h4>All Visits made</h4>
@@ -274,6 +276,12 @@ export default {
           'contact.name': 'Personnel Contacted',
           created_at: 'Date',
           action: '',
+        },
+        rowAttributesCallback(row) {
+          if (row.registered_by === 1) {
+            return { style: 'background: #00b95df8; color: #000000' };
+          }
+          // return { style: 'background: #36c15ecf; color: #000000' };
         },
         pagination: {
           dropdown: true,

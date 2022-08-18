@@ -349,6 +349,10 @@ class UsersController extends Controller
 
             $user_data->battery_status = $request->battery_level;
         }
+        if (isset($request->device_token)) {
+
+            $user_data->device_token = $request->device_token;
+        }
         $user_data->gps_status = 'on';
         $user_data->save();
         return 'success';

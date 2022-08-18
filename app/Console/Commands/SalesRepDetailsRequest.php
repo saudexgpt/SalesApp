@@ -179,17 +179,20 @@ class SalesRepDetailsRequest extends Command
         $customers = Customer::whereRaw('longitude IS NULL')->where('location_updated', '0')->get();
         foreach ($customers as $customer) {
             $first_visit = Visit::where('customer_id', $customer->id)->whereRaw('rep_latitude IS NOT NULL')->first();
-            $lat = $first_visit->rep_latitude;
-            $long = $first_visit->rep_longitude;
+            if ($first_visit) {
 
-            list($lat, $long, $formatted_address, $street, $area) = getLocationFromLatLong($lat, $long);
-            $customer->latitude =  $lat;
-            $customer->longitude = $long;
-            $customer->address = $formatted_address;
-            $customer->street = $street;
-            $customer->area = $area;
-            $customer->location_updated = '1';
-            $customer->save();
+                $lat = $first_visit->rep_latitude;
+                $long = $first_visit->rep_longitude;
+
+                list($lat, $long, $formatted_address, $street, $area) = getLocationFromLatLong($lat, $long);
+                $customer->latitude =  $lat;
+                $customer->longitude = $long;
+                $customer->address = $formatted_address;
+                $customer->street = $street;
+                $customer->area = $area;
+                $customer->location_updated = '1';
+                $customer->save();
+            }
         }
     }
     public function updateAllEmptyVisitAddresses()

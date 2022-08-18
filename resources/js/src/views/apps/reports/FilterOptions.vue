@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="no-print">
     <el-row :gutter="10">
       <el-col :lg="6" :md="6" :sm="6" :xs="24">
         <label for="">Select Team</label>
