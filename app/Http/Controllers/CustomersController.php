@@ -783,10 +783,10 @@ class CustomersController extends Controller
         foreach ($customer_ids as $customer_id) {
             $customer = Customer::find($customer_id);
             $name = $customer->business_name;
-            // $address = $customer->address;
+            $address = $customer->address;
             $duplicate = Customer::where('relating_officer', $user->id)
                 ->where('business_name', 'LIKE', '%' . $name . '%')
-                // ->where('address', 'LIKE', '%' . $address . '%')
+                ->where('address', 'LIKE', '%' . $address . '%')
                 ->count();
             $debtor = CustomerDebt::where('customer_id', $customer_id)->count();
             $paid = Payment::where('customer_id', $customer_id)->count();
