@@ -773,7 +773,7 @@ class CustomersController extends Controller
         // return $this->prospectiveCustomers($request);
     }
 
-    public function unassignCustomersaThatAreNotMine(Request $request)
+    public function unassignCustomersThatAreNotMine(Request $request)
     {
         $today  = date('Y-m-d', strtotime('now'));
         $user = $this->getUser();
@@ -782,8 +782,11 @@ class CustomersController extends Controller
         foreach ($customer_ids as $customer_id) {
             $customer = Customer::find($customer_id);
             $name = $customer->business_name;
-            $address = $customer->address;
-            $duplicate = Customer::where(['business_name' => $name, 'relating_officer' => $user->id])->where('address', 'LIKE', '%' . $address . '%')->count();
+            // $address = $customer->address;
+            $duplicate = Customer::where('relating_officer', $user->id)
+                ->where('business_name', 'LIKE', '%' . $name . '%')
+                // ->where('address', 'LIKE', '%' . $address . '%')
+                ->count();
             if ($duplicate > 1) {
                 $customer->relating_officer = NULL;
                 $customer->save();

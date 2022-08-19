@@ -119,16 +119,18 @@ class VisitsController extends Controller
         // $reps_customers = Customer::where(['registered_by' => $rep_id, 'relating_officer' => $rep_id])
         //     ->count();
 
-        $company_customers_visits = Visit::join('customers', 'customers.id', 'visits.customer_id')
+        $company_customers_visits = Visit::with('visitedBy', 'visitPartner', 'customer.registrar', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
+            ->join('customers', 'customers.id', 'visits.customer_id')
             ->groupBy(['customer_id'])
             ->where('customers.registered_by', 1)
-            ->where('customers.relating_officer', $rep_id)
+            // ->where('customers.relating_officer', $rep_id)
             ->where('visits.visitor', $rep_id)
             ->where('visits.created_at', '<=',  $date_to)
             ->where('visits.created_at', '>=',  $date_from)
-            ->get()->count();
+            ->select('visits.*')
+            ->get();
 
-        $notvisited_company_customers = Customer::select('id')
+        $notvisited_company_customers = Customer::select('id', 'business_name', 'address', 'latitude', 'longitude')
             ->where('customers.registered_by', 1)
             ->where('customers.relating_officer', $rep_id)
             ->whereNotExists(function ($query) use ($date_to, $date_from, $rep_id) {
@@ -138,19 +140,21 @@ class VisitsController extends Controller
                     ->where('visits.created_at', '<=',  $date_to)
                     ->where('visits.created_at', '>=',  $date_from)
                     ->whereRaw('customers.id = visits.customer_id');
-            })->count();
+            })->get();
 
 
-        $reps_customers_visits = Visit::join('customers', 'customers.id', 'visits.customer_id')
+        $reps_customers_visits = Visit::with('visitedBy', 'visitPartner', 'customer.registrar', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
+            ->join('customers', 'customers.id', 'visits.customer_id')
             ->groupBy(['customer_id'])
             ->where('customers.registered_by', $rep_id)
-            ->where('customers.relating_officer', $rep_id)
+            // ->where('customers.relating_officer', $rep_id)
             ->where('visits.visitor', $rep_id)
             ->where('visits.created_at', '<=',  $date_to)
             ->where('visits.created_at', '>=',  $date_from)
-            ->get()->count();
+            ->select('visits.*')
+            ->get();
 
-        $notvisited_rep_customers = Customer::select('id')
+        $notvisited_rep_customers = Customer::select('id', 'business_name', 'address', 'latitude', 'longitude')
             ->where('customers.registered_by', $rep_id)
             ->where('customers.relating_officer', $rep_id)
             ->whereNotExists(function ($query) use ($date_to, $date_from, $rep_id) {
@@ -160,7 +164,7 @@ class VisitsController extends Controller
                     ->where('visits.created_at', '<=',  $date_to)
                     ->where('visits.created_at', '>=',  $date_from)
                     ->whereRaw('customers.id = visits.customer_id');
-            })->count();
+            })->get();
 
         // return response()->json(compact('company_customers', 'reps_customers', 'company_customers_visits', 'reps_customers_visits', 'visited_company_customers', 'visited_rep_customers'), 200);
 

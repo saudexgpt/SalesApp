@@ -49,56 +49,258 @@
         </el-col> -->
       </el-row>
       <el-row v-loading="load" :gutter="10">
-
-        <span style="float: right">
-          <el-button
-            v-if="visits.length > 0"
-            :loading="downloadLoading"
-            round
-            style="margin:0 0 20px 20px;"
-            type="success"
-            icon="el-icon-download"
-            size="small"
-            @click="handleDownload"
-          >Export Excel</el-button>
-        </span>
-        <br>
-        <v-client-table v-model="visits" :columns="visits_columns" :options="visits_options">
-          <div
-            slot="customer.business_name"
-            slot-scope="props">
-            {{ (props.row.customer) ? props.row.customer.business_name : '' }} <br>
-            <small>{{ (props.row.customer) ? props.row.customer.address : '' }}</small>
-          </div>
-          <div
-            slot="next_appointment_date"
-            slot-scope="props"
-          >{{ (props.row.next_appointment_date) ? moment(props.row.next_appointment_date).format('lll') : '' }}
-          </div>
-          <div
-            slot="created_at"
-            slot-scope="props"
-          >{{ moment(props.row.created_at).format('lll') }}</div>
-          <div
-            slot="action"
-            slot-scope="props"
-          >
-            <el-tooltip
-              class="item"
-              effect="dark"
-              content="Visit Details"
-              placement="top-start"
-            >
+        <vs-tabs position="left" color="danger">
+          <vs-tab label="All Visits">
+            <span style="float: right">
               <el-button
+                v-if="visits.length > 0"
+                :loading="downloadLoading"
                 round
-                type="primary"
+                style="margin:0 0 20px 20px;"
+                type="success"
+                icon="el-icon-download"
                 size="small"
-                icon="el-icon-tickets"
-                @click="showDetails(props.row)"
-              />
-            </el-tooltip>
-          </div>
-        </v-client-table>
+                @click="handleDownload(visits, 'All Visits Report')"
+              >Export Excel</el-button>
+            </span>
+            <v-client-table v-model="visits" :columns="visits_columns" :options="visits_options">
+              <div
+                slot="customer.business_name"
+                slot-scope="props">
+                {{ (props.row.customer) ? props.row.customer.business_name : '' }} <br>
+                <small>{{ (props.row.customer) ? props.row.customer.address : '' }}</small>
+              </div>
+              <div
+                slot="next_appointment_date"
+                slot-scope="props"
+              >{{ (props.row.next_appointment_date) ? moment(props.row.next_appointment_date).format('lll') : '' }}
+              </div>
+              <div
+                slot="created_at"
+                slot-scope="props"
+              >{{ moment(props.row.created_at).format('lll') }}</div>
+              <div
+                slot="action"
+                slot-scope="props"
+              >
+                <el-tooltip
+                  class="item"
+                  effect="dark"
+                  content="Visit Details"
+                  placement="top-start"
+                >
+                  <el-button
+                    round
+                    type="primary"
+                    size="small"
+                    icon="el-icon-tickets"
+                    @click="showDetails(props.row)"
+                  />
+                </el-tooltip>
+              </div>
+            </v-client-table>
+          </vs-tab>
+          <vs-tab label="Company's Visited">
+            <span style="float: right">
+              <el-button
+                v-if="visits.length > 0"
+                :loading="downloadLoading"
+                round
+                style="margin:0 0 20px 20px;"
+                type="success"
+                icon="el-icon-download"
+                size="small"
+                @click="handleDownload(company_customers_visits, 'Company\'s Visited Customers Report')"
+              >Export Excel</el-button>
+            </span>
+            <v-client-table v-model="company_customers_visits" :columns="visits_columns" :options="visits_options">
+              <div
+                slot="customer.business_name"
+                slot-scope="props">
+                {{ (props.row.customer) ? props.row.customer.business_name : '' }} <br>
+                <small>{{ (props.row.customer) ? props.row.customer.address : '' }}</small>
+              </div>
+              <div
+                slot="next_appointment_date"
+                slot-scope="props"
+              >{{ (props.row.next_appointment_date) ? moment(props.row.next_appointment_date).format('lll') : '' }}
+              </div>
+              <div
+                slot="created_at"
+                slot-scope="props"
+              >{{ moment(props.row.created_at).format('lll') }}</div>
+              <div
+                slot="action"
+                slot-scope="props"
+              >
+                <el-tooltip
+                  class="item"
+                  effect="dark"
+                  content="Visit Details"
+                  placement="top-start"
+                >
+                  <el-button
+                    round
+                    type="primary"
+                    size="small"
+                    icon="el-icon-tickets"
+                    @click="showDetails(props.row)"
+                  />
+                </el-tooltip>
+              </div>
+            </v-client-table>
+          </vs-tab>
+          <vs-tab label="Company's Unvisited">
+            <span style="float: right">
+              <el-button
+                v-if="visits.length > 0"
+                :loading="downloadLoading"
+                round
+                style="margin:0 0 20px 20px;"
+                type="success"
+                icon="el-icon-download"
+                size="small"
+                @click="handleDownload2(company_unvisited_customers, 'Company\'s Unvisited Customers Report')"
+              >Export Excel</el-button>
+            </span>
+            <v-client-table v-model="company_unvisited_customers" :columns="unvisited_cust_columns" :options="unvisited_cust_options">
+              <div
+                slot="customer.business_name"
+                slot-scope="props">
+                {{ (props.row.customer) ? props.row.customer.business_name : '' }} <br>
+                <small>{{ (props.row.customer) ? props.row.customer.address : '' }}</small>
+              </div>
+              <div
+                slot="next_appointment_date"
+                slot-scope="props"
+              >{{ (props.row.next_appointment_date) ? moment(props.row.next_appointment_date).format('lll') : '' }}
+              </div>
+              <div
+                slot="created_at"
+                slot-scope="props"
+              >{{ moment(props.row.created_at).format('lll') }}</div>
+              <div
+                slot="action"
+                slot-scope="props"
+              >
+                <el-tooltip
+                  class="item"
+                  effect="dark"
+                  content="Visit Details"
+                  placement="top-start"
+                >
+                  <el-button
+                    round
+                    type="primary"
+                    size="small"
+                    icon="el-icon-tickets"
+                    @click="showDetails(props.row)"
+                  />
+                </el-tooltip>
+              </div>
+            </v-client-table>
+          </vs-tab>
+          <vs-tab label="Rep's Visited">
+            <span style="float: right">
+              <el-button
+                v-if="visits.length > 0"
+                :loading="downloadLoading"
+                round
+                style="margin:0 0 20px 20px;"
+                type="success"
+                icon="el-icon-download"
+                size="small"
+                @click="handleDownload(reps_customers_visits, 'Rep\'s Visited Customers Report')"
+              >Export Excel</el-button>
+            </span>
+            <v-client-table v-model="reps_customers_visits" :columns="visits_columns" :options="visits_options">
+              <div
+                slot="customer.business_name"
+                slot-scope="props">
+                {{ (props.row.customer) ? props.row.customer.business_name : '' }} <br>
+                <small>{{ (props.row.customer) ? props.row.customer.address : '' }}</small>
+              </div>
+              <div
+                slot="next_appointment_date"
+                slot-scope="props"
+              >{{ (props.row.next_appointment_date) ? moment(props.row.next_appointment_date).format('lll') : '' }}
+              </div>
+              <div
+                slot="created_at"
+                slot-scope="props"
+              >{{ moment(props.row.created_at).format('lll') }}</div>
+              <div
+                slot="action"
+                slot-scope="props"
+              >
+                <el-tooltip
+                  class="item"
+                  effect="dark"
+                  content="Visit Details"
+                  placement="top-start"
+                >
+                  <el-button
+                    round
+                    type="primary"
+                    size="small"
+                    icon="el-icon-tickets"
+                    @click="showDetails(props.row)"
+                  />
+                </el-tooltip>
+              </div>
+            </v-client-table>
+          </vs-tab>
+          <vs-tab label="Rep's Unvisited">
+            <span style="float: right">
+              <el-button
+                v-if="visits.length > 0"
+                :loading="downloadLoading"
+                round
+                style="margin:0 0 20px 20px;"
+                type="success"
+                icon="el-icon-download"
+                size="small"
+                @click="handleDownload2(rep_unvisited_customers, 'Rep\'s Unvisited Customers Report')"
+              >Export Excel</el-button>
+            </span>
+            <v-client-table v-model="rep_unvisited_customers" :columns="unvisited_cust_columns" :options="unvisited_cust_options">
+              <div
+                slot="customer.business_name"
+                slot-scope="props">
+                {{ (props.row.customer) ? props.row.customer.business_name : '' }} <br>
+                <small>{{ (props.row.customer) ? props.row.customer.address : '' }}</small>
+              </div>
+              <div
+                slot="next_appointment_date"
+                slot-scope="props"
+              >{{ (props.row.next_appointment_date) ? moment(props.row.next_appointment_date).format('lll') : '' }}
+              </div>
+              <div
+                slot="created_at"
+                slot-scope="props"
+              >{{ moment(props.row.created_at).format('lll') }}</div>
+              <div
+                slot="action"
+                slot-scope="props"
+              >
+                <el-tooltip
+                  class="item"
+                  effect="dark"
+                  content="Visit Details"
+                  placement="top-start"
+                >
+                  <el-button
+                    round
+                    type="primary"
+                    size="small"
+                    icon="el-icon-tickets"
+                    @click="showDetails(props.row)"
+                  />
+                </el-tooltip>
+              </div>
+            </v-client-table>
+          </vs-tab>
+        </vs-tabs>
       </el-row>
       <el-row :gutter="20">
         <pagination
@@ -244,12 +446,12 @@ export default {
           },
         }],
       },
-      visited_company_customers: 0,
-      visited_rep_customers: 0,
-      company_customers_visits: 0,
-      reps_customers_visits: 0,
       reps: [],
       customers: [],
+      company_customers_visits: [],
+      reps_customers_visits: [],
+      company_unvisited_customers: [],
+      rep_unvisited_customers: [],
       visits: [],
       visits_columns: [
         'customer.business_name',
@@ -264,6 +466,12 @@ export default {
         'visit_duration',
         'created_at',
         'action',
+      ],
+      unvisited_cust_columns: [
+        'business_name',
+        'address',
+        'latitude',
+        'longitude',
       ],
 
       visits_options: {
@@ -295,6 +503,22 @@ export default {
         // editableColumns:['name', 'category.name', 'sku'],
         sortable: ['created_at'],
         filterable: ['customer.business_name', 'next_appointment_date', 'created_at'],
+      },
+      unvisited_cust_options: {
+        headings: {
+        },
+        pagination: {
+          dropdown: true,
+          chunk: 100,
+        },
+        perPage: 100,
+        filterByColumn: false,
+        // texts: {
+        //   filter: 'Search:',
+        // },
+        // editableColumns:['name', 'category.name', 'sku'],
+        sortable: ['business_name'],
+        filterable: ['business_name', 'address'],
       },
       load: false,
       load_customer: false,
@@ -360,24 +584,23 @@ export default {
       app.series1[0] = app.series1[1] = 0;
       visitsResource.list(param)
         .then(response => {
-          app.series1[0] = response.company_customers_visits;
-          app.series1[1] = response.notvisited_company_customers;
+          app.series1[0] = response.company_customers_visits.length;
+          app.series1[1] = response.notvisited_company_customers.length;
 
-          app.series2[0] = response.reps_customers_visits;
-          app.series2[1] = response.notvisited_rep_customers;
+          app.series2[0] = response.reps_customers_visits.length;
+          app.series2[1] = response.notvisited_rep_customers.length;
 
-          //   app.company_customers_visits = response.company_customers_visits;
-          //   app.reps_customers_visits = response.reps_customers_visits;
-
-          //   app.visited_company_customers = response.visited_company_customers;
-          //   app.visited_rep_customers = response.visited_rep_customers;
+          app.company_customers_visits = response.company_customers_visits;
+          app.reps_customers_visits = response.reps_customers_visits;
+          app.company_unvisited_customers = response.notvisited_company_customers;
+          app.rep_unvisited_customers = response.notvisited_rep_customers;
           app.show_chart = true;
         });
     },
-    handleDownload() {
+    handleDownload(list, title) {
       this.downloadLoading = true;
       import('@/vendor/Export2Excel').then(excel => {
-        const multiHeader = [['Visits ' + this.sub_title, '', '', '', '', '', '', '', '', '', '']];
+        const multiHeader = [[title + ' ' + this.sub_title, '', '', '', '', '', '', '', '', '', '']];
         const tHeader = [
           'CUSTOMER',
           'VISIT TYPE',
@@ -402,13 +625,40 @@ export default {
           'visit_duration',
           'created_at',
         ];
-        const list = this.visits;
         const data = this.formatJson(filterVal, list);
         excel.export_json_to_excel({
           multiHeader,
           header: tHeader,
           data,
-          filename: 'Hospital Visit Report',
+          filename: title,
+          autoWidth: true,
+          bookType: 'csv',
+        });
+        this.downloadLoading = false;
+      });
+    },
+    handleDownload2(list, title) {
+      this.downloadLoading = true;
+      import('@/vendor/Export2Excel').then(excel => {
+        const multiHeader = [[title + ' ' + this.sub_title, '', '', '', '', '', '', '', '', '', '']];
+        const tHeader = [
+          'CUSTOMER',
+          'ADDRESS',
+          'LATITUDE',
+          'LONGITUDE',
+        ];
+        const filterVal = [
+          'business_name',
+          'address',
+          'latitude',
+          'longitude',
+        ];
+        const data = this.formatJson(filterVal, list);
+        excel.export_json_to_excel({
+          multiHeader,
+          header: tHeader,
+          data,
+          filename: title,
           autoWidth: true,
           bookType: 'csv',
         });
