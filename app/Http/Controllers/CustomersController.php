@@ -9,6 +9,7 @@ use App\Models\CustomerDebt;
 use App\Models\CustomerType;
 use App\Models\CustomerVerification;
 use App\Models\LocalGovernmentArea;
+use App\Models\Payment;
 use App\Models\SalesReports;
 use App\Models\SampleCustomer;
 use App\Models\Schedule;
@@ -787,7 +788,9 @@ class CustomersController extends Controller
                 ->where('business_name', 'LIKE', '%' . $name . '%')
                 // ->where('address', 'LIKE', '%' . $address . '%')
                 ->count();
-            if ($duplicate > 1) {
+            $debtor = CustomerDebt::where('customer_id', $customer_id)->count();
+            $paid = Payment::where('customer_id', $customer_id)->count();
+            if ($duplicate > 1 && $debtor == 0 && $paid == 0) {
                 $customer->relating_officer = NULL;
                 $customer->save();
                 $unassigned_customers .= $customer->business_name . ', ';
