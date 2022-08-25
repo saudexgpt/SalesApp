@@ -59,7 +59,7 @@ class Visit extends Model
             $long = (isset($unsaved_visit->rep_longitude)) ? $unsaved_visit->rep_longitude : NULL;
 
             if ($customer->latitude === NULL || (!$first_visit)) {
-                if ($lat !== NULL && $long !== NULL) {
+                if ($lat !== NULL && $lat !== $customer->latitude) {
 
                     $customer->latitude = $lat;
                     $customer->longitude = $long;
