@@ -10,7 +10,7 @@
       </div>
     </div>
     <el-row :gutter="10">
-      <el-col :lg="8" :md="8" :sm="8" :xs="24" style="background: #fcfcfc; padding: 10px;">
+      <el-col v-loading="load" :lg="8" :md="8" :sm="8" :xs="24" style="background: #fcfcfc; padding: 10px;">
         <label for="">Pick Schedule Date</label>
         <el-date-picker
           v-model="form.schedule_date"
@@ -37,7 +37,20 @@
 
           />
         </el-select>
-        <label for="">Repeat Schedule (Make Routine)</label>
+        <label for="">Schedule Recurrence</label>
+        <el-select
+          v-model="form.recurrence"
+          placeholder="Pick schedule recurrence"
+          style="width: 100%">
+          <el-option
+            v-for="(recurrence, recurrence_index) in recurrences"
+            :key="recurrence_index"
+            :label="recurrence.label"
+            :value="recurrence.value"
+
+          />
+        </el-select>
+        <!-- <label for="">Repeat Schedule (Make Routine)</label>
         <el-switch
           v-model="form.repeat_schedule"
           style="display: block"
@@ -45,7 +58,8 @@
           inactive-color="#ff4949"
           active-text="yes"
           inactive-text="no"
-        />
+          disabled
+        /> -->
         <hr>
 
         <el-button :disabled="form.customer_ids.length < 1" type="primary" round @click="calculateDistance(); show_submit_button = true">
@@ -110,10 +124,14 @@
               'select',
               'business_name',
               'address',
+              'last_visited'
             ]"
             :options="options"
             @filter="setNumberOfCustomersArray"
           >
+            <template slot="last_visited" slot-scope="scope">
+              <span>{{ (scope.row.last_visited) ? moment(scope.row.last_visited.visit_date).format('ll') : 'Not visited' }}</span>
+            </template>
             <template slot="business_name" slot-scope="scope">
               <strong>{{ scope.row.business_name }}</strong><br>
               <small><strong>Coordinate: </strong>{{ scope.row.longitude }}, {{ scope.row.latitude }}</small>
@@ -138,7 +156,7 @@
               :position="m.position"
               :icon="m.icon"
               @mouseout="showByIndex = null"
-              @click="center=m.position; showDetails(m.detail)"
+              @click="center=m.position;"
               @mouseover="showByIndex = index;"
             >
               <gmap-info-window
@@ -159,7 +177,7 @@
 </template>
 
 <script>
-// import CreateRoutineModal from './partials/CreateRoutineModal.vue'
+import moment from 'moment';
 import GmapCluster from 'vue2-google-maps/dist/components/cluster';
 import GmapPolyline from 'vue2-google-maps/dist/components/polyline';
 import Resource from '@/api/resource';
@@ -206,16 +224,23 @@ export default {
         //   filter: 'Search:',
         // },
         // editableColumns:['name', 'category.name', 'sku'],
-        sortable: ['business_name', 'address'],
-        filterable: ['business_name', 'address'],
+        sortable: ['business_name', 'address', 'last_visited'],
+        filterable: ['business_name', 'address', 'last_visited'],
       },
       form: {
         rep: '',
         customer_ids: [],
         schedule_date: '',
         note: 'Appointment Schedule',
-        repeat_schedule: 'no',
+        repeat_schedule: 'yes',
+        recurrence: 1,
       },
+      recurrences: [
+        { value: 1, label: 'Every Week' },
+        { value: 2, label: 'Once in 2 Weeks' },
+        { value: 3, label: 'Once in 3 Weeks' },
+        { value: 4, label: 'Once in a Month' },
+      ],
       load: false,
       load_customer: false,
       customers: [],
@@ -226,10 +251,11 @@ export default {
       no_of_customers_array: [],
     };
   },
-  created() {
-    this.setNumberOfCustomersArray();
-  },
+  //   created() {
+  //     this.setNumberOfCustomersArray();
+  //   },
   methods: {
+    moment,
     // filterMethod(query, item) {
     //   return item.label.toLowerCase().indexOf(query.toLowerCase()) > -1;
     // },
@@ -243,10 +269,12 @@ export default {
         .then(response => {
           app.customers = response.customers;
           app.load_customer = false;
+          app.setNumberOfCustomersArray();
         });
     },
     submitSchedule() {
       const app = this;
+      app.show_map = false;
       app.load = true;
       const submitScheduleResource = new Resource('schedules/store-rep-schedule');
       submitScheduleResource.store(app.form)
@@ -254,6 +282,8 @@ export default {
           app.$message('Schedule Saved Successfully');
           app.resetForm();
           app.load = false;
+          app.show_submit_button = false;
+          app.rearranged_schedule = [];
         }).catch(() => {
           app.load = false;
         });
@@ -345,7 +375,7 @@ export default {
       // eslint-disable-next-line no-array-constructor
       const distance_array = new Array();
       selected_customers.forEach(each_customer => {
-        const distance = app.getDistanceFromLatLonInKm(
+        const distance = app.haversineGreatCircleDistanceBetweenTwoPoints(
           each_customer.latitude,
           each_customer.longitude,
           latFrom,
@@ -353,15 +383,13 @@ export default {
         );
         let index = parseInt(distance);
         let distance_index = distance_array.indexOf(index);
-        for (let a = 0; a < 5; a++) {
-          if (distance_array[distance_index] !== undefined) {
-            distance_index++;
-            index++;
-          } else {
-            break;
-          }
-        }
-
+        // if (distance_array[distance_index] !== undefined) {
+        //   index++;
+        // }
+        do {
+          index = index + 100;
+          distance_index++;
+        } while (distance_array[distance_index] !== undefined);
         distance_array.push(index);
         const obj = {
           distance: parseInt(index),
@@ -369,8 +397,8 @@ export default {
         };
         unsorted_customers.push(obj);
         // // rearranged_schedule.splice(index, 0, obj);
-        // // latFrom = each_customer.latitude;
-        // // longFrom = each_customer.longitude;
+        latFrom = each_customer.latitude;
+        longFrom = each_customer.longitude;
         // rearranged_schedule[index] = obj;
         // rearranged_schedule.push({
         //   distance: index,
@@ -381,7 +409,7 @@ export default {
       distance_array.sort(function(a, b){
         return a - b;
       });
-      console.log(distance_array);
+      // console.log(distance_array);
       // We now want to arrange the selected customers based on the indexes of their sorted distances
       unsorted_customers.forEach(customer => {
         let index = distance_array.indexOf(customer.distance);
@@ -434,6 +462,36 @@ export default {
 
     deg2rad(deg) {
       return deg * (Math.PI / 180);
+    },
+
+    // haversine_distance(lat1, lon1, lat2, lon2) {
+    //   var R = 3958.8; // Radius of the Earth in miles
+    //   var rlat1 = lat1 * (Math.PI / 180); // Convert degrees to radians
+    //   var rlat2 = lat2 * (Math.PI / 180); // Convert degrees to radians
+    //   var difflat = rlat2 - rlat1; // Radian difference (latitudes)
+    //   var difflon = (lon2 - lat1) * (Math.PI / 180); // Radian difference (longitudes)
+
+    //   var d = 2 * R * Math.asin(Math.sqrt(Math.sin(difflat / 2) * Math.sin(difflat / 2) + Math.cos(rlat1) * Math.cos(rlat2) * Math.sin(difflon / 2) * Math.sin(difflon / 2)));
+    //   return d;
+    // },
+    haversineGreatCircleDistanceBetweenTwoPoints(
+      lat1, lon1, lat2, lon2
+    ) {
+      const app = this;
+      var R = 3958.8; // ratius of the earth in miles
+      // convert from degrees to radians
+      var latFrom = app.deg2rad(lat1);
+      var lonFrom = app.deg2rad(lon1);
+      var latTo = app.deg2rad(lat2);
+      var lonTo = app.deg2rad(lon2);
+
+      var latDelta = latTo - latFrom;
+      var lonDelta = lonTo - lonFrom;
+      var angle = 2 * Math.asin(Math.sqrt(Math.pow(Math.sin(latDelta / 2), 2) +
+Math.cos(latFrom) * Math.cos(latTo) * Math.pow(Math.sin(lonDelta / 2), 2)));
+      //   var angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) +
+      //     cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
+      return angle * R;
     },
   },
 };

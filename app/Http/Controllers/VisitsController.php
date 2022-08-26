@@ -106,69 +106,121 @@ class VisitsController extends Controller
 
     public function customerVisitStat(Request $request)
     {
-        $rep_id = $request->rep_id;
+        $condition1 = ['registered_by' => 1];
+        $condition2 = [];
+        $condition3 = 'registered_by != 1';
+        $condition4 = [];
+        $condition5 = [];
+        if (isset($request->rep_id) && $request->rep_id != 'all') {
+            $rep_id = $request->rep_id;
+            $condition2 = ['relating_officer' => $rep_id];
+            $condition3 = 'registered_by = ' . $rep_id;
+            $condition4 = ['visitor' =>  $rep_id];
+            $condition5 = ['rep' => $rep_id];
+        }
         $date_from = Carbon::now()->startOfMonth();
         $date_to = Carbon::now()->endOfMonth();
         if (isset($request->from, $request->to)) {
             $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
             $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
         }
-        // $company_customers = Customer::where(['registered_by' => 1, 'relating_officer' => $rep_id])
-        //     ->count();
+        $company_customers = Customer::where($condition1)
+            ->where($condition2)
+            ->count();
 
-        // $reps_customers = Customer::where(['registered_by' => $rep_id, 'relating_officer' => $rep_id])
-        //     ->count();
+        $reps_customers = Customer::where($condition2)
+            ->whereRaw($condition3)
+            ->count();
 
         $company_customers_visits = Visit::with('visitedBy', 'visitPartner', 'customer.registrar', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
             ->join('customers', 'customers.id', 'visits.customer_id')
             ->groupBy(['customer_id'])
-            ->where('customers.registered_by', 1)
+            ->whereRaw($condition3)
             // ->where('customers.relating_officer', $rep_id)
-            ->where('visits.visitor', $rep_id)
-            ->where('visits.created_at', '<=',  $date_to)
-            ->where('visits.created_at', '>=',  $date_from)
+            ->where($condition4)
+            // ->where('visits.created_at', '<=',  $date_to)
+            // ->where('visits.created_at', '>=',  $date_from)
             ->select('visits.*')
             ->get();
 
-        $notvisited_company_customers = Customer::select('id', 'business_name', 'address', 'latitude', 'longitude')
-            ->where('customers.registered_by', 1)
-            ->where('customers.relating_officer', $rep_id)
-            ->whereNotExists(function ($query) use ($date_to, $date_from, $rep_id) {
+        $notvisited_company_customers = Customer::with('assignedOfficer')
+            ->select('id', 'business_name', 'address', 'latitude', 'longitude', 'relating_officer')
+            ->where($condition1)
+            ->where($condition2)
+            ->whereNotExists(function ($query) use ($date_to, $date_from, $condition4) {
                 $query->select(\DB::raw(1))
                     ->from('visits')
-                    ->where('visits.visitor', $rep_id)
-                    ->where('visits.created_at', '<=',  $date_to)
-                    ->where('visits.created_at', '>=',  $date_from)
+                    ->where($condition4)
+                    // ->where('visits.created_at', '<=',  $date_to)
+                    // ->where('visits.created_at', '>=',  $date_from)
                     ->whereRaw('customers.id = visits.customer_id');
             })->get();
-
 
         $reps_customers_visits = Visit::with('visitedBy', 'visitPartner', 'customer.registrar', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
             ->join('customers', 'customers.id', 'visits.customer_id')
             ->groupBy(['customer_id'])
-            ->where('customers.registered_by', $rep_id)
+            ->whereRaw($condition3)
             // ->where('customers.relating_officer', $rep_id)
-            ->where('visits.visitor', $rep_id)
-            ->where('visits.created_at', '<=',  $date_to)
-            ->where('visits.created_at', '>=',  $date_from)
+            ->where($condition4)
+            // ->where('visits.created_at', '<=',  $date_to)
+            // ->where('visits.created_at', '>=',  $date_from)
             ->select('visits.*')
             ->get();
 
-        $notvisited_rep_customers = Customer::select('id', 'business_name', 'address', 'latitude', 'longitude')
-            ->where('customers.registered_by', $rep_id)
-            ->where('customers.relating_officer', $rep_id)
-            ->whereNotExists(function ($query) use ($date_to, $date_from, $rep_id) {
+        $notvisited_rep_customers = Customer::with('assignedOfficer')
+            ->select('id', 'business_name', 'address', 'latitude', 'longitude', 'relating_officer')
+            ->where($condition2)
+            ->whereRaw($condition3)
+            ->whereNotExists(function ($query) use ($date_to, $date_from, $condition4) {
                 $query->select(\DB::raw(1))
                     ->from('visits')
-                    ->where('visits.visitor', $rep_id)
-                    ->where('visits.created_at', '<=',  $date_to)
-                    ->where('visits.created_at', '>=',  $date_from)
+                    ->where($condition4)
+                    // ->where('visits.created_at', '<=',  $date_to)
+                    // ->where('visits.created_at', '>=',  $date_from)
                     ->whereRaw('customers.id = visits.customer_id');
             })->get();
 
-        // return response()->json(compact('company_customers', 'reps_customers', 'company_customers_visits', 'reps_customers_visits', 'visited_company_customers', 'visited_rep_customers'), 200);
 
-        return response()->json(compact('company_customers_visits', 'notvisited_company_customers', 'reps_customers_visits', 'notvisited_rep_customers'), 200);
+        $scheduled_visits = Visit::with('visitedBy', 'visitPartner', 'customer.registrar', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
+            ->where('created_at', '>=',  $date_from)
+            ->where('created_at', '<=',  $date_to)
+            ->where($condition4)
+            ->whereExists(function ($query) use ($date_to, $date_from, $condition5) {
+                $query->select(\DB::raw(1))
+                    ->from('schedules')
+                    ->where($condition5)
+                    ->where('schedule_date', '>=',  $date_from)
+                    ->where('schedule_date', '<=',  $date_to)
+                    ->whereRaw('schedules.customer_id = visits.customer_id');
+            })->get();
+        $unscheduled_visits = Visit::with('visitedBy', 'visitPartner', 'customer.registrar', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
+            ->where('created_at', '>=',  $date_from)
+            ->where('created_at', '<=',  $date_to)
+            ->where($condition4)
+            ->whereNotExists(function ($query) use ($date_to, $date_from, $condition5) {
+                $query->select(\DB::raw(1))
+                    ->from('schedules')
+                    ->where($condition5)
+                    ->where('schedule_date', '>=',  $date_from)
+                    ->where('schedule_date', '<=',  $date_to)
+                    ->whereRaw('schedules.customer_id = visits.customer_id');
+            })->get();
+
+        $unvisited_schedule = Schedule::with('scheduledBy', 'rep', 'customer')
+            ->where('schedule_date', '>=',  $date_from)
+            ->where('schedule_date', '<=',  $date_to)
+            ->where($condition5)
+            ->whereNotExists(function ($query) use ($date_to, $date_from, $condition4) {
+                $query->select(\DB::raw(1))
+                    ->from('visits')
+                    ->where($condition4)
+                    ->where('visits.created_at', '<=',  $date_to)
+                    ->where('visits.created_at', '>=',  $date_from)
+                    ->whereRaw('schedules.customer_id = visits.customer_id');
+            })->get();
+        return response()->json(compact('company_customers', 'reps_customers', 'company_customers_visits', 'reps_customers_visits', 'notvisited_company_customers', 'notvisited_rep_customers', 'scheduled_visits', 'unscheduled_visits', 'unvisited_schedule'), 200);
+
+        // return response()->json(compact('scheduled_visits', 'unscheduled_visits', 'unvisited_schedule'), 200);
     }
     public function fetchDetailedProducts(Request $request)
     {

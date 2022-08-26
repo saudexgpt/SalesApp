@@ -193,3 +193,12 @@ function getLocationFromAddress($address)
     // $area = $json->{'results'}[0]->{'address_components'}[4]->{'long_name'};
     return array($lat, $long, $formatted_address, $street, $area);
 }
+
+function setNextScheduleDate($current_date, $recurrence)
+{
+    $addition = '+1 week';
+    if ($recurrence > 1) {
+        $addition = '+' . $recurrence . ' weeks';
+    }
+    return  date('Y-m-d', strtotime($current_date . $addition));
+}

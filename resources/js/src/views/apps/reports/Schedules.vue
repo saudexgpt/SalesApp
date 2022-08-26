@@ -47,12 +47,12 @@ export default {
         headerToolbar: {
           // left: 'prev,next',
           // center: 'title',
-          right: 'timeGridWeek,timeGridDay,listWeek',
+          right: 'timeGridWeek,timeGridDay,listWeek,dayGridMonth',
           left: '',
           center: '',
         //   right: '',
         },
-        initialView: 'timeGridWeek',
+        initialView: 'dayGridMonth',
         // dateClick: this.handleDateClick,
         weekends: false,
         // editable: true,
@@ -129,6 +129,8 @@ export default {
           textColor: 'white',
           borderColor: 'white',
           daysOfWeek: [routine.day_num],
+          startRecur: routine.schedule_date,
+          endRecur: this.addHours(24, new Date(routine.schedule_date + 'T' + routine.schedule_time)),
           allDay: false,
         };
         events.push(eachEvent);

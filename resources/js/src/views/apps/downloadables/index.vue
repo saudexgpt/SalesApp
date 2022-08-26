@@ -148,12 +148,27 @@ export default {
         'customer.business_name',
         'visit_type',
         'proximity',
-        'next_appointment_date',
+        // 'next_appointment_date',
         'contact.name',
         'purpose',
         'visited_by.name',
         'visit_duration',
         'created_at',
+      ],
+      unvisited_cust_columns: [
+        'business_name',
+        'address',
+        'latitude',
+        'longitude',
+        'assigned_officer.name',
+      ],
+      unvisited_schedule_columns: [
+        'customer.business_name',
+        'customer.address',
+        'day',
+        'schedule_date',
+        'rep.name',
+        'scheduled_by.name',
       ],
       customers_columns: [
         'business_name',
@@ -300,22 +315,56 @@ export default {
       const param = app.form;
       param.paginate_option = 'all';
       const salesResource = new Resource('visits/fetch-general-visits');
+      const header = [
+        'CUSTOMER',
+        'VISIT TYPE',
+        'PROXIMITY (M)',
+        // 'FOLLOW-UP SCHEDULE',
+        'CONTACTED PERSONNEL',
+        'PURPOSE',
+        'RELATING OFFICER',
+        'VISIT DURATION',
+        'CREATED AT',
+      ];
+      const header2 = [
+        'CUSTOMER',
+        'ADDRESS',
+        'LATITUDE',
+        'LONGITUDE',
+        'REP',
+      ];
+      const header3 = [
+        'CUSTOMER',
+        'ADDRESS',
+        'DAY',
+        'SCHEDULE DATE',
+        'REP',
+        'SCHEDULED BY',
+      ];
       app.downloadLoading = true;
       salesResource.list(param)
         .then(response => {
           const sub_title = 'Visits from ' + response.date_from + ' to ' + response.date_to;
-          const header = [
-            'CUSTOMER',
-            'VISIT TYPE',
-            'PROXIMITY (M)',
-            'FOLLOW-UP SCHEDULE',
-            'CONTACTED PERSONNEL',
-            'PURPOSE',
-            'RELATING OFFICER',
-            'VISIT DURATION',
-            'CREATED AT',
-          ];
+
           app.handleDownload(response.visits, app.visits_columns, header, sub_title);
+        });
+      const visitsResource = new Resource('visits/customer-visit-stat');
+      visitsResource.list(param)
+        .then(response => {
+          app.handleDownload(response.scheduled_visits, app.visits_columns, header, 'Scheduled Visits Report');
+
+          app.handleDownload(response.unscheduled_visits, app.visits_columns, header, 'Unscheduled Visits Report');
+
+          app.handleDownload(response.unvisited_schedule, app.unvisited_schedule_columns, header3, 'Unvisited Schedule Report');
+
+          app.handleDownload(response.company_customers_visits, app.visits_columns, header, 'Company\'s Customers Visits Report');
+
+          app.handleDownload(response.reps_customers_visits, app.reps_customers_visits, header, 'Rep\'s Customers Visits Report');
+
+          app.handleDownload(response.notvisited_company_customers, app.unvisited_cust_columns, header2, 'Unvisited Company\'s Customers Report');
+
+          app.handleDownload(response.notvisited_rep_customers, app.unvisited_cust_columns, header2, 'Unvisited Rep\'s Customers Report');
+
           app.downloadLoading = false;
         });
     },
@@ -468,7 +517,7 @@ export default {
             return (v['date_verified']) ? moment(v['date_verified']).format('lll') : 'Not Verified';
           }
           if (j === 'last_visit') {
-            return (v['visits'].length > 0) ? moment(v['visits'][0]['visit_date']).format('ll') : 'Not Visited';
+            return (v['last_visited']) ? moment(v['last_visited']['visit_date']).format('ll') : 'Not Visited';
           }
           if (j === 'customer_type.name') {
             if (v['customer_type'] !== null) {
@@ -487,6 +536,9 @@ export default {
           }
           if (j === 'rep.name') {
             return v['rep']['name'];
+          }
+          if (j === 'scheduled_by.name') {
+            return v['scheduled_by']['name'];
           }
           if (j === 'item.name') {
             return v['item']['name'];

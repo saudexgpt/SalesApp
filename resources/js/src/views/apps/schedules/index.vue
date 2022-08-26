@@ -87,14 +87,14 @@ export default {
       calendarOptions: {
         plugins: [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin],
         headerToolbar: {
-          // left: 'prev,next',
+          left: 'prev,next',
           // center: 'title',
           right: 'listWeek,timeGridDay,timeGridWeek',
-          left: '',
+          // left: '',
           center: '',
         //   right: '',
         },
-        initialView: 'listWeek',
+        initialView: 'timeGridDay',
         // dateClick: this.handleDateClick,
         weekends: false,
         // editable: true,
@@ -165,24 +165,31 @@ export default {
 
       return this.moment(date).format('HH:mm:ss');
     },
+    randomColor() {
+      const colorCodes = ['#fadcb6', '#c9fab6', '#c1fab6', '#b6faef', '#b6d6fa', '#bab6fa', '#e4b6fa', '#fab6b9'];
+      const randomColor = colorCodes[Math.floor(Math.random() * colorCodes.length)];
+      return randomColor;
+    },
     setEvents(routines) {
       const app = this;
       const events = [];
       routines.forEach(routine => {
         const rep = (routine.rep) ? `${routine.rep.name}` : '';
         const customer = (routine.customer) ? `${routine.customer.business_name}` : '';
-
+        const scheduled_by = (routine.scheduled_by) ? `${routine.scheduled_by.name}` : '';
         const eachEvent = {
           id: routine.id,
-          title: `${routine.note} (${customer}) by ${rep}`,
+          title: `${customer} (${routine.note}) for ${rep} by ${scheduled_by}`,
           start: routine.schedule_date,
           end: this.schedule_date,
           startTime: routine.schedule_time,
           endTime: this.addHours(1, new Date(routine.schedule_date + 'T' + routine.schedule_time)),
-          // backgroundColor: routine.subject_teacher.subject.color_code,
-          textColor: 'white',
+          backgroundColor: app.randomColor(),
+          textColor: '#000000',
           borderColor: 'white',
           daysOfWeek: [routine.day_num],
+          startRecur: routine.schedule_date,
+          endRecur: this.addHours(24, new Date(routine.schedule_date + 'T' + routine.schedule_time)),
           allDay: false,
         };
         events.push(eachEvent);

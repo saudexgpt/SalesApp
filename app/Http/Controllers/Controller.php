@@ -13,6 +13,7 @@ use App\Models\Customer;
 use App\Models\LocalGovernmentArea;
 use App\Models\ManagerDomain;
 use App\Models\Role;
+use App\Models\Schedule;
 use App\Models\State;
 use App\Models\SubInventory;
 use App\Models\TeamMember;
@@ -27,6 +28,7 @@ class Controller extends BaseController
 
 
     protected $user;
+
 
     public function addTeamProducts($team_id, $item_id)
     {

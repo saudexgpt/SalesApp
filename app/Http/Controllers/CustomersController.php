@@ -219,17 +219,22 @@ class CustomersController extends Controller
         $rep_id = $request->rep_id;
         $date_from = Carbon::now()->startOfWeek();
         $date_to = Carbon::now()->endOfWeek();
-        $customers = Customer::where(['relating_officer' => $rep_id])
+        $customers = Customer::with(['lastVisited' => function ($q) {
+            $q->orderBy('id', 'DESC');
+        }])
+            ->where(['relating_officer' => $rep_id])
             ->where('latitude', '!=', null)
+            // ->orderBy('longitude')
             ->orderBy('latitude')
-            ->whereNotExists(function ($query) use ($date_to, $date_from, $rep_id) {
-                $query->select(\DB::raw(1))
-                    ->from('visits')
-                    ->where('visits.visitor', $rep_id)
-                    ->where('visits.created_at', '<=',  $date_to)
-                    ->where('visits.created_at', '>=',  $date_from)
-                    ->whereRaw('customers.id = visits.customer_id');
-            })->get();
+            ->get();
+        // ->whereNotExists(function ($query) use ($date_to, $date_from, $rep_id) {
+        //     $query->select(\DB::raw(1))
+        //         ->from('visits')
+        //         ->where('visits.visitor', $rep_id)
+        //         ->where('visits.created_at', '<=',  $date_to)
+        //         ->where('visits.created_at', '>=',  $date_from)
+        //         ->whereRaw('customers.id = visits.customer_id');
+        // })->get();
         return response()->json(compact('customers'), 200);
     }
 
