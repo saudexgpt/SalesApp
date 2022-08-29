@@ -104,10 +104,10 @@ class CustomersController extends Controller
 
             // $sales_reps_ids is in array form
             list($sales_reps, $sales_reps_ids) = $this->teamMembers();
-            $userQuery = $userQuery->with($relationships)->where($condition)->whereIn('relating_officer', $sales_reps_ids)->orderBy('id', 'DESC');
+            $userQuery = $userQuery->with($relationships)->where($condition)->whereIn('relating_officer', $sales_reps_ids)->orderBy('business_name');
         } else {
             // admin and super admin only
-            $userQuery = $userQuery->with($relationships)->where($condition)->orderBy('id', 'DESC');
+            $userQuery = $userQuery->with($relationships)->where($condition)->orderBy('business_name');
         }
         $paginate_option = $request->paginate_option;
         if ($paginate_option === 'all') {

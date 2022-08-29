@@ -6,6 +6,8 @@ use App\Models\Customer;
 use App\Models\CustomerReport;
 use App\Models\DailyReport;
 use App\Models\HospitalReport;
+use App\Models\ManagerDomain;
+use App\Models\ManagerLogin;
 use App\Models\Payment;
 use App\Models\ReturnedProduct;
 use App\Models\Schedule;
@@ -14,6 +16,7 @@ use App\Models\Transaction;
 use App\Models\Visit;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class ReportsController extends Controller
 {
@@ -226,27 +229,32 @@ class ReportsController extends Controller
             $schedule->save();
         }
     }
-    // private function formatDownloadableConditions($data)
-    // {
-    //     $condition = [];
-    //     $team_id = $data->team_id;
-    //     $rep_id = $data->rep_id;
-    //     $customer_id = $data->customer_id;
-    //     $rep_ids = [];
-    //     if ($rep_id === 'all') {
 
+    public function populateManagerLogin()
+    {
+        $manager_domains = ManagerDomain::get();
 
-    //         $team_members = TeamMember::where('team_id', $team_id)->get();
-    //         foreach ($team_members as $team_member) {
-    //             $rep_ids[] = $team_member->user_id;
-    //         }
+        foreach ($manager_domains as $manager_domain) {
+            # code...
+        }
+    }
 
-    //     }else {
-    //         # code...
-    //     }
-    // }
-    // public function downloadables(Request $request)
-    // {
-    //     $table = $request->table;
-    // }
+    public function managerLogins(Request $request)
+    {
+        $date_from = Carbon::now()->startOfMonth();
+        $date_to = Carbon::now()->endOfMonth();
+        if (isset($request->from, $request->to)) {
+            $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
+            $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
+        }
+        $condition = [];
+        if (isset($request->user_id) && $request->user_id != '') {
+            $condition = ['user_id' => $request->user_id];
+        }
+        $manager_logins = ManagerLogin::with('user')->where($condition)
+            ->where('created_at', '>=',  $date_from)
+            ->where('created_at', '<=',  $date_to)
+            ->get();
+        return response()->json(compact('manager_logins'), 200);
+    }
 }
