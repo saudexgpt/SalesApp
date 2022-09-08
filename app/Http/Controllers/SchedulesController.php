@@ -5,54 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use App\Models\Schedule;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+
 
 class SchedulesController extends Controller
 {
-    public function __construct()
-    {
-        $this->updateScheduleDate();
-        $this->assignRepsToTheirCustomerSchedule();
-    }
+    // public function __construct()
+    // {
+    //     $this->updateScheduleDate();
+    //     $this->assignRepsToTheirCustomerSchedule();
+    // }
 
-    public function updateScheduleDate()
-    {
-        $today = date('Y-m-d', strtotime('now'));
-        $schedules = Schedule::where('schedule_date', '<', $today)->orderBy('day_num')->get();
-        foreach ($schedules as $schedule) {
-            $schedule_date = $schedule->schedule_date;
-            $next_date_old = $schedule->next_date;
-            $recurrence = $schedule->recurrence;
-            if ($next_date_old === NULL) {
-                $next_date_old = setNextScheduleDate($schedule_date, $recurrence);
-            }
-            $schedule->schedule_date = $next_date_old;
-            $schedule->next_date = setNextScheduleDate($next_date_old, $recurrence);
-            $schedule->save();
-        }
-    }
-    public function assignRepsToTheirCustomerSchedule()
-    {
-        DB::table('schedules')->chunkById(100, function ($schedules) {
-            foreach ($schedules as $schedule) {
-                $customer = Customer::find($schedule->customer_id);
-                if ($customer) {
 
-                    $relating_officer = $customer->relating_officer;
-                    if ($relating_officer != NULL) {
-
-                        DB::table('schedules')
-                            ->where('customer_id', $schedule->customer_id)
-                            ->update(['rep' => $customer->relating_officer]);
-                    } else {
-                        DB::table('schedules')->where('customer_id', $schedule->customer_id)->delete();
-                    }
-                } else {
-                    DB::table('schedules')->where('customer_id', $schedule->customer_id)->delete();
-                }
-            }
-        });
-    }
     /**
      * Display a listing of the resource.
      *
@@ -106,22 +69,26 @@ class SchedulesController extends Controller
     {
         $user = $this->getUser();
         $schedule_date = date('Y-m-d', strtotime($request->schedule_date));
-        $schedule_time = $request->schedule_time;
-        if ($schedule_time === '') {
-            $schedule_time = 'now';
-        }
-        $schedule_time = date('H:i:s', strtotime($schedule_time));
-        $customer_id = $request->customer_id;
+        // $schedule_time = $request->schedule_time;
+        // if ($schedule_time === '') {
+        //     $schedule_time = 'now';
+        // }
+        // $schedule_time = date('H:i:s', strtotime($schedule_time));
+        $schedule_time = '8:00:00';
+        // $customer_id = $request->customer_id;
+        $customer_ids = $request->customer_ids;
         $rep = $request->rep;
         $note = $request->note;
-        // $repeat_schedule = $request->repeat_schedule;
+        $repeat_schedule = $request->repeat_schedule;
         $recurrence = (isset($request->recurrence)) ? $request->recurrence : 1;
         $next_date = setNextScheduleDate($schedule_date, $recurrence);
         $day = date('l', strtotime($request->schedule_date)); // returns 'Monday' or 'Tuesday' , etc
         $day_num = workingDaysStr($day);
-        $schedule = Schedule::where(['customer_id' => $customer_id, 'rep' => $rep, 'schedule_date' => $schedule_date])->first();
-        if (!$schedule) {
-            $schedule = new Schedule();
+        foreach ($customer_ids as $customer_id) {
+            $schedule = Schedule::where(['customer_id' => $customer_id, 'rep' => $rep, 'schedule_date' => $schedule_date])->first();
+            if (!$schedule) {
+                $schedule = new Schedule();
+            }
             $schedule->day = $day;
             $schedule->day_num = $day_num;
             $schedule->schedule_date = $schedule_date;
@@ -129,11 +96,12 @@ class SchedulesController extends Controller
             $schedule->customer_id = $customer_id;
             $schedule->rep = $rep;
             $schedule->note = $note;
-            $schedule->repeat_schedule = 'yes'; // $repeat_schedule;
+            $schedule->repeat_schedule = ($recurrence == 0) ? 'no' : 'yes'; // $repeat_schedule;
             $schedule->recurrence = $recurrence;
             $schedule->next_date = $next_date;
             $schedule->scheduled_by = $user->id;
             $schedule->save();
+            $schedule_time = date('H:i:s', strtotime($schedule_time . ' +30 minutes'));
         }
     }
     public function storeRepSchedule(Request $request)

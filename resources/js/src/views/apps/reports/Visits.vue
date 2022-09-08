@@ -11,41 +11,57 @@
         </el-col>
       </el-row>
       <br><br>
-      <el-row :gutter="10">
-        <el-col :md="6">
+      <el-row v-if="show_chart" :gutter="10">
+        <el-col :md="12">
           <el-card shadow="always">
             <div slot="header" class="clearfix">
               <span>Total Visits: {{ total }}</span>
             </div>
-            <h4>Scheduled: {{ scheduled_visits.length }}</h4>
-            <h4>Unscheduled: {{ unscheduled_visits.length }}</h4>
+            <!-- <h4>Scheduled: {{ scheduled_visits.length }}</h4>
+            <h4>Unscheduled: {{ unscheduled_visits.length }}</h4> -->
+            <vue-apex-charts
+              :options="chartOptions1"
+              :series="[scheduled_visits.length, unscheduled_visits.length]"
+            />
           </el-card>
         </el-col>
-        <el-col :md="6">
+        <el-col :md="12">
           <el-card shadow="always">
             <div slot="header" class="clearfix">
               <span>Total Schedules: {{ parseInt(scheduled_visits.length + unvisited_schedule.length) }}</span>
             </div>
-            <h4>Visited: {{ scheduled_visits.length }}</h4>
-            <h4>Unvisited: {{ unvisited_schedule.length }}</h4>
+            <!-- <h4>Visited: {{ scheduled_visits.length }}</h4>
+            <h4>Unvisited: {{ unvisited_schedule.length }}</h4> -->
+            <vue-apex-charts
+              :options="chartOptions2"
+              :series="[scheduled_visits.length, unvisited_schedule.length]"
+            />
           </el-card>
         </el-col>
-        <el-col :md="6">
+        <el-col :md="12">
           <el-card shadow="always">
             <div slot="header" class="clearfix">
               <span>Company's Customers: {{ company_customers }}</span>
             </div>
-            <h4>Visited: {{ company_customers_visits.length }}</h4>
-            <h4>Unvisited: {{ notvisited_company_customers.length }}</h4>
+            <!-- <h4>Visited: {{ company_customers_visits.length }}</h4>
+            <h4>Unvisited: {{ notvisited_company_customers.length }}</h4> -->
+            <vue-apex-charts
+              :options="chartOptions2"
+              :series="[company_customers_visits.length, notvisited_company_customers.length]"
+            />
           </el-card>
         </el-col>
-        <el-col :md="6">
+        <el-col :md="12">
           <el-card shadow="always">
             <div slot="header" class="clearfix">
               <span>Rep's Customers: {{ reps_customers }}</span>
             </div>
-            <h4>Visited: {{ reps_customers_visits.length }}</h4>
-            <h4>Unvisited: {{ notvisited_rep_customers.length }}</h4>
+            <!-- <h4>Visited: {{ reps_customers_visits.length }}</h4>
+            <h4>Unvisited: {{ notvisited_rep_customers.length }}</h4> -->
+            <vue-apex-charts
+              :options="chartOptions2"
+              :series="[reps_customers_visits.length, notvisited_rep_customers.length]"
+            />
           </el-card>
         </el-col>
       </el-row>
@@ -499,102 +515,86 @@ export default {
   data() {
     return {
       show_chart: false,
-      series1: [0, 0],
-      // series2: [0, 0],
-      //   chartOptions1: {
-      //     chart: {
-      //       width: 350,
-      //       type: 'pie',
-      //     },
-      //     plotOptions: {
-      //       pie: {
-      //         startAngle: -90,
-      //         endAngle: 270,
-      //       },
-      //     },
-      //     labels: ['Scheduled Visits', 'Unscheduled Visits'],
-      //     colors: ['#1fa30e', '#D12929'],
-      //     dataLabels: {
-      //       enabled: true,
-      //     },
-      //     fill: {
-      //       type: 'gradient',
-      //     },
-      //     legend: {
-      //       formatter: function(val, opts) {
-      //         return val + ': ' + opts.w.globals.series[opts.seriesIndex];
-      //       },
-      //       // position: 'bottom',
-      //       labels: {
-      //         colors: ['#000000'],
-      //       },
-      //     },
-      //     title: {
-      //       text: 'Visit Schedule Chart',
-      //       align: 'center',
-      //       style: {
-      //         color: '#000000',
-      //       },
-      //     },
-      //     responsive: [{
-      //       breakpoint: 480,
-      //       options: {
-      //         chart: {
-      //           width: 350,
-      //         },
-      //         legend: {
-      //           position: 'bottom',
-      //         },
-      //       },
-      //     }],
-      //   },
-      //   chartOptions2: {
-      //     chart: {
-      //       width: 350,
-      //       type: 'pie',
-      //     },
-      //     plotOptions: {
-      //       pie: {
-      //         startAngle: -90,
-      //         endAngle: 270,
-      //       },
-      //     },
-      //     labels: ['Rep\'s Visited Customers', 'Rep\'s Unvisited Customers'],
-      //     colors: ['#1fa30e', '#D12929'],
-      //     dataLabels: {
-      //       enabled: true,
-      //     },
-      //     fill: {
-      //       type: 'gradient',
-      //     },
-      //     legend: {
-      //       formatter: function(val, opts) {
-      //         return val + ': ' + opts.w.globals.series[opts.seriesIndex];
-      //       },
-      //       // position: 'bottom',
-      //       labels: {
-      //         colors: ['#000000'],
-      //       },
-      //     },
-      //     title: {
-      //       text: 'Rep\'s Customers Stat',
-      //       align: 'center',
-      //       style: {
-      //         color: '#000000',
-      //       },
-      //     },
-      //     responsive: [{
-      //       breakpoint: 480,
-      //       options: {
-      //         chart: {
-      //           width: 350,
-      //         },
-      //         legend: {
-      //           position: 'bottom',
-      //         },
-      //       },
-      //     }],
-      //   },
+      chartOptions1: {
+        chart: {
+          width: 350,
+          type: 'pie',
+        },
+        plotOptions: {
+          pie: {
+            startAngle: -90,
+            endAngle: 270,
+          },
+        },
+        labels: ['Scheduled', 'Unscheduled'],
+        colors: ['#1fa30e', '#D12929'],
+        dataLabels: {
+          enabled: true,
+        },
+        fill: {
+          type: 'gradient',
+        },
+        legend: {
+          formatter: function(val, opts) {
+            return val + ': ' + opts.w.globals.series[opts.seriesIndex];
+          },
+          // position: 'bottom',
+          labels: {
+            colors: ['#000000'],
+          },
+        },
+        responsive: [{
+          breakpoint: 480,
+          options: {
+            chart: {
+              width: 350,
+            },
+            legend: {
+              position: 'bottom',
+            },
+          },
+        }],
+      },
+      chartOptions2: {
+        chart: {
+          width: 350,
+          type: 'pie',
+        },
+        plotOptions: {
+          pie: {
+            startAngle: -90,
+            endAngle: 270,
+          },
+        },
+        labels: ['Visited', 'Unvisited'],
+        colors: ['#1fa30e', '#D12929'],
+        dataLabels: {
+          enabled: true,
+        },
+        fill: {
+          type: 'gradient',
+        },
+        legend: {
+          formatter: function(val, opts) {
+            return val + ': ' + opts.w.globals.series[opts.seriesIndex];
+          },
+          // position: 'bottom',
+          labels: {
+            colors: ['#000000'],
+          },
+        },
+        responsive: [{
+          breakpoint: 480,
+          options: {
+            chart: {
+              width: 350,
+            },
+            legend: {
+              position: 'bottom',
+            },
+          },
+        }],
+      },
       reps: [],
       customers: [],
       scheduled_visits: [],
@@ -739,6 +739,9 @@ export default {
       app.selected_visit = visit;
       app.page = 'details';
     },
+    mileToMeter(mile) {
+      return mile * 1609.34;
+    },
     fetchReports(param) {
       const app = this;
       app.fetchVisitStat(param);
@@ -765,11 +768,11 @@ export default {
       app.show_chart = false;
       const visitsResource = new Resource('visits/customer-visit-stat');
       // const param = app.form;
-      app.series1[0] = app.series1[1] = 0;
+      // app.series1[0] = app.series1[1] = 0;
       visitsResource.list(param)
         .then(response => {
-          app.series1[0] = response.scheduled_visits.length;
-          app.series1[1] = response.unscheduled_visits.length;
+        //   app.series1[0] = response.scheduled_visits.length;
+        //   app.series1[1] = response.unscheduled_visits.length;
 
           //   app.series2[0] = response.reps_customers_visits.length;
           //   app.series2[1] = response.notvisited_rep_customers.length;

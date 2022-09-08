@@ -60,6 +60,10 @@ function addSingleElementToString($parent_string, $child_string)
     return $str;
 }
 
+function mileToMetre($mile)
+{
+    return $mile * 1609.34;
+}
 /**
  * Calculates the great-circle distance between two points, with
  * the Haversine formula.
@@ -75,7 +79,8 @@ function haversineGreatCircleDistanceBetweenTwoPoints(
     $longitudeFrom,
     $latitudeTo,
     $longitudeTo,
-    $earthRadius = 6371000  /*6378137*/
+    $earthRadius = 3958.8 // in mile
+    // 6371000  /*6378137*/ in meter
 ) {
     // convert from degrees to radians
     $latFrom = deg2rad($latitudeFrom);
@@ -196,9 +201,13 @@ function getLocationFromAddress($address)
 
 function setNextScheduleDate($current_date, $recurrence)
 {
-    $addition = '+1 week';
-    if ($recurrence > 1) {
-        $addition = '+' . $recurrence . ' weeks';
+    if ($recurrence > 0) {
+
+        $addition = '+1 week';
+        if ($recurrence > 1) {
+            $addition = '+' . $recurrence . ' weeks';
+        }
+        return  date('Y-m-d', strtotime($current_date . $addition));
     }
-    return  date('Y-m-d', strtotime($current_date . $addition));
+    return  date('Y-m-d', strtotime($current_date));
 }

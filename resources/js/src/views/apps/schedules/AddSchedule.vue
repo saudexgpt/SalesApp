@@ -236,6 +236,7 @@ export default {
         recurrence: 1,
       },
       recurrences: [
+        { value: 0, label: 'Just This Once' },
         { value: 1, label: 'Every Week' },
         { value: 2, label: 'Once in 2 Weeks' },
         { value: 3, label: 'Once in 3 Weeks' },

@@ -287,7 +287,7 @@ class CustomersController extends Controller
         $today  = date('Y-m-d', strtotime('now'));
         $user = $this->getUser();
         $condition = ['relating_officer' => $user->id];
-        $paginate = 500; // $request->paginate;
+        $paginate = $request->paginate;
         if ($paginate < 1) {
             $paginate = 100;
         }
@@ -300,6 +300,9 @@ class CustomersController extends Controller
         }
         $customers = Customer::with([
             'customerContacts',
+            'lastVisited' => function ($q) {
+                $q->orderBy('id', 'DESC');
+            },
             // 'state',
             // 'lga',
             // 'customerType', 'registrar', 'assignedOfficer', 'verifier',

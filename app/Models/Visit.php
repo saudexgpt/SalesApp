@@ -50,45 +50,51 @@ class Visit extends Model
         $unsaved_list = '';
         $customer_id = (isset($unsaved_visit->customer_id)) ? $unsaved_visit->customer_id : NULL;
         if ($customer_id !== NULL) {
-
-            $customer = Customer::find($customer_id);
-            //check for first visit where proximity is less than or equal to 100m
-            $first_visit = Visit::where('customer_id', $customer_id)->where('proximity', '<=', 100)->first();
-
-            $lat = (isset($unsaved_visit->rep_latitude)) ? $unsaved_visit->rep_latitude : NULL;
-            $long = (isset($unsaved_visit->rep_longitude)) ? $unsaved_visit->rep_longitude : NULL;
-
-            if ($customer->latitude === NULL || (!$first_visit)) {
-                if ($lat !== NULL && $lat !== $customer->latitude) {
-
-                    $customer->latitude = $lat;
-                    $customer->longitude = $long;
-                    $customer->save();
-                }
-            }
-            $visit_date = (isset($unsaved_visit->visit_date)) ? date('Y-m-d', strtotime($unsaved_visit->visit_date)) : date('Y-m-d', strtotime('now')); // $unsaved_visit->visit_date;
-            $customer_contact_id = (isset($unsaved_visit->contact_id)) ? $unsaved_visit->contact_id : null;
-
-            // $purposes = json_decode(json_encode($unsaved_visit->purpose));
-            $purpose = (isset($unsaved_visit->purpose)) ? $unsaved_visit->purpose : 'Detailing';
-            $visit_type = 'off site';
-            $distance = NULL;
-            if ($lat != NULL && $lat != '') {
-                $location_obj = new UserGeolocation();
-                $location_obj->updateLocation($user->id, $lat, $long);
-
-                $distance = haversineGreatCircleDistanceBetweenTwoPoints(
-                    $customer->latitude,
-                    $customer->longitude,
-                    $lat,
-                    $long,
-                );
-                // we are giving 100 meter allowance
-                if ($distance < 100) {
-                    $visit_type = 'on site';
-                }
-            }
             try {
+                $customer = Customer::find($customer_id);
+                //check for first visit where proximity is less than or equal to 100m
+                $first_visit = Visit::where('customer_id', $customer_id)->where('proximity', '<=', 100)->first();
+
+                $lat = (isset($unsaved_visit->rep_latitude)) ? $unsaved_visit->rep_latitude : NULL;
+                $long = (isset($unsaved_visit->rep_longitude)) ? $unsaved_visit->rep_longitude : NULL;
+
+                if ($customer->latitude === NULL || (!$first_visit)) {
+                    if ($lat !== NULL && $lat !== $customer->latitude) {
+                        // check is any suce customer exists
+                        $exisiting_customer = Customer::where(['business_name' => $customer->business_name, 'latitude' => $lat, 'longitude' => $long])->first();
+                        if (!$exisiting_customer) {
+
+                            $customer->latitude = $lat;
+                            $customer->longitude = $long;
+                            $customer->save();
+                        }
+                    }
+                }
+                $visit_date = (isset($unsaved_visit->visit_date)) ? date('Y-m-d', strtotime($unsaved_visit->visit_date)) : date('Y-m-d', strtotime('now')); // $unsaved_visit->visit_date;
+                $customer_contact_id = (isset($unsaved_visit->contact_id)) ? $unsaved_visit->contact_id : null;
+
+                // $purposes = json_decode(json_encode($unsaved_visit->purpose));
+                $purpose = (isset($unsaved_visit->purpose)) ? $unsaved_visit->purpose : 'Detailing';
+                $visit_type = 'off site';
+                $distance = NULL;
+                if ($lat != NULL && $lat != '') {
+                    $location_obj = new UserGeolocation();
+                    $location_obj->updateLocation($user->id, $lat, $long);
+
+                    // this distance is in Miles. We are going to convert it to metre
+                    $distance = haversineGreatCircleDistanceBetweenTwoPoints(
+                        $customer->latitude,
+                        $customer->longitude,
+                        $lat,
+                        $long,
+                    );
+                    $distance = mileToMetre($distance);
+                    // we are giving 100 metre allowance
+                    if ($distance < 100) {
+                        $visit_type = 'on site';
+                    }
+                }
+
                 $date = $visit_date;
                 $visit = Visit::where(['customer_id' => $customer_id, 'visitor' => $user->id, 'visit_date' => $date])->first();
 

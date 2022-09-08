@@ -5,9 +5,11 @@ namespace App\Console\Commands;
 use App\Models\Customer;
 use App\Models\Item;
 use App\Models\ItemPrice;
+use App\Models\Schedule;
 use Illuminate\Console\Command;
 use App\Models\User;
 use App\Models\Visit;
+use Illuminate\Support\Facades\DB;
 
 class SalesRepDetailsRequest extends Command
 {
@@ -74,7 +76,7 @@ class SalesRepDetailsRequest extends Command
             $basic_unit = $warehouse_item->basic_unit;
             $basic_unit_quantity_per_package_type = $warehouse_item->basic_unit_quantity_per_package_type;
             $picture = $warehouse_item->picture;
-            $item = Item::where('name', $name)->first();
+            $item = Item::find($id);
             if (!$item) {
                 $item = new Item();
             }
@@ -208,9 +210,49 @@ class SalesRepDetailsRequest extends Command
             }
         }
     }
+    public function updateScheduleDate()
+    {
+        $today = date('Y-m-d', strtotime('now'));
+        $schedules = Schedule::where('schedule_date', '<', $today)->where('recurrence', '>', 0)->orderBy('day_num')->get();
+        foreach ($schedules as $schedule) {
+            $schedule_date = $schedule->schedule_date;
+            $next_date_old = $schedule->next_date;
+            $recurrence = $schedule->recurrence;
+            if ($next_date_old === NULL) {
+                $next_date_old = setNextScheduleDate($schedule_date, $recurrence);
+            }
+            $schedule->schedule_date = $next_date_old;
+            $schedule->next_date = setNextScheduleDate($next_date_old, $recurrence);
+            $schedule->save();
+        }
+    }
+    public function assignRepsToTheirCustomerSchedule()
+    {
+        DB::table('schedules')->chunkById(100, function ($schedules) {
+            foreach ($schedules as $schedule) {
+                $customer = Customer::find($schedule->customer_id);
+                if ($customer) {
+
+                    $relating_officer = $customer->relating_officer;
+                    if ($relating_officer != NULL) {
+
+                        DB::table('schedules')
+                            ->where('customer_id', $schedule->customer_id)
+                            ->update(['rep' => $customer->relating_officer]);
+                    } else {
+                        DB::table('schedules')->where('customer_id', $schedule->customer_id)->delete();
+                    }
+                } else {
+                    DB::table('schedules')->where('customer_id', $schedule->customer_id)->delete();
+                }
+            }
+        });
+    }
     public function handle()
     {
         //
+        $this->updateScheduleDate();
+        $this->assignRepsToTheirCustomerSchedule();
         $this->fetchWarehouseProducts();
         $this->updateAllEmptyVisitAddresses();
         $this->fetchWarehouseRepDetails();
