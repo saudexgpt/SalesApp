@@ -78,10 +78,11 @@ function haversineGreatCircleDistanceBetweenTwoPoints(
     $latitudeFrom,
     $longitudeFrom,
     $latitudeTo,
-    $longitudeTo,
-    $earthRadius = 3958.8 // in mile
-    // 6371000  /*6378137*/ in meter
+    $longitudeTo
 ) {
+
+    $earthRadius = 3958.8; // in mile
+    // 6371000  /*6378137*/ in meter
     // convert from degrees to radians
     $latFrom = deg2rad($latitudeFrom);
     $lonFrom = deg2rad($longitudeFrom);

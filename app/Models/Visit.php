@@ -74,23 +74,24 @@ class Visit extends Model
                 $customer_contact_id = (isset($unsaved_visit->contact_id)) ? $unsaved_visit->contact_id : null;
 
                 // $purposes = json_decode(json_encode($unsaved_visit->purpose));
-                $purpose = (isset($unsaved_visit->purpose)) ? $unsaved_visit->purpose : 'Detailing';
+                $purpose = (isset($unsaved_visit->purpose)) ? $unsaved_visit->purpose : 'Mere Visit';
                 $visit_type = 'off site';
                 $distance = NULL;
                 if ($lat != NULL && $lat != '') {
                     $location_obj = new UserGeolocation();
                     $location_obj->updateLocation($user->id, $lat, $long);
 
-                    // this distance is in Miles. We are going to convert it to metre
+                    // this distance is in Miles. We are going to convert it to metres
                     $distance = haversineGreatCircleDistanceBetweenTwoPoints(
                         $customer->latitude,
                         $customer->longitude,
                         $lat,
                         $long,
                     );
+                    //converting miles to metres
                     $distance = mileToMetre($distance);
-                    // we are giving 100 metre allowance
-                    if ($distance < 100) {
+                    // we are giving 1000 metre allowance
+                    if ($distance < 1000) {
                         $visit_type = 'on site';
                     }
                 }

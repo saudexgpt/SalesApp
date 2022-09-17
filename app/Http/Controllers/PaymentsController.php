@@ -42,7 +42,6 @@ class PaymentsController extends Controller
         if (isset($request->from, $request->to)) {
             $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
             $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
-            $panel = $request->panel;
         }
         $limit = 25;
         if (isset($request->limit) && $request->limit != '') {
@@ -57,10 +56,10 @@ class PaymentsController extends Controller
             $paymentsQuery = Payment::groupBy(['payment_date', 'customer_id'])
                 ->with(['customer', 'confirmer'])
                 ->where('received_by', $user->id)
-                ->where('payment_date', '<=',  $date_to)
                 ->where('payment_date', '>=',  $date_from)
+                ->where('payment_date', '<=',  $date_to)
                 ->where($condition)
-                ->orderBy('id', 'DESC')
+                ->orderBy('payment_date', 'DESC')
                 ->select('*', \DB::raw('SUM(amount) as total_amount'));
         }
         // else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
