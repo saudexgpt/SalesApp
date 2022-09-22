@@ -185,6 +185,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('store-rep-schedule', [SchedulesController::class, 'storeRepSchedule']);
         Route::get('today-schedule', [SchedulesController::class, 'todaySchedule']);
         Route::post('store', [SchedulesController::class, 'store']); //->middleware('permission:create-sales');
+        Route::delete('destroy/{schedule}', [SchedulesController::class, 'destroy']);
     });
     Route::group(['prefix' => 'teams'], function () {
         Route::get('/', [TeamsController::class, 'index']);
