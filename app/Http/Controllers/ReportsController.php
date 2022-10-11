@@ -375,6 +375,7 @@ class ReportsController extends Controller
             ->select(\DB::raw('SUM(amount - paid) as total_amount'))->first();
 
         $total_debts = CustomerDebt::whereIn('field_staff', $sales_reps_ids)
+            ->whereIn('field_staff', $sales_reps_ids)
             ->where($condition)
             ->select(\DB::raw('SUM(amount - paid) as total_amount'))->first();
 
@@ -467,4 +468,5 @@ class ReportsController extends Controller
         $date_to = getDateFormatWords($date_to);
         return response()->json(compact('returns', 'date_from', 'date_to'), 200);
     }
+    /////////////////////////DOWNLOADABLES/////////////////////
 }
