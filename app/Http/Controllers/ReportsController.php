@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\CustomerDebt;
 use App\Models\CustomerReport;
 use App\Models\DailyReport;
 use App\Models\HospitalReport;
@@ -13,6 +14,7 @@ use App\Models\ReturnedProduct;
 use App\Models\Schedule;
 use App\Models\TeamMember;
 use App\Models\Transaction;
+use App\Models\TransactionDetail;
 use App\Models\Visit;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -20,6 +22,7 @@ use Illuminate\Support\Facades\DB;
 
 class ReportsController extends Controller
 {
+    protected $start_date = '2022-08-01 12:00:00'; // the date the app started being in use
     //
     public function visitedCustomers(Request $request)
     {
@@ -256,5 +259,212 @@ class ReportsController extends Controller
             ->where('created_at', '<=',  $date_to)
             ->get();
         return response()->json(compact('manager_logins'), 200);
+    }
+
+    /////////////////////////DOWNLOADABLES/////////////////////
+    public function productSales(Request $request)
+    {
+        $date_from = $this->start_date; // Carbon::now()->startOfMonth();
+        $date_to = Carbon::now()->endOfMonth();
+        $panel = 'quarter';
+        $currency = $this->currency();
+        if (isset($request->from, $request->to)) {
+            $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
+            $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
+            $panel = $request->panel;
+        }
+        $rep_field_name = 'field_staff';
+        $condition = $this->setQueryConditions($request, $rep_field_name);
+        $total_sales = 0;
+        list($sales_reps, $sales_reps_ids) = $this->allTeamMembers($request->team_id);
+        $salesQuery = TransactionDetail::with('transaction.customer')
+            ->join('transactions', 'transactions.id', 'transaction_details.transaction_id')
+            ->join('users', 'transactions.field_staff', 'users.id')
+            ->where('transaction_details.created_at', '<=',  $date_to)
+            ->where('transaction_details.created_at', '>=',  $date_from)
+            ->where($condition)
+            ->whereIn('transactions.field_staff', $sales_reps_ids)
+            ->orderBy('transaction_details.id', 'DESC');
+
+        $total_sales = TransactionDetail::where('created_at', '<=',  $date_to)
+            ->where('created_at', '>=',  $date_from)
+            ->where($condition)
+            ->whereIn('field_staff', $sales_reps_ids)
+            ->select(\DB::raw('SUM(amount) as total_amount'))->first();
+
+        $sales = $salesQuery->get();
+        $date_from = getDateFormatWords($date_from);
+        $date_to = getDateFormatWords($date_to);
+        return response()->json(compact('sales', 'currency', 'date_from', 'date_to', 'total_sales'), 200);
+    }
+
+    public function collections(Request $request)
+    {
+        $date_from = $this->start_date; //Carbon::now()->startOfMonth();
+        $date_to = Carbon::now()->endOfMonth();
+        $panel = 'quarter';
+        $currency = $this->currency();
+        if (isset($request->from, $request->to)) {
+            $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
+            $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
+        }
+
+        $rep_field_name = 'received_by';
+        $condition = $this->setQueryConditions($request, $rep_field_name);
+        $delivery_status = $request->delivery_status;
+        $total_collections = 0;
+
+        list($sales_reps, $sales_reps_ids) = $this->allTeamMembers($request->team_id);
+        $paymentsQuery = Payment::groupBy('payment_date', 'customer_id')
+            ->with(['customer.assignedOfficer', 'confirmer'])
+            ->where('payment_date', '<=',  $date_to)
+            ->where('payment_date', '>=',  $date_from)
+            ->whereIn('received_by', $sales_reps_ids)
+            ->where($condition)
+            ->orderBy('id', 'DESC')
+            ->select('*', \DB::raw('SUM(amount) as total_amount'));
+
+        $total_collections = Payment::where('payment_date', '<=',  $date_to)
+            ->where('payment_date', '>=',  $date_from)
+            ->where($condition)
+            ->whereIn('received_by', $sales_reps_ids)
+            ->select(\DB::raw('SUM(amount) as total_amount'))->first();
+
+        $payments = $paymentsQuery->get();
+        $date_from = getDateFormatWords($date_from);
+        $date_to = getDateFormatWords($date_to);
+        return response()->json(compact('payments', 'currency', 'total_collections', 'date_from', 'date_to'), 200);
+    }
+
+    public function debts(Request $request)
+    {
+        $date_from = $this->start_date; //Carbon::now()->startOfMonth();
+        $date_to = Carbon::now()->endOfMonth();
+        $panel = 'quarter';
+        $currency = $this->currency();
+        if (isset($request->from, $request->to)) {
+            $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
+            $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
+        }
+
+        $rep_field_name = 'field_staff';
+        $condition = $this->setQueryConditions($request, $rep_field_name);
+        $delivery_status = $request->delivery_status;
+        $total_debts = 0;
+        $dated_debts = 0;
+        list($sales_reps, $sales_reps_ids) = $this->allTeamMembers($request->team_id);
+        $debtsQuery = CustomerDebt::groupBy('customer_id')
+            ->with([
+                'staff',
+                'customer',
+                'payments' => function ($q) {
+                    $q->orderBy('id', 'DESC');
+                },
+            ])
+            ->whereRaw('amount - paid > 0')
+            ->where('created_at', '<=',  $date_to)
+            ->where('created_at', '>=',  $date_from)
+            ->whereIn('field_staff', $sales_reps_ids)
+            ->where($condition)
+            ->select('*', \DB::raw('SUM(amount) as total_amount_due'), \DB::raw('SUM(paid) as total_amount_paid'));
+
+        $dated_debts = CustomerDebt::where('created_at', '<=',  $date_to)
+            ->where('created_at', '>=',  $date_from)
+            ->whereIn('field_staff', $sales_reps_ids)
+            ->where($condition)
+            ->select(\DB::raw('SUM(amount - paid) as total_amount'))->first();
+
+        $total_debts = CustomerDebt::whereIn('field_staff', $sales_reps_ids)
+            ->where($condition)
+            ->select(\DB::raw('SUM(amount - paid) as total_amount'))->first();
+
+        $debts = $debtsQuery->get();
+
+        $date_from = getDateFormatWords($date_from);
+        $date_to = getDateFormatWords($date_to);
+        return response()->json(compact('debts', 'currency', 'total_debts', 'dated_debts', 'date_from', 'date_to'), 200);
+    }
+    public function visits(Request $request)
+    {
+        $date_from = $this->start_date; //Carbon::now()->startOfMonth();
+        $date_to = Carbon::now()->endOfMonth();
+        $panel = 'quarter';
+        $currency = $this->currency();
+        if (isset($request->from, $request->to)) {
+            $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
+            $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
+        }
+        $condition = [];
+        if (isset($request->customer_id) && $request->customer_id != 'all') {
+            $condition['customer_id'] = $request->customer_id;
+        }
+        if (isset($request->rep_id) && $request->rep_id != 'all') {
+            $condition['visitor'] = $request->rep_id;
+        }
+        list($sales_reps, $sales_reps_ids) = $this->allTeamMembers($request->team_id);
+        $visitsQuery = Visit::with('visitedBy', 'visitPartner', 'customer.registrar', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
+            ->where('created_at', '<=',  $date_to)
+            ->where('created_at', '>=',  $date_from)
+            ->where($condition)
+            ->whereIn('visits.visitor', $sales_reps_ids);
+        $visits = $visitsQuery->get();
+        $date_from = getDateFormatWords($date_from);
+        $date_to = getDateFormatWords($date_to);
+        return response()->json(compact('visits', 'currency', 'date_from', 'date_to'), 200);
+    }
+
+    public function customers(Request $request)
+    {
+        $searchParams = $request->all();
+        $userQuery = Customer::query();
+        $today  = date('Y-m-d', strtotime('now'));
+        $relationships = [
+            'customerContacts',
+            'state',
+            'lga',
+            'customerType', 'registrar', 'assignedOfficer',
+
+            'lastVisited' => function ($q) {
+                $q->orderBy('id', 'DESC');
+            },
+
+        ];
+        $rep_field_name = 'relating_officer';
+        $condition = $this->setQueryConditions($request, $rep_field_name);
+        list($sales_reps, $sales_reps_ids) = $this->allTeamMembers($request->team_id);
+        $userQuery = $userQuery->with($relationships)->where($condition)->whereIn('relating_officer', $sales_reps_ids)->orderBy('business_name');
+        $paginate_option = $request->paginate_option;
+        $customers = $userQuery->get();
+        return response()->json(compact('customers'), 200);
+    }
+
+    public function returnedProducts(Request $request)
+    {
+        $date_from = $this->start_date; // Carbon::now()->startOfMonth();
+        $date_to = Carbon::now()->endOfMonth();
+        $panel = 'quarter';
+        $currency = $this->currency();
+        if (isset($request->from, $request->to)) {
+            $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
+            $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
+            $panel = $request->panel;
+        }
+        $condition = [];
+        if (isset($request->customer_id) && $request->customer_id != 'all') {
+            $condition = ['customer_id' => $request->customer_id];
+        }
+        $delivery_status = $request->delivery_status;
+        list($sales_reps, $sales_reps_ids) = $this->allTeamMembers($request->team_id);
+        $returnsQuery = ReturnedProduct::with('customer', 'rep', 'item')
+            ->where('created_at', '<=',  $date_to)
+            ->where('created_at', '>=',  $date_from)
+            ->where($condition)
+            ->whereIn('stocked_by', $sales_reps_ids)
+            ->orderBy('id', 'DESC');
+        $returns = $returnsQuery->get();
+
+        $date_from = getDateFormatWords($date_from);
+        $date_to = getDateFormatWords($date_to);
+        return response()->json(compact('returns', 'date_from', 'date_to'), 200);
     }
 }

@@ -5,8 +5,8 @@
     <filter-options @submitQuery="setParam" />
     <hr>
     <el-row>
-      <el-col :span="6">
-        <div class="flex items-end px-3">
+      <el-col :span="24">
+        <div>
           <span >
             <el-button
               :loading="downloadLoading"
@@ -17,11 +17,18 @@
               size="large"
               @click="downloadSales()"
             >Download Sales Report</el-button>
+            <el-input :value="`${baseUrl}/report/download/product-sales${strParams}`" class="form-control" readonly>
+              <template #append>
+                <el-button @click="copyToClipboard(`${baseUrl}/report/download/product-sales${strParams}`)">Copy API</el-button>
+              </template>
+            </el-input>
+
           </span>
+          <hr>
         </div>
       </el-col>
-      <el-col :span="6">
-        <div class="flex items-end px-3">
+      <el-col :span="24">
+        <div>
           <span >
             <el-button
               :loading="downloadLoading"
@@ -32,11 +39,18 @@
               size="large"
               @click="downloadCollections()"
             >Download Collections Report</el-button>
+            <el-input :value="`${baseUrl}/report/download/collections${strParams}`" class="form-control" readonly>
+              <template #append>
+                <el-button @click="copyToClipboard(`${baseUrl}/report/download/collections${strParams}`)">Copy API</el-button>
+              </template>
+            </el-input>
+
           </span>
+          <hr>
         </div>
       </el-col>
-      <el-col :span="6">
-        <div class="flex items-end px-3">
+      <el-col :span="24">
+        <div>
           <span >
             <el-button
               :loading="downloadLoading"
@@ -47,11 +61,18 @@
               size="large"
               @click="downloadDebts()"
             >Download Debts Report</el-button>
+            <el-input :value="`${baseUrl}/report/download/debts${strParams}`" class="form-control" readonly>
+              <template #append>
+                <el-button @click="copyToClipboard(`${baseUrl}/report/download/debts${strParams}`)">Copy API</el-button>
+              </template>
+            </el-input>
+
           </span>
+          <hr>
         </div>
       </el-col>
-      <el-col :span="6">
-        <div class="flex items-end px-3">
+      <el-col :span="24">
+        <div>
           <span >
             <el-button
               :loading="downloadLoading"
@@ -62,11 +83,19 @@
               size="large"
               @click="downloadReturns()"
             >Download Returns Report</el-button>
+
+            <el-input :value="`${baseUrl}/report/download/returned-products${strParams}`" class="form-control" readonly>
+              <template #append>
+                <el-button @click="copyToClipboard(`${baseUrl}/report/download/returned-products${strParams}`)">Copy API</el-button>
+              </template>
+            </el-input>
+
           </span>
+          <hr>
         </div>
       </el-col>
-      <el-col :span="6">
-        <div class="flex items-end px-3">
+      <el-col :span="24">
+        <div>
           <span >
             <el-button
               :loading="downloadLoading"
@@ -77,22 +106,36 @@
               size="large"
               @click="downloadVisits()"
             >Download Visits Report</el-button>
+            <el-input :value="`${baseUrl}/report/download/visits${strParams}`" class="form-control" readonly>
+              <template #append>
+                <el-button @click="copyToClipboard(`${baseUrl}/report/download/visits${strParams}`)">Copy API</el-button>
+              </template>
+            </el-input>
+
           </span>
+          <hr>
         </div>
       </el-col>
-      <el-col :span="6">
-        <div class="flex items-end px-3">
+      <el-col :span="24">
+        <div>
           <span >
             <el-button
               :loading="downloadLoading"
               round
               style="margin:0 0 20px 20px;"
-              type="default"
+              type="info"
               icon="el-icon-download"
               size="large"
               @click="downloadCustomers()"
             >Download Customers Report</el-button>
+            <el-input :value="`${baseUrl}/report/download/customers${strParams}`" class="form-control" readonly>
+              <template #append>
+                <el-button @click="copyToClipboard(`${baseUrl}/report/download/customers${strParams}`)">Copy API</el-button>
+              </template>
+            </el-input>
+
           </span>
+          <hr>
         </div>
       </el-col>
     </el-row>
@@ -210,14 +253,21 @@ export default {
         customer_id: 'all',
         rep_id: '',
       },
+      strParams: '',
       downloadLoading: false,
     };
+  },
+  computed: {
+    baseUrl() {
+      return this.$store.getters.baseUrl;
+    },
   },
   methods: {
     moment,
     setParam(param) {
       const app = this;
       app.form = param;
+      app.setStrParam();
     },
     emptyDateRange() {
       if (this.form.from === '' || this.form.to === '') {
@@ -456,10 +506,10 @@ export default {
       return jsonData.map(v =>
         filterVal.map(j => {
           if (j === 'expiry_date') {
-            moment(v['expiry_date']).format('lll');
+            moment(v['expiry_date']).format('DD/MM/YYYY');
           }
           if (j === 'transaction.created_at') {
-            return (v['transaction']) ? moment(v['transaction']['created_at']).format('lll') : '';
+            return (v['transaction']) ? moment(v['transaction']['created_at']).format('DD/MM/YYYY') : '';
           }
           if (j === 'transaction.customer.business_name') {
             return v['transaction']['customer']['business_name'];
@@ -475,7 +525,7 @@ export default {
             }
           }
           if (j === 'updated_at') {
-            return (v['confirmer']) ? moment(v['updated_at']).format('lll') : 'Pending';
+            return (v['confirmer']) ? moment(v['updated_at']).format('DD/MM/YYYY') : 'Pending';
           }
           if (j === 'customer.business_name') {
             return (v['customer']) ? v['customer']['business_name'] : '';
@@ -502,10 +552,10 @@ export default {
             return moment(v['created_at']).fromNow();
           }
           if (j === 'created_at') {
-            return moment(v['created_at']).format('lll');
+            return moment(v['created_at']).format('DD/MM/YYYY');
           }
           if (j === 'date') {
-            return moment(v['created_at']).format('lll');
+            return moment(v['created_at']).format('DD/MM/YYYY');
           }
           if (j === 'contact.name') {
             return (v['contact']) ? v['contact']['name'] : '';
@@ -514,10 +564,10 @@ export default {
             return (v['visited_by']) ? v['visited_by']['name'] : '';
           }
           if (j === 'date_verified') {
-            return (v['date_verified']) ? moment(v['date_verified']).format('lll') : 'Not Verified';
+            return (v['date_verified']) ? moment(v['date_verified']).format('DD/MM/YYYY') : 'Not Verified';
           }
           if (j === 'last_visit') {
-            return (v['last_visited']) ? moment(v['last_visited']['visit_date']).format('ll') : 'Not Visited';
+            return (v['last_visited']) ? moment(v['last_visited']['visit_date']).format('DD/MM/YYYY') : 'Not Visited';
           }
           if (j === 'customer_type.name') {
             if (v['customer_type'] !== null) {
@@ -546,6 +596,14 @@ export default {
           return v[j];
         }),
       );
+    },
+    setStrParam(){
+      const app = this;
+      app.strParams = `?from=${app.form.from}&to=${app.form.to}&rep_id=${app.form.rep_id}&team_id=${app.form.team_id}`;
+    },
+    copyToClipboard(text) {
+      navigator.clipboard.writeText(text);
+      this.$message('API link copied to clipboard');
     },
   },
 };

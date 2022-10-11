@@ -9,6 +9,7 @@ const state = {
   device: 'desktop',
   language: getLanguage(),
   size: Cookies.get('size') || 'medium',
+  baseUrl: 'https://sales.3coretechnology.com/api',
 };
 
 const mutations = {

@@ -127,6 +127,24 @@ class Controller extends BaseController
         // }
         return array($all_team_members, $all_team_member_ids);
     }
+    public function allTeamMembers($team_id = null)
+    {
+        $all_team_members = [];
+        $all_team_member_ids = [];
+        if ($team_id == null) {
+
+            $my_members = TeamMember::get();
+        } else {
+
+            $my_members = TeamMember::where('team_id', $team_id)->get();
+        }
+        foreach ($my_members as $my_member) {
+            $all_team_members[] = $my_member->user;
+            $all_team_member_ids[] = $my_member->user->id;
+        }
+        // }
+        return array($all_team_members, $all_team_member_ids);
+    }
     public function getInvoiceNo($prefix, $next_no)
     {
         $no_of_digits = 7;

@@ -50,7 +50,16 @@ Route::group(['prefix' => 'auth'], function () {
         Route::get('user', [AuthController::class, 'user']); //->middleware('permission:read-users');
     });
 });
-
+Route::group(['prefix' => 'report'], function () {
+    Route::group(['prefix' => 'download'], function () {
+        Route::get('product-sales', [ReportsController::class, 'productSales']);
+        Route::get('collections', [ReportsController::class, 'collections']);
+        Route::get('debts', [ReportsController::class, 'debts']);
+        Route::get('visits', [ReportsController::class, 'visits']);
+        Route::get('customers', [ReportsController::class, 'customers']);
+        Route::get('returned-products', [ReportsController::class, 'returnedProducts']);
+    });
+});
 //////////////////////////////// APP APIS //////////////////////////////////////////////
 Route::group(['middleware' => 'auth:sanctum'], function () {
     // Protected routes for authenticated users
