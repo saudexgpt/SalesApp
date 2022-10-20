@@ -277,14 +277,15 @@ class ReportsController extends Controller
         $condition = $this->setQueryConditions($request, $rep_field_name);
         $total_sales = 0;
         list($sales_reps, $sales_reps_ids) = $this->allTeamMembers($request->team_id);
-        $salesQuery = TransactionDetail::with('transaction.customer')
-            ->join('transactions', 'transactions.id', 'transaction_details.transaction_id')
+        $salesQuery = TransactionDetail::join('transactions', 'transactions.id', 'transaction_details.transaction_id')
+            ->join('customers', 'transactions.customer_id', 'customers.id')
             ->join('users', 'transactions.field_staff', 'users.id')
             ->where('transaction_details.created_at', '<=',  $date_to)
             ->where('transaction_details.created_at', '>=',  $date_from)
             ->where($condition)
             ->whereIn('transactions.field_staff', $sales_reps_ids)
-            ->orderBy('transaction_details.id', 'DESC');
+            ->orderBy('transaction_details.id', 'DESC')
+            ->select('*', 'transaction_details.id as id');
 
         $total_sales = TransactionDetail::where('created_at', '<=',  $date_to)
             ->where('created_at', '>=',  $date_from)
@@ -295,7 +296,7 @@ class ReportsController extends Controller
         $sales = $salesQuery->get();
         $date_from = getDateFormatWords($date_from);
         $date_to = getDateFormatWords($date_to);
-        return response()->json(compact('sales', 'currency', 'date_from', 'date_to', 'total_sales'), 200);
+        return response()->json(compact('sales', /*'currency', 'date_from', 'date_to', 'total_sales'*/), 200);
     }
 
     public function collections(Request $request)
@@ -316,13 +317,14 @@ class ReportsController extends Controller
 
         list($sales_reps, $sales_reps_ids) = $this->allTeamMembers($request->team_id);
         $paymentsQuery = Payment::groupBy('payment_date', 'customer_id')
-            ->with(['customer.assignedOfficer', 'confirmer'])
+            ->join('customers', 'payments.customer_id', 'customers.id')
+            ->join('users', 'customers.relating_officer', 'users.id')
             ->where('payment_date', '<=',  $date_to)
             ->where('payment_date', '>=',  $date_from)
             ->whereIn('received_by', $sales_reps_ids)
             ->where($condition)
-            ->orderBy('id', 'DESC')
-            ->select('*', \DB::raw('SUM(amount) as total_amount'));
+            ->orderBy('payments.id', 'DESC')
+            ->select('*', 'payments.id as id', \DB::raw('SUM(amount) as total_amount'));
 
         $total_collections = Payment::where('payment_date', '<=',  $date_to)
             ->where('payment_date', '>=',  $date_from)
@@ -333,7 +335,7 @@ class ReportsController extends Controller
         $payments = $paymentsQuery->get();
         $date_from = getDateFormatWords($date_from);
         $date_to = getDateFormatWords($date_to);
-        return response()->json(compact('payments', 'currency', 'total_collections', 'date_from', 'date_to'), 200);
+        return response()->json(compact('payments', /*'currency', 'total_collections', 'date_from', 'date_to'*/), 200);
     }
 
     public function debts(Request $request)
@@ -354,19 +356,15 @@ class ReportsController extends Controller
         $dated_debts = 0;
         list($sales_reps, $sales_reps_ids) = $this->allTeamMembers($request->team_id);
         $debtsQuery = CustomerDebt::groupBy('customer_id')
-            ->with([
-                'staff',
-                'customer',
-                'payments' => function ($q) {
-                    $q->orderBy('id', 'DESC');
-                },
-            ])
+            ->join('customers', 'customer_debts.customer_id', 'customers.id')
+            ->join('users', 'customer_debts.field_staff', 'users.id')
             ->whereRaw('amount - paid > 0')
-            ->where('created_at', '<=',  $date_to)
-            ->where('created_at', '>=',  $date_from)
+            // ->where('customer_debts.created_at', '<=',  $date_to)
+            // ->where('customer_debts.created_at', '>=',  $date_from)
             ->whereIn('field_staff', $sales_reps_ids)
             ->where($condition)
-            ->select('*', \DB::raw('SUM(amount) as total_amount_due'), \DB::raw('SUM(paid) as total_amount_paid'));
+            ->orderBy('customer_debts.id', 'DESC')
+            ->select('*', 'customer_debts.id as id', \DB::raw('SUM(amount) as total_amount_due'), \DB::raw('SUM(paid) as total_amount_paid'));
 
         $dated_debts = CustomerDebt::where('created_at', '<=',  $date_to)
             ->where('created_at', '>=',  $date_from)
@@ -383,7 +381,7 @@ class ReportsController extends Controller
 
         $date_from = getDateFormatWords($date_from);
         $date_to = getDateFormatWords($date_to);
-        return response()->json(compact('debts', 'currency', 'total_debts', 'dated_debts', 'date_from', 'date_to'), 200);
+        return response()->json(compact('debts'/*, 'currency', 'total_debts', 'dated_debts', 'date_from', 'date_to'*/), 200);
     }
     public function visits(Request $request)
     {
@@ -403,16 +401,19 @@ class ReportsController extends Controller
             $condition['visitor'] = $request->rep_id;
         }
         list($sales_reps, $sales_reps_ids) = $this->allTeamMembers($request->team_id);
-        $visitsQuery = Visit::with('visitedBy', 'visitPartner', 'customer.registrar', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
-            ->where('created_at', '<=',  $date_to)
-            ->where('created_at', '>=',  $date_from)
+        $visitsQuery = Visit::join('customers', 'visits.customer_id', 'customers.id')
+            ->join('users', 'visits.visitor', 'users.id')
+            ->where('visits.created_at', '<=',  $date_to)
+            ->where('visits.created_at', '>=',  $date_from)
             ->where($condition)
-            ->whereIn('visits.visitor', $sales_reps_ids);
+            ->whereIn('visits.visitor', $sales_reps_ids)
+            ->select('*', 'visits.id as id');
         $visits = $visitsQuery->get();
         $date_from = getDateFormatWords($date_from);
         $date_to = getDateFormatWords($date_to);
-        return response()->json(compact('visits', 'currency', 'date_from', 'date_to'), 200);
+        return response()->json(compact('visits'/*, 'currency', 'date_from', 'date_to'*/), 200);
     }
+
 
     public function customers(Request $request)
     {
@@ -433,7 +434,11 @@ class ReportsController extends Controller
         $rep_field_name = 'relating_officer';
         $condition = $this->setQueryConditions($request, $rep_field_name);
         list($sales_reps, $sales_reps_ids) = $this->allTeamMembers($request->team_id);
-        $userQuery = $userQuery->with($relationships)->where($condition)->whereIn('relating_officer', $sales_reps_ids)->orderBy('business_name');
+        $userQuery = $userQuery->join('users', 'customers.relating_officer', 'users.id')
+            ->where($condition)
+            ->whereIn('relating_officer', $sales_reps_ids)
+            ->orderBy('business_name')
+            ->select('*', 'customers.id as id');
         $paginate_option = $request->paginate_option;
         $customers = $userQuery->get();
         return response()->json(compact('customers'), 200);
@@ -456,12 +461,15 @@ class ReportsController extends Controller
         }
         $delivery_status = $request->delivery_status;
         list($sales_reps, $sales_reps_ids) = $this->allTeamMembers($request->team_id);
-        $returnsQuery = ReturnedProduct::with('customer', 'rep', 'item')
-            ->where('created_at', '<=',  $date_to)
-            ->where('created_at', '>=',  $date_from)
+        $returnsQuery = ReturnedProduct::join('customers', 'returned_products.customer_id', 'customers.id')
+            ->join('users', 'returned_products.stocked_by', 'users.id')
+            ->join('items', 'returned_products.item_id', 'items.id')
+            ->where('returned_products.created_at', '<=',  $date_to)
+            ->where('returned_products.created_at', '>=',  $date_from)
             ->where($condition)
             ->whereIn('stocked_by', $sales_reps_ids)
-            ->orderBy('id', 'DESC');
+            ->orderBy('returned_products.id', 'DESC')
+            ->select('*', 'returned_products.id as id');
         $returns = $returnsQuery->get();
 
         $date_from = getDateFormatWords($date_from);
