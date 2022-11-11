@@ -20,4 +20,8 @@ class Payment extends Model
     {
         return $this->belongsTo(User::class, 'confirmed_by', 'id');
     }
+    public function attachments()
+    {
+        return $this->hasMany(TransactionFile::class, 'tnx_id', 'id');
+    }
 }

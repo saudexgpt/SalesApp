@@ -29,7 +29,7 @@ class CustomerDebt extends Model
     public function settleDebt($customer_id)
     {
 
-        $payments = Payment::where('customer_id', $customer_id)->whereRaw('amount - used_to_clear_debt > 0')->orderBy('id')->get();
+        $payments = Payment::where('customer_id', $customer_id)->whereRaw('amount - used_to_clear_debt > 0')->where('confirmed_by', '!=', NULL)->orderBy('id')->get();
         if ($payments->isNotEmpty()) {
             foreach ($payments as $payment) {
                 $payment_id = $payment->id;

@@ -3,7 +3,8 @@
   <el-card>
     <!-- tab 1 content -->
     <div title="Report Date" class="mb-5" icon="el-icon-date">
-      <strong>Pick Report Date</strong>
+      <filter-options :hide-customers-list="true" :submit-on-rep-change="true" panel="none" @submitQuery="setFormParams" />
+      <!-- <strong>Pick Report Date</strong>
       <el-date-picker
         v-model="form.date"
         :picker-options="pickerOptions"
@@ -13,11 +14,11 @@
         format="dd-MM-yyyy"
         value-format="yyyy-MM-dd"
         @input="visitedCustomers()"
-      />
+      /> -->
     </div>
-    <form-wizard v-loading="loadForm" v-if="form.date !== ''" :title="null" :subtitle="null" color="rgba(var(--vs-primary), 1)" finish-button-text="Submit" @on-complete="formSubmitted">
+    <form-wizard v-loading="loadForm" v-if="form.rep_id !== ''" :title="null" :subtitle="null" color="rgba(var(--vs-primary), 1)" finish-button-text="Submit" @on-complete="formSubmitted">
 
-      <tab-content :before-change="()=>validateSales()" title="Sales Report" class="mb-5" icon="feather icon-shopping-cart">
+      <tab-content :before-change="()=>validateSales()" title="New Sales" class="mb-5" icon="feather icon-shopping-cart">
         <div v-if="show_reported_message">
           <reported-message />
         </div>
@@ -26,7 +27,7 @@
           <sales-report :visited-customers-list="customersSalesList" :my-customers="my_customers" :products="products" />
         </div>
       </tab-content>
-      <tab-content :before-change="()=>validateCollections()" title="Collection Report" class="mb-5" icon="el-icon-money">
+      <tab-content :before-change="()=>validateCollections()" title="New Collections" class="mb-5" icon="el-icon-money">
         <div v-if="show_reported_message">
           <reported-message />
         </div>
@@ -35,7 +36,7 @@
           <collection-report :visited-customers-list="customersCollectionList" :my-customers="my_customers" />
         </div>
       </tab-content>
-      <tab-content :before-change="()=>validateReturns()" title="Product Returned Report" class="mb-5" icon="el-icon-sell">
+      <tab-content :before-change="()=>validateReturns()" title="Products Returned" class="mb-5" icon="el-icon-sell">
         <div v-if="show_reported_message">
           <reported-message />
         </div>
@@ -46,15 +47,15 @@
       </tab-content>
 
       <!-- tab 3 content -->
-      <tab-content :before-change="()=>validateHospitalVisit()" title="Hospital Visit Report" class="mb-5" icon="el-icon-office-building">
+      <!-- <tab-content :before-change="()=>validateHospitalVisit()" title="Detailing Report" class="mb-5" icon="el-icon-office-building">
         <div v-if="show_reported_message">
           <reported-message />
         </div>
         <div v-else>
-          <hospital-visit-report :visited-customers-list="visitedHospitalsList" :my-customers="my_hospital_customers" :products="all_products" />
+          <hospital-visit-report :visited-customers-list="visitedHospitalsList" :my-customers="my_customers" :products="all_products" />
         </div>
-      </tab-content>
-      <tab-content title="General Report" class="mb-5" icon="el-icon-guide">
+      </tab-content> -->
+      <!-- <tab-content title="General Report" class="mb-5" icon="el-icon-guide">
         <div v-if="show_reported_message">
           <reported-message />
         </div>
@@ -106,7 +107,7 @@
             </div>
           </div>
         </div>
-      </tab-content>
+      </tab-content> -->
       <el-button slot="prev" type="danger">Back</el-button>
       <el-button slot="next" type="primary">Next</el-button>
       <el-button slot="finish" :disabled="show_reported_message" type="success">Submit</el-button>
@@ -117,6 +118,7 @@
 <script>
 import { FormWizard, TabContent } from 'vue-form-wizard';
 import 'vue-form-wizard/dist/vue-form-wizard.min.css';
+import FilterOptions from '@/views/apps/reports/FilterOptions';
 import ReportedMessage from './partials/ReportedMessage';
 import CollectionReport from './partials/CollectionReport';
 import SalesReport from './partials/SalesReport';
@@ -127,6 +129,7 @@ export default {
   components: {
     FormWizard,
     TabContent,
+    FilterOptions,
     ReportedMessage,
     CollectionReport,
     SalesReport,
@@ -151,13 +154,10 @@ export default {
       products: [],
       all_products: [],
       form: {
-        work_with_manager_check: '0',
-        time_duration_with_manager: null,
-        relationship_with_manager: null,
+        customer_id: '',
+        rep_id: '',
+        team_id: '',
         date: '',
-        customer_sales: [],
-        customer_collections: [],
-        hospital_report: [],
       },
       show_reported_message: false,
       loadForm: false,
@@ -165,15 +165,29 @@ export default {
   },
   created() {
     // this.visitedCustomers();
-    this.fetchMyProducts();
+    // this.fetchRepProducts();
   },
   methods: {
+    setFormParams(param){
+      const app = this;
+      app.customersCollectionList = [];
+      app.customersSalesList = [];
+      app.visitedHospitalsList = [];
+      app.customersReturnsList = [];
+      app.my_customers = [];
+      app.form = param;
+      app.my_customers = param.customers;
+      this.fetchRepProducts();
+    },
     validateSales() {
       const sales = this.customersSalesList;
       if (sales.length > 0) {
         let errorCount = 0;
         sales.forEach(sale => {
-          if (sale.due_date === '' || sale.due_date === undefined) {
+          if (sale.entry_date === '' || sale.entry_date === undefined) {
+            errorCount++;
+          }
+          if (sale.rep_coordinate === '' || sale.rep_coordinate === undefined) {
             errorCount++;
           }
           if (sale.invoice_items === undefined) {
@@ -200,7 +214,7 @@ export default {
       if (collections.length > 0) {
         let errorCount = 0;
         collections.forEach(sale => {
-          if (sale.amount_collected === '' || sale.payment_method === undefined) {
+          if (sale.amount_collected === '' || sale.payment_mode === undefined) {
             errorCount++;
           }
         });
@@ -221,7 +235,7 @@ export default {
             errorCount++;
           } else {
             const checkEmptyLines = item.returns.filter(
-              (detail) => detail.product_id === '' || detail.quantity_returned === '' || detail.quantity === 0 || detail.rate === '' || detail.batch_no === '' || detail.expiry_date === '' || detail.reason === ''
+              (detail) => detail.product_id === '' || detail.quantity_returned === '' || detail.quantity === 0 || detail.rate === '' || /* detail.batch_no === '' ||*/ detail.expiry_date === '' || detail.reason === ''
             );
             if (checkEmptyLines.length > 0) {
               errorCount++;
@@ -263,12 +277,16 @@ export default {
 
       return true;
     },
-    fetchMyProducts() {
+    fetchRepProducts() {
       const app = this;
-      const getProducts = new Resource('products/my-products');
-      getProducts.list().then((response) => {
-        app.products = response.my_products;
-        app.all_products = response.all_products;
+      const getProducts = new Resource('products/rep-products');
+      const param = {
+        rep_id: app.form.rep_id,
+        team_id: app.form.team_id,
+      };
+      getProducts.list(param).then((response) => {
+        app.products = response.rep_products;
+        app.all_products = response.team_products;
       });
     },
     visitedCustomers() {
@@ -295,7 +313,7 @@ export default {
             });
             const purposes = purpose_string.split(',');
             element.customer.customer_id = element.customer.id;
-            element.customer.payment_mode = 'later';
+            // element.customer.payment_mode = 'Cash';
             element.customer.can_delete = 'no';
             if (purposes.includes('Collections')) {
               app.customersCollectionList.push(element.customer);
@@ -325,7 +343,7 @@ export default {
     },
     formSubmitted() {
       const app = this;
-      app.$confirm('Are you sure you want to submit this report? It cannot be modified', 'Warning', {
+      app.$confirm('Are you sure you want to submit these entries?', 'Warning', {
         confirmButtonText: 'Yes Submit',
         cancelButtonText: 'Cancel',
         type: 'warning',
@@ -336,25 +354,42 @@ export default {
         });
         app.loadForm = true;
         const param = app.form;
-        const unsaved_orders = { unsaved_orders: app.customersSalesList, date: param.date };
-        const submitSales = new Resource('sales/store');
-        submitSales.store(unsaved_orders).then(() => {
-          // console.log(response);
-        });
-
-        param.customers_report = app.customersCollectionList;
-        param.hospital_report = app.visitedHospitalsList;
-        param.returns_report = app.customersReturnsList;
-        const submitReport = new Resource('daily-report/store');
-        submitReport.store(param).then(() => {
-          app.loadForm = false;
-          this.$message({
-            type: 'success',
-            message: 'Report Submitted',
+        if (app.customersSalesList.length > 0) {
+          const unsaved_orders = { unsaved_orders: app.customersSalesList, date: param.date, rep_id: param.rep_id };
+          const submitSales = new Resource('sales/store');
+          submitSales.store(unsaved_orders).then(() => {
+            this.$message({
+              type: 'success',
+              message: 'Sales Entries Submitted',
+            });
+            app.customersSalesList = [];
+            app.loadForm = false;
           });
-          this.$router.replace({ path: '/daily-reports' });
-          // console.log(response);
-        });
+        }
+        if (app.customersCollectionList.length > 0) {
+          const unsaved_payments = { unsaved_collections: app.customersCollectionList, date: param.date, rep_id: param.rep_id };
+          const submitCollections = new Resource('payments/store');
+          submitCollections.store(unsaved_payments).then(() => {
+            this.$message({
+              type: 'success',
+              message: 'Collections Entries Submitted',
+            });
+            app.customersCollectionList = [];
+          });
+        }
+        if (app.customersReturnsList.length > 0) {
+          const unsaved_returns = { unsaved_returns: app.customersReturnsList, date: param.date, rep_id: param.rep_id };
+          const storeResource = new Resource('returns/store');
+          storeResource.store(unsaved_returns).then(() => {
+            this.$message({
+              type: 'success',
+              message: 'Returns Entries Submitted',
+            });
+            app.customersReturnsList = [];
+            app.loadForm = false;
+          });
+        }
+        // app.loadForm = false;
       }).catch(() => {
         app.loadForm = false;
       });

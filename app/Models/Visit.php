@@ -46,6 +46,23 @@ class Visit extends Model
     }
     public function saveAsVisits($user, $unsaved_visit)
     {
+        if (isset($unsaved_visit->rep_coordinate) && $unsaved_visit->rep_coordinate != '') {
+            $coordinate_array = explode(',', $unsaved_visit->rep_coordinate);
+            $lat = $coordinate_array[0];
+            $long = $coordinate_array[1];
+        } else {
+            $lat = (isset($unsaved_visit->rep_latitude)) ? $unsaved_visit->rep_latitude : NULL;
+            $long = (isset($unsaved_visit->rep_longitude)) ? $unsaved_visit->rep_longitude : NULL;
+        }
+
+        if (isset($unsaved_visit->manager_coordinate) && $unsaved_visit->manager_coordinate != '') {
+            $manager_coordinate_array = explode(',', $unsaved_visit->manager_coordinate);
+            $manager_lat = $manager_coordinate_array[0];
+            $manager_long = $manager_coordinate_array[1];
+        } else {
+            $manager_lat = NULL;
+            $manager_long =  NULL;
+        }
         //foreach ($unsaved_visits as $unsaved_visit) {
         $unsaved_list = '';
         $customer_id = (isset($unsaved_visit->customer_id)) ? $unsaved_visit->customer_id : NULL;
@@ -53,19 +70,30 @@ class Visit extends Model
             try {
                 $customer = Customer::find($customer_id);
                 //check for first visit where proximity is less than or equal to 100m
-                $first_visit = Visit::where('customer_id', $customer_id)->where('proximity', '<=', 100)->first();
+                $first_visit = Visit::where('customer_id', $customer_id)->where('proximity', '<=', 500)->first();
 
-                $lat = (isset($unsaved_visit->rep_latitude)) ? $unsaved_visit->rep_latitude : NULL;
-                $long = (isset($unsaved_visit->rep_longitude)) ? $unsaved_visit->rep_longitude : NULL;
+
 
                 if ($customer->latitude === NULL || (!$first_visit)) {
                     if ($lat !== NULL && $lat !== $customer->latitude) {
-                        // check is any suce customer exists
+                        // check if any such customer exists
                         $exisiting_customer = Customer::where(['business_name' => $customer->business_name, 'latitude' => $lat, 'longitude' => $long])->first();
                         if (!$exisiting_customer) {
 
                             $customer->latitude = $lat;
                             $customer->longitude = $long;
+                            $customer->save();
+                        }
+                    }
+                }
+                if ($customer->latitude2 === NULL || (!$first_visit)) {
+                    if ($manager_lat !== NULL && $manager_lat !== $customer->latitude2) {
+                        // check if any such customer exists
+                        $exisiting_customer = Customer::where(['business_name' => $customer->business_name, 'latitude2' => $manager_lat, 'longitude2' => $manager_long])->first();
+                        if (!$exisiting_customer) {
+
+                            $customer->latitude2 = $manager_lat;
+                            $customer->longitude2 = $manager_long;
                             $customer->save();
                         }
                     }
@@ -107,8 +135,10 @@ class Visit extends Model
                     $visit->visit_date = $date;
                     $visit->rep_latitude = $lat;
                     $visit->rep_longitude = $long;
+                    $visit->manager_latitude = $manager_lat;
+                    $visit->manager_longitude = $manager_long;
                     $visit->address = NULL; //$formatted_address;
-                    $visit->accuracy = $unsaved_visit->accuracy;
+                    $visit->accuracy = (isset($unsaved_visit->accuracy)) ? $unsaved_visit->accuracy : NULL;
                     $visit->proximity = $distance;
                     $visit->visiting_partner_id = (isset($unsaved_visit->visiting_partner_id)) ? $unsaved_visit->visiting_partner_id : NULL;
                     $visit->customer_contact_id = $customer_contact_id;
@@ -118,6 +148,10 @@ class Visit extends Model
                     $visit->visit_duration = (isset($unsaved_visit->description)) ? $unsaved_visit->visit_duration : NULL;
                 } else {
                     $visit->purpose = str_replace('~', ',', addSingleElementToString($visit->purpose, $purpose));
+                    $visit->rep_latitude = $lat;
+                    $visit->rep_longitude = $long;
+                    $visit->manager_latitude = $manager_lat;
+                    $visit->manager_longitude = $manager_long;
                 }
 
                 $visit->save();

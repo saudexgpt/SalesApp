@@ -32,4 +32,8 @@ class Transaction extends Model
     {
         return $this->hasMany(TransactionDetail::class, 'transaction_id', 'id');
     }
+    public function attachments()
+    {
+        return $this->hasMany(TransactionFile::class, 'tnx_id', 'id');
+    }
 }

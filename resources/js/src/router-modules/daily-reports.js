@@ -30,7 +30,7 @@ const reportsRoutes = {
       slug: 'new-report',
       i18n: 'New Report',
       meta: {
-        roles: ['sales_rep'],
+        // roles: ['sales_rep'],
       },
     },
     {

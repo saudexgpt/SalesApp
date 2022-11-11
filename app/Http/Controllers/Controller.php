@@ -12,12 +12,16 @@ use App\Http\Resources\UserResource;
 use App\Models\Customer;
 use App\Models\LocalGovernmentArea;
 use App\Models\ManagerDomain;
+use App\Models\Payment;
+use App\Models\ReturnedProduct;
 use App\Models\Role;
 use App\Models\Schedule;
 use App\Models\State;
 use App\Models\SubInventory;
 use App\Models\TeamMember;
 use App\Models\TeamProduct;
+use App\Models\Transaction;
+use App\Models\TransactionFile;
 use App\Models\User;
 use App\Notifications\AuditTrail;
 use Notification;
@@ -40,22 +44,51 @@ class Controller extends BaseController
             $team_product->save();
         }
     }
-    public function uploadFile($request)
+    // public function uploadFile($request)
+    // {
+    //     if ($request->file('avatar') != null && $request->file('avatar')->isValid()) {
+    //         $mime = $request->file('avatar')->getClientMimeType();
+
+    //         if ($mime == 'image/png' || $mime == 'image/jpeg' || $mime == 'image/jpg' || $mime == 'image/gif') {
+    //             $name = time() . "." . $request->file('avatar')->guessClientExtension();
+    //             $folder = "customers";
+    //             $avatar = $request->file('avatar')->storeAs($folder, $name, 'public');
+
+    //             return response()->json(['avatar' => 'storage/' . $avatar], 200);
+    //         }
+    //     }
+    // }
+
+    public function uploadFile($media, $file_name, $folder)
     {
-        if ($request->file('avatar') != null && $request->file('avatar')->isValid()) {
-            $mime = $request->file('avatar')->getClientMimeType();
+        $photo = $media->storeAs($folder, $file_name, 'public');
 
-            if ($mime == 'image/png' || $mime == 'image/jpeg' || $mime == 'image/jpg' || $mime == 'image/gif') {
-                $name = time() . "." . $request->file('avatar')->guessClientExtension();
-                $folder = "customers";
-                $avatar = $request->file('avatar')->storeAs($folder, $name, 'public');
-
-                return response()->json(['avatar' => 'storage/' . $avatar], 200);
-            }
-        }
+        return $folder . '/' . $file_name;
     }
 
+    public function attachFiles(Request $request)
+    {
+        // if ($request->hasFile('files')) {
+        $media = $request->file('files');
+        $type = $request->type;
+        // foreach ($files as $media) {
 
+        if ($media != null && $media->isValid()) {
+            $file_name = time() . "." . $media->guessClientExtension();
+            $folder = "transactions/" . $type;
+            return  $this->uploadFile($media, $file_name, $folder);
+        }
+        // }
+        // }
+    }
+    public function saveTransactionFile($tnx_id, $type, $link)
+    {
+        $tnx_file = new TransactionFile();
+        $tnx_file->tnx_id = $tnx_id;
+        $tnx_file->tnx_type = $type;
+        $tnx_file->link = $link;
+        $tnx_file->save();
+    }
 
     public function setUser()
     {
@@ -205,14 +238,16 @@ class Controller extends BaseController
         // $activity_log->save();
     }
 
-    public function setQueryConditions($data, $rep_field_name)
+    public function setQueryConditions($data, $rep_field_name = null)
     {
         $condition = [];
+        if ($rep_field_name) {
+            if (isset($data->rep_id) && $data->rep_id != '' && $data->rep_id != 'all') {
 
-        if (isset($data->rep_id) && $data->rep_id != '' && $data->rep_id != 'all') {
-
-            $condition = array_merge($condition, [$rep_field_name => $data->rep_id]);
+                $condition = array_merge($condition, [$rep_field_name => $data->rep_id]);
+            }
         }
+
         if (isset($data->customer_id) && $data->customer_id != '' && $data->customer_id != 'all') {
             $condition = array_merge($condition, ['customer_id' => $data->customer_id]);
         }
@@ -221,6 +256,33 @@ class Controller extends BaseController
             $condition = array_merge($condition, ['customer_type_id' => $data->customer_type_id]);
         }
         return $condition;
+    }
+    public function logComplaints(Request $request, $id)
+    {
+        $type = $request->type;
+        $complaints = $request->complaints;
+
+        switch ($type) {
+            case 'sales':
+                $transaction = Transaction::find($id);
+                $transaction->complaints = $complaints;
+                $transaction->complain_status = 'pending';
+                $transaction->save();
+                break;
+
+            case 'collections':
+                $payment = Payment::find($id);
+                $payment->complaints = $complaints;
+                $payment->complain_status = 'pending';
+                $payment->save();
+                break;
+            case 'returns':
+                $returns = ReturnedProduct::find($id);
+                $returns->complaints = $complaints;
+                $returns->complain_status = 'pending';
+                $returns->save();
+                break;
+        }
     }
 
     public function sendFirebaseMessage($title, $body, $user = null)

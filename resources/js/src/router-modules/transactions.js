@@ -14,6 +14,17 @@ const transactionsRoutes = {
 
     {
       hidden: false,
+      component: () => import('@/views/apps/daily-reports/AddReport'),
+      path: '/daily-reports/new',
+      name: 'NewReport',
+      slug: 'new-report',
+      i18n: 'New Entry',
+      meta: {
+        // roles: ['sales_rep'],
+      },
+    },
+    {
+      hidden: false,
       component: () => import('@/views/apps/transactions/Sales'),
       path: '/transactions/sales',
       name: 'Sales',

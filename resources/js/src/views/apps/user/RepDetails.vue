@@ -70,7 +70,8 @@
             <vs-divider />
             <div class="block overflow-x-auto">
               <v-client-table
-                v-model="selectedRep.customers"
+                v-loading="load_customer"
+                v-model="customers"
                 :columns="['business_name', 'address', 'area', 'action']"
                 :options="{}"
               >
@@ -142,6 +143,7 @@ import moment from 'moment';
 import checkPermission from '@/utils/permission';
 import 'swiper/dist/css/swiper.min.css';
 import { swiper, swiperSlide } from 'vue-awesome-swiper';
+import Resource from '@/api/resource';
 export default {
   components: { swiper, swiperSlide },
   props: {
@@ -154,17 +156,34 @@ export default {
     return {
       showFullPhoto: false,
       downloading: false,
+      load_customer: false,
 
     };
+  },
+  created() {
+    if (this.selectedRep !== null){
+      this.fetchCustomers(this.selectedRep.id);
+    }
   },
   methods: {
     moment,
     checkPermission,
+    fetchCustomers(rep_id) {
+      const app = this;
+      app.load_customer = true;
+      const customerResource = new Resource('customers/rep-customers');
+      const param = { rep_id };
+      customerResource.list(param)
+        .then(response => {
+          app.customers = response.customers;
+          app.load_customer = false;
+        });
+    },
     exportToExcel() {
       this.downloading = true;
       import('@/vendor/Export2Excel').then((excel) => {
         const tHeader = [
-          'BUSINESS NAME', 'ADDRESS', 'AREA'
+          'BUSINESS NAME', 'ADDRESS', 'AREA',
         ];
         const filterVal = [
           'business_name', 'address', 'area',

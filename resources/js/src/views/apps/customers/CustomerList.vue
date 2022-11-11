@@ -6,7 +6,15 @@
           <feather-icon svg-classes="w-6 h-6" icon="UsersIcon" class="mr-2" />
           <span class="font-medium text-lg">List of Customers</span>
         </div>
-        <vs-divider />
+        <div class="flex items-end px-3">
+          <el-input
+            v-model="query.keyword"
+            placeholder="Search Customer"
+            style="width: 100%"
+            class="filter-item"
+            @input="handleFilter"
+          />
+        </div>
       </div>
       <div class="vx-col lg:w-1/4 w-full">
         <div class="flex items-end px-3">
@@ -25,6 +33,7 @@
           </span>
         </div>
       </div>
+      <vs-divider />
     </div>
     <div class="filter-container">
       <!-- <el-row v-if="checkPermission(['assign-field-staff'])" :gutter="20">
@@ -61,7 +70,7 @@
             </aside>
           </el-col>
         </el-row> -->
-      <el-row :gutter="20">
+      <!-- <el-row :gutter="20">
         <el-col :xs="24" :sm="8" :md="8">
           Search Customer
           <el-input
@@ -101,11 +110,11 @@
             <el-option label="Verified" value="verified"/>
             <el-option label="Unverified" value="unverified"/>
           </el-select>
-          <!-- <el-radio-group v-model="query.verify_type" @change="getList()">
-              <el-radio label="all" border>All</el-radio>
-              <el-radio label="verified" border>Verified</el-radio>
-              <el-radio label="unverified" border>Unverified</el-radio>
-            </el-radio-group> -->
+        </el-col>
+      </el-row> -->
+      <el-row :gutter="20">
+        <el-col :span="24">
+          <filter-options :hide-customers-list="true" :show-button="true" panel="none" @submitQuery="setParam" />
         </el-col>
       </el-row>
     </div>
@@ -334,10 +343,11 @@ import Pagination from '@/components/Pagination'; // Secondary package based on 
 import Resource from '@/api/resource';
 import permission from '@/directive/permission'; // Permission directive
 import checkPermission from '@/utils/permission'; // Permission checking
+import FilterOptions from '@/views/apps/reports/FilterOptions';
 const customersResource = new Resource('customers');
 export default {
   name: 'Customers',
-  components: { Pagination, VueGoogleAutocomplete },
+  components: { Pagination, VueGoogleAutocomplete, FilterOptions },
   directives: { permission },
   data() {
     return {
@@ -350,7 +360,7 @@ export default {
         // 'area',
         'last_visited',
         'registrar.name',
-        'assigned_officer',
+        // 'assigned_officer',
         'address',
         // 'verifier.name',
         'created_at',
@@ -363,7 +373,7 @@ export default {
           'customer_type.name': 'Type',
           'last_visited': 'Last Visit',
           'registrar.name': 'Registered By',
-          'assigned_officer': 'Field Staff',
+          // 'assigned_officer': 'Field Staff',
           'verifier.name': 'Verified By',
         },
         rowAttributesCallback(row) {
@@ -397,6 +407,7 @@ export default {
         role: '',
         verify_type: 'all',
         rep_id: '',
+        team_id: '',
       },
       selectedCustomer: {},
       dialogFormVisible: false,
@@ -413,8 +424,8 @@ export default {
     };
   },
   created() {
-    this.getList();
-    this.fetchSalesRep();
+    // this.getList();
+    // this.fetchSalesRep();
   },
   methods: {
     moment,
@@ -463,6 +474,11 @@ export default {
         .catch((error) => {
           console.log(error);
         });
+    },
+    setParam(param) {
+      this.query.rep_id = param.rep_id;
+      this.query.team_id = param.team_id;
+      this.getList();
     },
     getList() {
       const { limit, page } = this.query;

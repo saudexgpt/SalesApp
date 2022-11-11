@@ -11,6 +11,7 @@ use App\Models\Schedule;
 use App\Models\SubInventory;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
+use App\Models\User;
 use App\Models\VanInventory;
 use App\Models\Visit;
 use Illuminate\Http\Request;
@@ -112,8 +113,8 @@ class TransactionsController extends Controller
                     },
                 ])
                 ->whereRaw('amount - paid > 0')
-                ->where('created_at', '<=',  $date_to)
-                ->where('created_at', '>=',  $date_from)
+                // ->where('created_at', '<=',  $date_to)
+                // ->where('created_at', '>=',  $date_from)
                 ->whereIn('field_staff', $sales_reps_ids)
                 ->where($condition)
                 ->select('*', \DB::raw('SUM(amount) as total_amount_due'), \DB::raw('SUM(paid) as total_amount_paid'));
@@ -121,9 +122,9 @@ class TransactionsController extends Controller
             //     $q->orderBy('id', 'DESC');
             // }, 'payments.transaction.staff', 'payments.confirmer', 'details'])->whereRaw('amount_due - amount_paid > 0')->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(50);
 
-            $dated_debts = CustomerDebt::where('created_at', '<=',  $date_to)
-                ->where('created_at', '>=',  $date_from)
-                ->whereIn('field_staff', $sales_reps_ids)
+            $dated_debts = CustomerDebt::whereIn('field_staff', $sales_reps_ids)
+                // ->where('created_at', '<=',  $date_to)
+                // ->where('created_at', '>=',  $date_from)
                 ->where($condition)
                 ->select(\DB::raw('SUM(amount - paid) as total_amount'))->first();
 
@@ -164,7 +165,9 @@ class TransactionsController extends Controller
         if ($user->hasRole('sales_rep')) {
 
             $salesQuery = $user->transactions()
-                ->with(['customer.assignedOfficer', 'details'])
+                ->with(['customer.assignedOfficer', 'details', 'attachments' => function ($q) {
+                    $q->where('tnx_type', 'sales');
+                }])
                 ->where('created_at', '<=',  $date_to)
                 ->where('created_at', '>=',  $date_from)
                 ->where($condition)
@@ -173,7 +176,9 @@ class TransactionsController extends Controller
             list($sales_reps, $sales_reps_ids) = $this->teamMembers($request->team_id);
             // $sales_reps_ids is in array form
             // list($sales_reps, $sales_reps_ids) = $this->teamMembers();
-            $salesQuery = Transaction::with(['customer', 'staff'])
+            $salesQuery = Transaction::with(['customer', 'details', 'staff', 'attachments' => function ($q) {
+                $q->where('tnx_type', 'sales');
+            }])
                 ->where('created_at', '<=',  $date_to)
                 ->where('created_at', '>=',  $date_from)
                 ->where($condition)
@@ -222,13 +227,20 @@ class TransactionsController extends Controller
         $total_sales = 0;
         if ($user->hasRole('sales_rep')) {
 
-            $salesQuery = TransactionDetail::with('transaction.customer')
+            $salesQuery = TransactionDetail::with(
+                [
+                    'transaction.customer', 'transaction.attachments' => function ($q) {
+                        $q->where('tnx_type', 'sales');
+                    }
+                ]
+            )
                 ->join('transactions', 'transactions.id', 'transaction_details.transaction_id')
                 ->join('users', 'transactions.field_staff', 'users.id')
                 ->where('transactions.field_staff', $user->id)
                 ->where('transaction_details.created_at', '<=',  $date_to)
                 ->where('transaction_details.created_at', '>=',  $date_from)
                 ->where($condition)
+                ->select('*', 'transaction_details.id as id')
                 ->orderBy('transaction_details.id', 'DESC');
         }
         // else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
@@ -239,13 +251,20 @@ class TransactionsController extends Controller
         // }
         else {
             list($sales_reps, $sales_reps_ids) = $this->teamMembers($request->team_id);
-            $salesQuery = TransactionDetail::with('transaction.customer')
+            $salesQuery = TransactionDetail::with(
+                [
+                    'transaction.customer', 'transaction.attachments' => function ($q) {
+                        $q->where('tnx_type', 'sales');
+                    }
+                ]
+            )
                 ->join('transactions', 'transactions.id', 'transaction_details.transaction_id')
                 ->join('users', 'transactions.field_staff', 'users.id')
                 ->where('transaction_details.created_at', '<=',  $date_to)
                 ->where('transaction_details.created_at', '>=',  $date_from)
                 ->where($condition)
                 ->whereIn('transactions.field_staff', $sales_reps_ids)
+                ->select('*', 'transaction_details.id as id')
                 ->orderBy('transaction_details.id', 'DESC');
             // $sales = Transaction::with(['customer.assignedOfficer', 'payments' => function ($q) {
             //     $q->orderBy('id', 'DESC');
@@ -273,7 +292,6 @@ class TransactionsController extends Controller
      * @return \Illuminate\Http\Response
      */
 
-
     /**
      * Store a newly created resource in storage.
      *
@@ -283,14 +301,22 @@ class TransactionsController extends Controller
     public function store(Request $request)
     {
         //
+        // return $request;
         $prefix = 'INV-';
-        $user = $this->getUser();
+        $actor = $this->getUser();
+        if (isset($request->rep_id) && $request->rep_id != '') {
+
+            $rep_id = $request->rep_id;
+            $user = User::find($rep_id);
+        } else {
+            $user = $actor;
+        }
         $unsaved_orders = json_decode(json_encode($request->unsaved_orders));
         $order_list = [];
         $unsaved_list = [];
         foreach ($unsaved_orders as $unsaved_order) {
 
-            $date = $unsaved_order->due_date;
+            $date = Carbon::now()->endOfMonth(); // $unsaved_order->due_date;
             $invoice_items = $unsaved_order->invoice_items;
             $entry_exist = Transaction::where('unique_sales_id', $unsaved_order->unique_sales_id)->first();
             if (!$entry_exist) {
@@ -300,14 +326,16 @@ class TransactionsController extends Controller
                     $invoice->customer_id    = $unsaved_order->customer_id;
                     $invoice->unique_sales_id    = $unsaved_order->unique_sales_id;
                     $invoice->field_staff    = $user->id;
-                    $invoice->payment_status = ($unsaved_order->payment_mode == 'now') ? 'paid' : 'unpaid';
+                    $invoice->logged_by    = $actor->id;
+                    $invoice->confirmed_by = $actor->id;
+                    $invoice->payment_status = 'unpaid';
                     $invoice->amount_due     = $unsaved_order->amount;
                     $invoice->main_amount     = $unsaved_order->main_amount;
 
-                    $invoice->due_date       = ($unsaved_order->payment_mode == 'later') ? date('Y-m-d', strtotime($date)) : date('Y-m-d', strtotime('now'));
+                    $invoice->due_date       = date('Y-m-d', strtotime($date));
                     $invoice->entry_date = ($request->entry_date != '') ? date('Y-m-d H:i:s', strtotime($request->entry_date)) : date('Y-m-d H:i:s', strtotime('now'));
-                    $invoice->created_at = $invoice->entry_date;
-                    $invoice->updated_at = $invoice->entry_date;
+                    // $invoice->created_at = $invoice->entry_date;
+                    // $invoice->updated_at = $invoice->entry_date;
                     if ($invoice->save()) {
 
                         $invoice->invoice_no = $this->getInvoiceNo($prefix, $invoice->id);
@@ -315,8 +343,15 @@ class TransactionsController extends Controller
 
                         $this->addCustomerDebt($invoice);
                         $this->createInvoiceItems($invoice, $invoice_items);
-                        $customer_debt_obj = new CustomerDebt();
-                        $customer_debt_obj->settleDebt($invoice->customer_id);
+                        // $customer_debt_obj = new CustomerDebt();
+                        // $customer_debt_obj->settleDebt($invoice->customer_id);
+
+                        if (isset($unsaved_order->files) && !empty($unsaved_order->files)) {
+                            $links = $unsaved_order->files;
+                            foreach ($links as $link) {
+                                $this->saveTransactionFile($invoice->id, 'sales', $link);
+                            }
+                        }
 
                         //uncomment this if the sales feature for the app is reactivated
                         // if ($unsaved_order->payment_mode == 'now') {
@@ -327,6 +362,7 @@ class TransactionsController extends Controller
                         //     $this->payAmount($invoice, $unsaved_order->amount_collected);
                         // }
 
+                        $unsaved_order->purpose = 'sales';
                         $visit_obj = new Visit();
                         $visit_obj->saveAsVisits($user, $unsaved_order);
 
@@ -334,7 +370,7 @@ class TransactionsController extends Controller
 
                         $customer = Customer::find($unsaved_order->customer_id);
                         $title = "New Sales made";
-                        $description = $user->name . " successfully made sales to $customer->business_name";
+                        $description = $user->name . " successfully made sales to $customer->business_name. Entry logged by $actor->name";
                         $this->logUserActivity($title, $description, $user);
                     }
                     // $title = "New order received";
@@ -355,15 +391,33 @@ class TransactionsController extends Controller
         // $this->logUserActivity($title, $description, $roles);
         return response()->json(['orders' => $order_list, 'unsaved_list' => $unsaved_list, 'message' => 'success'], 200);
     }
+    public function confirm(Request $request, Transaction $transaction)
+    {
+        if ($transaction->confirmed_by === NULL) {
+            $user = $this->getUser();
+            $transaction->confirmed_by = $user->id;
+            $transaction->save();
+            $title = "Sales Confirmed";
+            $description = $user->name . " successfully confirmed sales with invoice number $transaction->invoice_no";
+            // $this->addCustomerDebt($transaction);
+
+            $this->logUserActivity($title, $description, $user);
+            return 'success';
+        }
+    }
     private function addCustomerDebt($transaction)
     {
-        $new_debt = new CustomerDebt();
-        $new_debt->customer_id = $transaction->customer_id;
-        $new_debt->transaction_id = $transaction->id;
-        $new_debt->amount = $transaction->amount_due;
-        $new_debt->field_staff = $transaction->field_staff;
-        $new_debt->due_date = $transaction->due_date;
-        $new_debt->save();
+        $customer_debt = CustomerDebt::where('transaction_id', $transaction->id)->first();
+        if (!$customer_debt) {
+
+            $customer_debt = new CustomerDebt();
+        }
+        $customer_debt->customer_id = $transaction->customer_id;
+        $customer_debt->transaction_id = $transaction->id;
+        $customer_debt->amount = $transaction->amount_due;
+        $customer_debt->field_staff = $transaction->field_staff;
+        $customer_debt->due_date = $transaction->due_date;
+        $customer_debt->save();
     }
     private function createInvoiceItems($invoice, $invoice_items)
     {
@@ -393,9 +447,9 @@ class TransactionsController extends Controller
                 // set schedule for delivery
                 $this->scheduleDeliveryDate($invoice->customer_id, $invoice_item, $item->delivery_date);
             }
-            if ($delivery_mode == 'now') {
-                $this->performProductSupply($invoice_item, $item->quantity_supplied, $item->item_id);
-            }
+            // if ($delivery_mode == 'now') {
+            $this->performProductSupply($invoice_item, $item->quantity_supplied, $item->item_id);
+            // }
         }
     }
 
@@ -461,7 +515,9 @@ class TransactionsController extends Controller
         //
         $transaction = $transaction->with(['customer', 'details' => function ($q) {
             $q->orderBy('id', 'DESC');
-        },])->find($transaction->id);
+        }, 'attachments' => function ($q) {
+            $q->where('tnx_type', 'sales');
+        }])->find($transaction->id);
         return $transaction;
     }
 
@@ -480,8 +536,9 @@ class TransactionsController extends Controller
     }
     private function performProductSupply(TransactionDetail $transaction_detail, $quantity_for_supply, $item_id)
     {
-        $user = $this->getUser();
-        $stock_balance = $this->checkForStockBalance($item_id);
+        $field_staff = $transaction_detail->field_staff;
+        $user = User::find($field_staff); // $this->getUser();
+        $stock_balance = $this->checkForStockBalance($user, $item_id);
         if ($quantity_for_supply > $stock_balance) {
             return response()->json(['message' => 'Insufficient Stock'], 422);
         }
@@ -501,7 +558,7 @@ class TransactionsController extends Controller
 
             $transaction_detail->save();
             $van_inventory_obj = new VanInventory();
-            $van_inventory_obj->deductFromVanInventory($item_id, $quantity_for_supply, $user);
+            $van_inventory_obj->deductFromVanInventory($item_id, $quantity_for_supply, $user->id);
 
             $title = "Product Supplied";
             $description = $user->name . " supplied $quantity $packaging of $product to $customer->business_name";
@@ -520,9 +577,69 @@ class TransactionsController extends Controller
         }
         return $this->show($transaction);
     }
-    private function checkForStockBalance($item_id)
+
+    private function updateTransactionDetails(TransactionDetail $transaction_detail, $quantity, $rate)
     {
         $user = $this->getUser();
+        $old_quantity = $transaction_detail->quantity;
+        $product = $transaction_detail->product;
+        $packaging = $transaction_detail->packaging;
+
+        $transaction_detail->quantity = $quantity;
+        $transaction_detail->quantity_supplied = $quantity;
+        $transaction_detail->rate = $rate;
+        $transaction_detail->amount = $rate * $quantity;
+        $transaction_detail->main_amount = $transaction_detail->main_rate * $quantity;
+        $transaction_detail->save();
+
+        $details = TransactionDetail::where('transaction_id', $transaction_detail->transaction_id)
+            ->select(\DB::raw('SUM(main_amount) as total_amount'))
+            ->first();
+        $transaction = Transaction::find($transaction_detail->transaction_id);
+        $transaction->main_amount = $details->total_amount;
+        $transaction->amount_due = $details->total_amount;
+        $transaction->save();
+        // we need to update the customer debt;
+        $this->addCustomerDebt($transaction);
+
+        $title = "Sales Details Updated";
+        $description = $user->name . " updated $product sales details from $old_quantity $packaging to $quantity $packaging  at ₦$rate on invoice $transaction->invoice_no";
+        $this->logUserActivity($title, $description, $user);
+    }
+
+    public function updateDetails(Request $request, TransactionDetail $transaction_detail)
+    {
+        $van_inventory_obj = new VanInventory();
+        $transaction = Transaction::find($transaction_detail->transaction_id);
+        if ($transaction->confirmed_by === NULL) {
+            $field_staff = $transaction_detail->field_staff;
+            $user = User::find($field_staff); // $this->getUser();
+            $old_quantity = (int) $request->old_quantity;
+            $new_quantity = (int) $request->new_quantity;
+            $rate = $request->rate;
+            $difference = $new_quantity - $old_quantity;
+            $item_id = $transaction_detail->item_id;
+            if ($difference > 0) {
+                $stock_balance = $this->checkForStockBalance($user, $item_id);
+                if ($stock_balance >= $difference) {
+                    $van_inventory_obj->deductFromVanInventory($item_id, $difference, $user->id);
+                    $this->updateTransactionDetails($transaction_detail, $new_quantity, $rate);
+                }
+            } else if ($difference < 0) {
+                $difference = abs($difference);
+                $van_inventory_obj->addToVanInventory($item_id, $difference, $user->id);
+                $this->updateTransactionDetails($transaction_detail, $new_quantity, $rate);
+            }
+        }
+    }
+    public function resolveComplaints(Transaction $transaction)
+    {
+        $transaction->complain_status = 'solved';
+        $transaction->save();
+    }
+    private function checkForStockBalance($user, $item_id)
+    {
+        // $user = $this->getUser();
         $balance = VanInventory::where(['staff_id' => $user->id, 'item_id' => $item_id])->sum('balance');
         return $balance;
     }

@@ -13,9 +13,9 @@
       <div class="filter-container">
         <el-row v-if="checkPermission(['assign-field-staff'])" :gutter="20">
           <el-col :xs="24" :sm="24" :md="24">
-            <h4>Assign Rep to Customers</h4>
+            <h4>Make Selection to fetch customers to assign</h4>
             <aside>
-              <el-select
+              <!-- <el-select
                 v-model="assignRep.relating_officer"
                 placeholder="Select Rep"
                 filterable
@@ -26,7 +26,7 @@
                   :label="rep.name"
                   :value="rep.id"
                 />
-              </el-select>
+              </el-select> -->
               <el-select
                 v-model="selected_state"
                 placeholder="Select State"
@@ -53,25 +53,6 @@
                   :value="lga_index"
                 />
               </el-select>
-
-              <!-- <el-select
-                v-model="assignRep.customer_ids"
-                placeholder="Select Customers (Multiple Allowed)"
-                multiple
-                filterable
-                collapse-tags
-                @input="showCustomer()"
-              >
-                <el-option
-                  v-for="(customer, customer_index) in customer_list"
-                  :key="customer_index"
-                  :label="customer.business_name + ' at ' + customer.area"
-                  :value="customer.id"
-                >
-                  <span style="float: left">{{ '('+ customer.id + ') ' + customer.business_name }}</span>
-                  <span style="float: right; color: #8492a6; font-size: 13px">{{ ' at ' + customer.area }}</span>
-                </el-option>
-              </el-select> -->
             </aside>
           </el-col>
           <el-tag
@@ -88,9 +69,11 @@
       </div>
       <el-row>
         <el-col :xs="24" :sm="24" :md="24">
-          <h3>Selected LGA Customers
+          <aside>
+            <h3>Selected LGA Customers</h3>
             <el-checkbox v-if="customer_list.length > 0" :indeterminate="isIndeterminate" v-model="checkAll" @change="handleCheckAllChange">Check all</el-checkbox>
 
+            <filter-options :hide-customers-list="true" :show-button="false" :submit-on-rep-change="true" panel="none" @submitQuery="setParam" />
             <el-button
               :disabled="customer_list.length < 1"
               type="primary"
@@ -98,7 +81,7 @@
             >
               Assign
             </el-button>
-          </h3>
+          </aside>
           <v-client-table
             v-model="customer_list"
             :columns="['select','business_name', 'address', 'area']"
@@ -126,7 +109,7 @@
             </template>
           </v-client-table>
         </el-col>
-        <el-col :xs="24" :sm="24" :md="24">
+        <!-- <el-col :xs="24" :sm="24" :md="24">
           <h3>LIST OF SALES REPS</h3>
           <v-client-table
             v-model="sales_reps"
@@ -136,9 +119,6 @@
 
             <template slot="photo" slot-scope="props">
               <img :src="props.row.photo" width="100">
-            </template>
-            <template slot="customers" slot-scope="props">
-              <span>{{ props.row.customers.length }}</span>
             </template>
             <template slot="visits" slot-scope="scope">
               <span>{{ (scope.row.visits.length > 0) ? moment(scope.row.visits[0].visit_date).format('ll') : '' }}</span>
@@ -166,10 +146,10 @@
               </el-tooltip>
             </template>
           </v-client-table>
-        </el-col>
+        </el-col> -->
       </el-row>
     </vx-card>
-    <vx-card v-if="page==='details'">
+    <!-- <vx-card v-if="page==='details'">
       <div class="vx-row">
         <div class="vx-col lg:w-3/4 w-full">
           <div class="flex items-end px-3">
@@ -192,7 +172,7 @@
       <div class="filter-container">
         <rep-details :selected-rep="selectedRep"/>
       </div>
-    </vx-card>
+    </vx-card> -->
   </div>
 </template>
 
@@ -203,9 +183,10 @@ import Resource from '@/api/resource';
 import permission from '@/directive/permission'; // Permission directive
 import checkPermission from '@/utils/permission'; // Permission checking
 import RepDetails from './RepDetails';
+import FilterOptions from '@/views/apps/reports/FilterOptions';
 export default {
   name: 'Customers',
-  components: { Pagination, RepDetails },
+  components: { Pagination, FilterOptions, RepDetails },
   directives: { permission },
   data() {
     return {
@@ -217,13 +198,13 @@ export default {
         'name',
         'email',
         'phone',
-        'customers',
+        // 'customers',
         'action',
       ],
 
       options: {
         headings: {
-          customers: 'No of Customers',
+          // customers: 'No of Customers',
         },
         pagination: {
           dropdown: true,
@@ -256,7 +237,7 @@ export default {
   },
   created() {
     this.fetchStateLGACustomers();
-    this.fetchSalesRep();
+    // this.fetchSalesRep();
   },
   methods: {
     moment,
@@ -336,6 +317,9 @@ export default {
       const app = this;
       app.selected_customer = selectedCustomer;
       app.page = 'details';
+    },
+    setParam(param) {
+      this.assignRep.relating_officer = param.rep_id;
     },
   },
 };

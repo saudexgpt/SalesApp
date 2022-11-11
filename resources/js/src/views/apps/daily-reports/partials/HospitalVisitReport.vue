@@ -49,7 +49,7 @@
           <tr>
             <th/>
             <th>Personnel Contacted</th>
-            <th>Marketed Products</th>
+            <th>Detailed Products</th>
             <th>Follow-up Schedule</th>
             <th>Feedback/Comment</th>
           </tr>
@@ -237,7 +237,7 @@ export default {
       const customer_id = app.myCustomers[value].id;
       if (!app.visitedCustomersList.filter(e => e.id === customer_id).length > 0) {
         app.myCustomers[value].customer_id = customer_id;
-        app.myCustomers[value].payment_mode = 'later';
+        // app.myCustomers[value].payment_mode = 'later';
         app.myCustomers[value].can_delete = 'yes';
         app.visitedCustomersList.push(app.myCustomers[value]);
       }

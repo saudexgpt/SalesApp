@@ -57,9 +57,13 @@ class User extends Authenticatable
     {
         return $this->hasMany(TeamMember::class);
     }
+    // public function customers()
+    // {
+    //     return $this->hasMany(Customer::class, 'relating_officer', 'id');
+    // }
     public function customers()
     {
-        return $this->hasMany(Customer::class, 'relating_officer', 'id');
+        return $this->belongsToMany(Customer::class, 'customer_user', 'user_id', 'customer_id');
     }
     public function subInventories()
     {

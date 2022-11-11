@@ -52,6 +52,19 @@ class ItemsController extends Controller
 
         return response()->json(compact('all_products'));
     }
+    public function repProducts(Request $request)
+    {
+        $team_id = $request->team_id;
+        $rep_id = $request->rep_id;
+        $team_products = Item::with('price')->join('team_products', 'items.id', 'team_products.item_id')->where('team_products.team_id', $team_id)->orderBy('items.name')->select('*', 'items.id as id')->get();
+        $rep_products = VanInventory::with('item.price')
+            ->groupBy('item_id', 'batch_no', 'expiry_date')
+            ->where('staff_id', $rep_id)
+            ->where('balance', '>', 0)
+            ->select('*', \DB::raw('SUM(quantity_stocked) as total_stocked'), \DB::raw('SUM(sold) as total_sold'), \DB::raw('SUM(balance) as total_balance'))
+            ->get();
+        return response()->json(compact('team_products', 'rep_products'), 200);
+    }
     public function fetchWarehouseProducts()
     {
         // Create a stream

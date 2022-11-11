@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ReturnedProduct;
+use App\Models\User;
 use App\Models\Visit;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -82,7 +83,15 @@ class ReturnsController extends Controller
     }
     public function store(Request $request)
     {
-        $user = $this->getUser();
+        // return $request;
+        $actor = $this->getUser();
+        if (isset($request->rep_id) && $request->rep_id != '') {
+
+            $rep_id = $request->rep_id;
+            $user = User::find($rep_id);
+        } else {
+            $user = $actor;
+        }
         $unsaved_returns = json_decode(json_encode($request->unsaved_returns));
         foreach ($unsaved_returns as $unsaved_return) {
             if (isset($unsaved_return->returns) && $unsaved_return->returns !== '') {
@@ -104,10 +113,23 @@ class ReturnsController extends Controller
                     $return->save();
                 }
             }
-
+            $unsaved_return->purpose = 'product returns';
             $visit_obj = new Visit();
             $visit_obj->saveAsVisits($user, $unsaved_return);
         }
         return response()->json(['unsaved_list' => [], 'message' => 'success'], 200);
+    }
+    public function confirm(Request $request, ReturnedProduct $returned_product)
+    {
+        if ($returned_product->confirmed_by === NULL) {
+            $user = $this->getUser();
+            $returned_product->confirmed_by = $user->id;
+            $returned_product->save();
+            $title = "Returned product Confirmed";
+            $description = $user->name . " successfully confirmed returned product with ID $returned_product->id";
+
+            $this->logUserActivity($title, $description, $user);
+            return 'success';
+        }
     }
 }

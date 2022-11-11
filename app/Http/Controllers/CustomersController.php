@@ -58,7 +58,43 @@ class CustomersController extends Controller
 
         $user = $this->getUser();
         $searchParams = $request->all();
-        $userQuery = Customer::query();
+        $relationships = [
+            //'customerContacts',
+            // 'state',
+            // 'lga',
+            'customerType',
+            'registrar',
+            // 'assignedOfficer',
+
+            'lastVisited' => function ($q) {
+                $q->orderBy('id', 'DESC');
+            },
+
+        ];
+        // $userQuery = Customer::query();
+        if (isset($request->rep_id) && $request->rep_id != '' && $request->rep_id != 'all') {
+            $rep = User::find($request->rep_id);
+
+            $userQuery = $rep->customers();
+        } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+            $userQuery = Customer::query();
+            list($sales_reps, $sales_reps_ids) = $this->teamMembers($request->team_id);
+            $userQuery->whereHas('reps', function ($q) use ($sales_reps_ids) {
+                $q->whereIn('user_id', $sales_reps_ids);
+            });
+        } else {
+            if (isset($request->team_id) && $request->team_id != '') {
+                $userQuery = Customer::query();
+                list($sales_reps, $sales_reps_ids) = $this->teamMembers($request->team_id);
+                $userQuery->whereHas('reps', function ($q) use ($sales_reps_ids) {
+                    $q->whereIn('user_id', $sales_reps_ids);
+                });
+            } else {
+
+                $userQuery = Customer::query();
+            }
+        }
+
         $limit = Arr::get($searchParams, 'limit', static::ITEM_PER_PAGE);
         $keyword = Arr::get($searchParams, 'keyword', '');
         $verify_type = Arr::get($searchParams, 'verify_type', 'verified');
@@ -69,51 +105,11 @@ class CustomersController extends Controller
                 $q->orWhere('address', 'LIKE', '%' . $keyword . '%');
             });
         }
-        $today  = date('Y-m-d', strtotime('now'));
-        // $condition = [];
-        // if (isset($request->customer_type_id)) {
-
-        //     $customer_type_id = $request->customer_type_id;
-        //     if ($customer_type_id != 'all') {
-        //         $condition = ['customer_type_id' => $customer_type_id];
-        //     }
-        // }
-        $relationships = [
-            'customerContacts',
-            'state',
-            'lga',
-            'customerType', 'registrar', 'assignedOfficer',
-
-            'lastVisited' => function ($q) {
-                $q->orderBy('id', 'DESC');
-            },
-
-        ];
-        if ($verify_type === 'verified') {
-            $userQuery = $userQuery->Verified();
-        } else if ($verify_type === 'unverified') {
-            $userQuery = $userQuery->Unverified();
-        }
-        $rep_field_name = 'relating_officer';
-        $condition = $this->setQueryConditions($request, $rep_field_name);
-        if ($user->hasRole('sales_rep')) {
-            $customers = $userQuery->with($relationships)->where($condition)->where('relating_officer', $user->id)->orderBy('id', 'DESC')->paginate($limit);
-            return response()->json(compact('customers'), 200);
-        } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
-
-
-            // $sales_reps_ids is in array form
-            list($sales_reps, $sales_reps_ids) = $this->teamMembers();
-            $userQuery = $userQuery->with($relationships)->where($condition)->whereIn('relating_officer', $sales_reps_ids)->orderBy('business_name');
-        } else {
-            // admin and super admin only
-            $userQuery = $userQuery->with($relationships)->where($condition)->orderBy('business_name');
-        }
         $paginate_option = $request->paginate_option;
         if ($paginate_option === 'all') {
-            $customers = $userQuery->get();
+            $customers = $userQuery->with($relationships)->get();
         } else {
-            $customers = $userQuery->paginate($limit);
+            $customers = $userQuery->with($relationships)->paginate($limit);
         }
         $customer_types = CustomerType::get();
         $states = State::with('lgas')->get();
@@ -216,13 +212,26 @@ class CustomersController extends Controller
     // fetch a particular rep customers. Queried by managera/ admin
     public function repCustomers(Request $request)
     {
-        $rep_id = $request->rep_id;
+
+        if (isset($request->rep_id) && $request->rep_id != '' && $request->rep_id != 'all') {
+            $rep_id = $request->rep_id;
+            $rep = User::find($rep_id);
+
+            $userQuery = $rep->customers();
+        } else {
+            $userQuery = Customer::query();
+            list($sales_reps, $sales_reps_ids) = $this->teamMembers($request->team_id);
+            $userQuery->whereHas('reps', function ($q) use ($sales_reps_ids) {
+                $q->whereIn('user_id', $sales_reps_ids);
+            });
+        }
+
         $date_from = Carbon::now()->startOfWeek();
         $date_to = Carbon::now()->endOfWeek();
-        $customers = Customer::with(['lastVisited' => function ($q) {
+        $customers = $userQuery->with(['lastVisited' => function ($q) {
             $q->orderBy('id', 'DESC');
         }])
-            ->where(['relating_officer' => $rep_id])
+            // ->where(['relating_officer' => $rep_id])
             ->where('latitude', '!=', null)
             // ->orderBy('longitude')
             ->orderBy('latitude')
@@ -286,19 +295,19 @@ class CustomersController extends Controller
         //
         $today  = date('Y-m-d', strtotime('now'));
         $user = $this->getUser();
-        $condition = ['relating_officer' => $user->id];
         $paginate = $request->paginate;
         if ($paginate < 1) {
             $paginate = 100;
         }
+        $condition = [];
         if (isset($request->customer_type_id)) {
 
             $customer_type_id = $request->customer_type_id;
             if ($customer_type_id != 'all') {
-                $condition = ['relating_officer' => $user->id, 'customer_type_id' => $customer_type_id];
+                $condition = ['customer_type_id' => $customer_type_id];
             }
         }
-        $customers = Customer::with([
+        $customers = $user->customers()->with([
             'customerContacts',
             'lastVisited' => function ($q) {
                 $q->orderBy('id', 'DESC');
@@ -767,16 +776,10 @@ class CustomersController extends Controller
         $today  = date('Y-m-d', strtotime('now'));
         $user = $this->getUser();
         $customer_ids = json_decode(json_encode($request->customer_ids));
-        $customers_assigned = '';
-        foreach ($customer_ids as $customer_id) {
-            $customer = Customer::find($customer_id);
-            $customer->relating_officer = $relating_officer->id;
-            $customer->save();
-            $customers_assigned .= $customer->business_name . ', ';
-        }
+        $relating_officer->customers()->sync($customer_ids);
 
         $title = "Customer's Relating Officer Assigned";
-        $description = $user->name . " successfully assigned $relating_officer->name to $customers_assigned on $today";
+        $description = $user->name . " successfully assigned $relating_officer->name to customers on $today";
         $this->logUserActivity($title, $description, $relating_officer);
 
         // return $this->prospectiveCustomers($request);

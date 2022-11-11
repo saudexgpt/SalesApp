@@ -17,7 +17,7 @@
         <label for="">Select Rep</label>
         <el-select v-model="form.rep_id" filterable style="width: 100%" @change="fetchCustomers($event)">
           <el-option
-            v-if="reps.length > 0"
+            v-if="reps.length > 0 && !submitOnRepChange"
             label="All"
             value="all" />
           <el-option
@@ -28,10 +28,11 @@
 
           />
         </el-select>
+        <div v-loading="load_customer" />
       </el-col>
-      <el-col :lg="6" :md="6" :sm="6" :xs="24">
+      <el-col v-if="!hideCustomersList" :lg="6" :md="6" :sm="6" :xs="24">
         <label for="">Select Customer</label>
-        <el-select :loading="load_customer" v-model="form.customer_id" loading-text filterable style="width: 100%" @change="loadPage()">
+        <el-select v-model="form.customer_id" loading-text filterable style="width: 100%" @change="loadPage()">
           <el-option
             v-if="customers.length > 0"
             label="All"
@@ -46,21 +47,41 @@
         </el-select>
       </el-col>
       <el-col :lg="6" :md="6" :sm="6" :xs="24">
-        <label for="">&nbsp;</label><br>
-        <el-popover placement="right" trigger="click">
-          <date-range-picker
-            :from="$route.query.from"
-            :to="$route.query.to"
-            :panel="panel"
-            :panels="panels"
-            :submit-title="submitTitle"
-            :future="future"
-            @update="setDateRange"
+        <div v-if="panel === 'month'">
+
+          <label for="">&nbsp;</label><br>
+          <el-popover placement="right" trigger="click">
+            <date-range-picker
+              :from="$route.query.from"
+              :to="$route.query.to"
+              :panel="panel"
+              :panels="panels"
+              :submit-title="submitTitle"
+              :future="future"
+              @update="setDateRange"
+            />
+            <el-button id="pick_date1" slot="reference" type="primary">
+              <i class="el-icon-date" /> Pick Date Range
+            </el-button>
+          </el-popover>
+        </div>
+        <div v-if="panel === 'date'">
+          <label for="">Pick Date</label><br>
+          <el-date-picker
+            v-model="form.date"
+            :picker-options="pickerOptions"
+            type="date"
+            placeholder="Report Date"
+            style="width: 100%;"
+            format="dd-MM-yyyy"
+            value-format="yyyy-MM-dd"
+            @input="submitQuery()"
           />
-          <el-button id="pick_date1" slot="reference" type="primary">
-            <i class="el-icon-date" /> Pick Date Range
-          </el-button>
-        </el-popover>
+        </div>
+      </el-col>
+      <el-col v-if="showButton" :lg="6" :md="6" :sm="6" :xs="24">
+        <label for="">&nbsp;</label><br>
+        <el-button type="primary" @click="submitQuery()">Fetch</el-button>
       </el-col>
     </el-row>
   </div>
@@ -80,9 +101,28 @@ export default {
       type: Array,
       default: () => ['range', 'week', 'month', 'quarter', 'year'],
     },
+    hideCustomersList: {
+      type: Boolean,
+      default: () => false,
+    },
+    showButton: {
+      type: Boolean,
+      default: () => false,
+    },
+    submitOnRepChange: {
+      type: Boolean,
+      default: () => false,
+    },
   },
   data() {
     return {
+      pickerOptions: {
+        disabledDate(date) {
+          var d = new Date(); // today
+          d.setDate(d.getDate()); // one year from now
+          return date > d;
+        },
+      },
       teams: [],
       reps: [],
       customers: [],
@@ -99,6 +139,7 @@ export default {
         customer_id: '',
         rep_id: '',
         team_id: '',
+        date: '',
       },
       sub_title: '',
       submitTitle: 'Fetch Report',
@@ -117,7 +158,7 @@ export default {
     loadPage() {
       const app = this;
       if (app.form.from !== '') {
-        app.$emit('submitQuery', app.form);
+        app.submitQuery();
       }
     },
     fetchTeams() {
@@ -140,6 +181,8 @@ export default {
     fetchTeamReps(teamId) {
       const app = this;
       // this.load_table = true;
+      app.reps = [];
+      app.form.rep_id = '';
       const salesRepResource = new Resource('teams/fetch-reps');
       salesRepResource
         .list({ team_id: teamId })
@@ -152,17 +195,22 @@ export default {
     },
     fetchCustomers(rep_id) {
       const app = this;
+      // if (!app.hideCustomersList) {
       app.loadPage();
       app.form.rep_id = rep_id;
       app.form.customer_id = 'all';
       app.load_customer = true;
       const customerResource = new Resource('customers/rep-customers');
-      const param = { rep_id };
+      const param = { rep_id, team_id: app.form.team_id };
       customerResource.list(param)
         .then(response => {
           app.customers = response.customers;
           app.load_customer = false;
+          if (app.submitOnRepChange) {
+            app.submitQuery();
+          }
         });
+      // }
     },
     // fetchCustomers() {
     //   const app = this;
@@ -191,7 +239,13 @@ export default {
       app.form.from = from;
       app.form.to = to;
       app.form.panel = panel;
-      app.$emit('submitQuery', app.form);
+      app.submitQuery();
+    },
+    submitQuery() {
+      if (this.hideCustomersList) {
+        this.form.customers = this.customers;
+      }
+      this.$emit('submitQuery', this.form);
     },
   },
 };

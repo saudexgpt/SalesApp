@@ -58,6 +58,15 @@ class Customer extends Model
     {
         return $this->belongsTo(User::class, 'relating_officer', 'id');
     }
+    /**
+     * The reps that belong to the Customer
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function reps()
+    {
+        return $this->belongsToMany(User::class, 'customer_user', 'customer_id', 'user_id');
+    }
     public function verifier()
     {
         return $this->belongsTo(User::class, 'verified_by', 'id');

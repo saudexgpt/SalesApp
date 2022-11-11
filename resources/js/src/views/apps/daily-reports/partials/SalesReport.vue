@@ -7,13 +7,15 @@
           <th>Customer Name</th>
           <!-- <th>Opening Debt</th> -->
           <th>Total Sales (NGN)</th>
-          <th>Payment Due Date</th>
+          <th>Date</th>
+          <th>Coordinates</th>
+          <th>Attach File</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="(customer, index) in visitedCustomersList" :key="index">
           <td>
-            <el-tooltip :content="'Add Sales Report for ' + customer.business_name" class="item" effect="dark" placement="top-start">
+            <el-tooltip :content="'Add Sales Details for ' + customer.business_name" class="item" effect="dark" placement="top-start">
               <el-button circle type="primary" icon="el-icon-goods" @click="setCustomerSales(index, customer)" />
             </el-tooltip>
           </td>
@@ -25,18 +27,42 @@
           <td>{{ customer.amount }}</td>
           <td>
             <el-date-picker
-              v-model="customer.due_date"
+              v-model="customer.entry_date"
               :picker-options="pickerOptions"
               type="date"
-              placeholder="Due Date"
+              placeholder="Transaction Date"
               style="width: 100%;"
               format="yyyy-MM-dd"
               value-format="yyyy-MM-dd"
             />
           </td>
+          <td>
+            <strong>Rep's</strong>
+            <el-input
+              v-model="customer.rep_coordinate"
+              placeholder="6.5270061,3.3766094"
+            />
+            <br>
+            <strong>Manager's</strong>
+            <el-input
+              v-model="customer.manager_coordinate"
+              placeholder="6.5270161,3.3756094"
+            />
+          </td>
+          <td>
+            <input
+              type="file"
+              class="form-control"
+              multiple
+              @change="onImageChange($event, index)"
+            ><br>
+            <span v-for="(file, file_index) in uploadedFiles[index].files" :key="file_index">
+              <img :src="`/storage/${file}`" width="50">
+            </span>
+          </td>
         </tr>
         <tr>
-          <td colspan="4">
+          <td colspan="7">
             <el-select
               v-model="extra_customers"
               placeholder="Select Customer"
@@ -48,8 +74,11 @@
                 v-for="(customer, item_index) in myCustomers"
                 :key="item_index"
                 :value="item_index"
-                :label="customer.business_name"
-              />
+                :label="customer.business_name + ' ' + customer.address"
+              >
+                <span style="float: left"><strong>{{ customer.business_name }}</strong></span>
+                <span style="float: right; color: #8492a6; font-size: 12px">{{ customer.address }}</span>
+              </el-option>
             </el-select>
           </td>
         </tr>
@@ -138,7 +167,9 @@
   </div>
 </template>
 <script>
-// import Resource from '@/api/resource';
+import Resource from '@/api/resource';
+import { createUniqueString } from '@/utils/index';
+
 export default {
   props: {
     visitedCustomersList: {
@@ -159,8 +190,8 @@ export default {
       pickerOptions: {
         disabledDate(date) {
           var d = new Date(); // today
-          d.setDate(d.getDate() - 1);
-          return date < d;
+          d.setDate(d.getDate());
+          return date >= d;
         },
       },
       activeName: '1',
@@ -172,6 +203,8 @@ export default {
       fill_fields_error: false,
       showSaveButton: true,
       extra_customers: '',
+      // eslint-disable-next-line no-array-constructor
+      uploadedFiles: [],
     };
   },
   methods: {
@@ -299,7 +332,7 @@ export default {
       app.invoice_items[index].main_rate = item.price.sale_price;
       app.invoice_items[index].rate = item.price.sale_price;
       app.invoice_items[index].item_id = item.id;
-      app.invoice_items[index].type = item.package_type;
+      app.invoice_items[index].type = (item.basic_unit) ? item.basic_unit : item.package_type;
       app.invoice_items[index].quantity_per_carton = item.quantity_per_carton;
       app.invoice_items[index].no_of_cartons = 0;
       app.invoice_items[index].batch_no = van_inventory.batch_no;
@@ -363,10 +396,14 @@ export default {
       const customer_id = app.myCustomers[value].id;
       if (!app.visitedCustomersList.filter(e => e.id === customer_id).length > 0) {
         app.myCustomers[value].customer_id = customer_id;
-        app.myCustomers[value].payment_mode = 'later';
+        // app.myCustomers[value].payment_mode = 'later';
+        app.myCustomers[value].files = [];
+        app.myCustomers[value].unique_sales_id = createUniqueString();
         app.myCustomers[value].can_delete = 'yes';
         app.visitedCustomersList.push(app.myCustomers[value]);
+        app.uploadedFiles.push({ files: [] });
       }
+      app.extra_customers = '';
     },
     removeExtraCustomer(customer_id) {
       const app = this;
@@ -375,6 +412,34 @@ export default {
           app.visitedCustomersList.splice(count, 1);
         }
       }
+    },
+    onImageChange(e, index) {
+      const app = this;
+      const files = e.target.files;
+      let filesToBeUploaded = '';
+      for (let i = 0; i < files.length; i++) {
+        filesToBeUploaded = e.target.files[i];
+        // console.log(file);
+        // const filesToBeUploaded = file[0];
+        app.submitUpload(filesToBeUploaded, index);
+      }
+      // app.visitedCustomersList[index].files = filesToBeUploaded;
+    },
+    submitUpload(filesToBeUploaded, index) {
+      const app = this;
+      app.loading = true;
+      const formData = new FormData();
+      formData.append('files', filesToBeUploaded);
+      formData.append('type', 'sales');
+      const updatePhotoResource = new Resource('attach/files');
+      updatePhotoResource.store(formData)
+        .then(response => {
+          app.visitedCustomersList[index].files.push(response);
+          app.uploadedFiles[index].files.push(response);
+        })
+        .catch(e => {
+          console.log(e);
+        });
     },
   },
 };

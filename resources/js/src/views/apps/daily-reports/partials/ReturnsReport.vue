@@ -48,8 +48,11 @@
                 v-for="(customer, product_index) in myCustomers"
                 :key="product_index"
                 :value="product_index"
-                :label="customer.business_name"
-              />
+                :label="customer.business_name + ' ' + customer.address"
+              >
+                <span style="float: left"><strong>{{ customer.business_name }}</strong></span>
+                <span style="float: right; color: #8492a6; font-size: 12px">{{ customer.address }}</span>
+              </el-option>
             </el-select>
           </td>
         </tr>
@@ -66,8 +69,8 @@
             <th>Product</th>
             <!-- <th>Package Type</th> -->
             <th>Quantity Return</th>
-            <th>Rate</th>
-            <th>Batch No.</th>
+            <!-- <th>Rate</th>
+            <th>Batch No.</th> -->
             <th>Expiry Date</th>
             <th>Reason</th>
           </tr>
@@ -109,7 +112,7 @@
                 <template slot="append">{{ each_return.package_type }}</template>
               </el-input>
             </td>
-            <td>
+            <!-- <td>
               <el-input
                 v-model="each_return.rate"
                 type="number"
@@ -126,7 +129,7 @@
                 style="width: 100%;"
                 outline
               />
-            </td>
+            </td> -->
             <td>
               <el-date-picker
                 v-model="each_return.expiry_date"
@@ -236,7 +239,7 @@ export default {
           detail.quantity_returned === '' ||
           detail.rate === '' ||
           detail.expiry_date === '' ||
-          detail.batch_no === '' ||
+          // detail.batch_no === '' ||
           detail.reason === '') {
           this.removeRow(index);
         }
@@ -250,7 +253,7 @@ export default {
           detail.quantity_returned === '' ||
           detail.rate === '' ||
           detail.expiry_date === '' ||
-          detail.batch_no === '' ||
+          // detail.batch_no === '' ||
           detail.reason === ''
       );
       if (checkEmptyLines.length > 0) {
@@ -295,7 +298,7 @@ export default {
       const customer_id = app.myCustomers[value].id;
       if (!app.customersReturnsList.filter(e => e.id === customer_id).length > 0) {
         app.myCustomers[value].customer_id = customer_id;
-        app.myCustomers[value].payment_mode = 'later';
+        // app.myCustomers[value].payment_mode = 'later';
         app.myCustomers[value].can_delete = 'yes';
         app.customersReturnsList.push(app.myCustomers[value]);
       }

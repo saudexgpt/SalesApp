@@ -52,6 +52,96 @@
         </span>
       </el-col>
       <v-client-table v-if="view_type === 'invoice'" v-model="sales" :columns="sales_columns" :options="sales_options">
+        <div slot="child_row" slot-scope="props" style="background: #000">
+
+          <div v-if="props.row.complain_status === 'pending'">
+            <h4><el-alert :closable="false" type="error">Complaint: {{ props.row.complaints }}</el-alert></h4>
+          </div>
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                <th
+                  v-if="checkPermission(['update-sales']) && props.row.complain_status === 'pending'">Edit</th>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Rate</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+
+              <tr v-for="(detail, index) in props.row.details" :key="index">
+
+                <td v-if="checkPermission(['update-sales']) && props.row.complain_status === 'pending'">
+                  <el-popover
+                    placement="right"
+                    width="400"
+                    trigger="click">
+                    <table class="table table-bordered">
+                      <tbody>
+                        <tr>
+                          <td>Old Quantity</td>
+                          <td>{{ updateDetails.old_quantity }} {{ updateDetails.type }}</td>
+                        </tr>
+                        <tr>
+                          <td>New Quantity</td>
+                          <el-input v-model="updateDetails.new_quantity" type="number">
+                            <template #append>
+                              {{ updateDetails.type }}
+                            </template>
+                          </el-input>
+                        </tr>
+                        <tr>
+                          <td>Rate</td>
+                          <td>
+                            <el-input v-model="updateDetails.rate" type="number">
+                              <template #prepend>
+                                {{ currency }}
+                              </template>
+                            </el-input>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td colspan="2">
+                            <el-button
+                              type="primary"
+                              round
+                              @click="updateEntry()"
+                            >
+                              Submit
+                            </el-button>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <el-button
+                      slot="reference"
+                      :id="`update_sales_${detail.id}`"
+                      type="warning"
+                      circle
+                      icon="el-icon-edit"
+                      @click="setUpdateDetailsForm(detail)"
+                    />
+                  </el-popover>
+                </td>
+                <td>{{ detail.product }}</td>
+                <td>{{ detail.quantity }} {{ detail.packaging }}</td>
+                <td>{{ currency + Number(detail.rate).toLocaleString() }}</td>
+                <td>{{ currency + Number(detail.amount).toLocaleString() }}</td>
+              </tr>
+              <tr v-if="checkPermission(['update-sales']) && props.row.complain_status == 'pending'">
+                <td colspan="5">
+                  <el-button
+                    type="success"
+                    round
+                    @click="resolveComplaints(props.row)"
+                  >Complaints Resolved</el-button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+        </div>
         <div
           slot="amount_due"
           slot-scope="props"
@@ -61,6 +151,14 @@
           slot="created_at"
           slot-scope="props"
         >{{ moment(props.row.created_at).format('lll') }}</div>
+        <template slot="attachments" slot-scope="{row}">
+          <el-button
+            v-if="row.attachments.length > 0"
+            type="primary"
+            round
+            @click="viewDetails(row)"
+          >View</el-button>
+        </template>
       </v-client-table>
       <v-client-table v-else v-model="sales" :columns="product_sales_columns" :options="product_salesoptions">
         <div
@@ -97,9 +195,9 @@
           slot-scope="props"
         >{{ (props.row.expiry_date) ? moment(props.row.expiry_date).format('ll') : '' }}</div> -->
         <div
-          slot="transaction.created_at"
+          slot="entry_date"
           slot-scope="props"
-        >{{ moment(props.row.transaction.created_at).format('lll') }}</div>
+        >{{ moment(props.row.entry_date).format('lll') }}</div>
       </v-client-table>
     </el-row>
     <el-row :gutter="20">
@@ -111,6 +209,16 @@
         @pagination="fetchSales(form)"
       />
     </el-row>
+    <el-dialog
+      :visible.sync="dialogVisible"
+      title="Attached Document"
+      width="50%">
+      <el-carousel indicator-position="outside">
+        <el-carousel-item v-for="(attachment, index) in details.attachments" :key="index" style="overflow: auto">
+          <img :src="`/storage/${attachment.link}`">
+        </el-carousel-item>
+      </el-carousel>
+    </el-dialog>
   </vx-card>
 </template>
 <script>
@@ -118,13 +226,17 @@ import moment from 'moment';
 import Pagination from '@/components/Pagination';
 import Resource from '@/api/resource';
 import FilterOptions from '@/views/apps/reports/FilterOptions';
+import checkPermission from '@/utils/permission'; // Permission checking
 export default {
   components: { Pagination, FilterOptions },
   data() {
     return {
+      dialogVisible: false,
+      details: '',
       sales: [],
       reps: [],
       sales_columns: [
+        'attachments',
         'customer.business_name',
         'invoice_no',
         'amount_due',
@@ -133,21 +245,6 @@ export default {
         'staff.name', // field staff
         'created_at',
       ],
-      product_sales_columns: [
-        'transaction.customer.business_name',
-        'transaction.invoice_no',
-        'product',
-        'quantity',
-        // 'main_rate',
-        // 'main_amount',
-        'rate',
-        'amount',
-        // 'batch_no',
-        // 'expiry_date',
-        'name', // field staff
-        'transaction.created_at',
-      ],
-
       sales_options: {
         headings: {
           'customer.business_name': 'Customer Name',
@@ -174,6 +271,21 @@ export default {
         sortable: ['customer.business_name', 'invoice_no', 'created_at', 'staff.name,'],
         filterable: ['invoice_no', 'customer.business_name', 'created_at', 'staff.name'],
       },
+      product_sales_columns: [
+        // 'action',
+        'transaction.customer.business_name',
+        'transaction.invoice_no',
+        'product',
+        'quantity',
+        // 'main_rate',
+        // 'main_amount',
+        'rate',
+        'amount',
+        // 'batch_no',
+        // 'expiry_date',
+        'name', // field staff
+        'entry_date',
+      ],
       product_salesoptions: {
         headings: {
           'transaction.customer.business_name': 'Customer Name',
@@ -186,7 +298,7 @@ export default {
           //   'amount': 'Sell Amount',
           //   'main_amount': 'Original Amount',
           //   'main_rate': 'Original Rate',
-          'transaction.created_at': 'Date',
+          'entry_date': 'Date',
         },
         pagination: {
           dropdown: true,
@@ -198,8 +310,8 @@ export default {
         //   filter: 'Search:',
         // },
         // editableColumns:['name', 'category.name', 'sku'],
-        sortable: ['transaction.invoice_no', 'product', 'transaction.customer.business_name', 'transaction.created_at', 'name,'],
-        filterable: ['transaction.invoice_no', 'product', 'transaction.customer.business_name', 'transaction.created_at', 'name'],
+        sortable: ['transaction.invoice_no', 'product', 'transaction.customer.business_name', 'entry_date', 'name,'],
+        filterable: ['transaction.invoice_no', 'product', 'transaction.customer.business_name', 'entry_date', 'name'],
       },
       load: false,
       total: 0,
@@ -227,14 +339,62 @@ export default {
       total_sales: {
         total_amount: 0,
       },
+      updateDetails: {
+        id: '',
+        old_quantity: '',
+        new_quantity: 0,
+        rate: '',
+        type: '',
+      },
     };
   },
   created() {
   },
   methods: {
     moment,
+    checkPermission,
+    viewDetails(details){
+      this.details = details;
+      this.dialogVisible = true;
+    },
+    setUpdateDetailsForm(data) {
+      const app = this;
+      app.updateDetails.id = data.id;
+      app.updateDetails.old_quantity = data.quantity;
+      app.updateDetails.new_quantity = 0;
+      app.updateDetails.rate = data.rate;
+      app.updateDetails.type = data.packaging;
+    },
+    updateEntry() {
+      const app = this;
+      const updateSalesResource = new Resource('sales/update-details');
+      const param = app.updateDetails;
+      app.load = true;
+      updateSalesResource.update(param.id, param)
+        .then(() => {
+          app.fetchSales(app.form);
+          document.getElementById(`update_sales_${param.id}`).click();
+        }).catch((e) => {
+          app.load = false;
+        });
+    },
+    resolveComplaints(sale) {
+      const app = this;
+      const message = 'Are you sure you have resolved all complaints about this entry? Click OK to confirm';
+      if (confirm(message)) {
+        const resolveComplainResource = new Resource('sales/resolve-complaints');
+        app.load = true;
+        resolveComplainResource.update(sale.id)
+          .then(() => {
+            app.fetchSales(app.form);
+          }).catch((e) => {
+            app.load = false;
+          });
+      }
+    },
     fetchSales(param) {
       const app = this;
+      app.sales = [];
       app.form = param;
       const { limit, page } = param;
       app.sales_options.perPage = limit;
@@ -269,7 +429,15 @@ export default {
           'FIELD STAFF',
           'DATE',
         ];
-        const filterVal = this.sales_columns;
+        const filterVal = [
+          'customer.business_name',
+          'invoice_no',
+          'amount_due',
+          // 'batch_no',
+          // 'expiry_date',
+          'staff.name', // field staff
+          'created_at',
+        ];
         const list = this.sales;
         const data = this.formatJson(filterVal, list);
         excel.export_json_to_excel({
@@ -301,7 +469,21 @@ export default {
           'FIELD STAFF',
           'DATE',
         ];
-        const filterVal = this.product_sales_columns;
+        const filterVal = [
+        // 'action',
+          'transaction.customer.business_name',
+          'transaction.invoice_no',
+          'product',
+          'quantity',
+          // 'main_rate',
+          // 'main_amount',
+          'rate',
+          'amount',
+          // 'batch_no',
+          // 'expiry_date',
+          'name', // field staff
+          'entry_date',
+        ];
         const list = this.sales;
         const data = this.formatJson(filterVal, list);
         excel.export_json_to_excel({

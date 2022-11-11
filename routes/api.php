@@ -67,6 +67,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('fetch-necessary-params', [Controller::class, 'fetchNecessayParams']);
     Route::get('user-notifications', [UsersController::class, 'userNotifications']);
     Route::get('notification/mark-as-read', [UsersController::class, 'markNotificationAsRead']);
+    Route::post('attach/files', [Controller::class, 'attachFiles']);
+    Route::put('log-complaints/{id}', [Controller::class, 'logComplaints']);
 
     Route::get('location-trails', [UsersController::class, 'showLocationTrails']);
     Route::group(['prefix' => 'acl'], function () {
@@ -158,13 +160,16 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('/', [PaymentsController::class, 'index']);
         Route::post('/store', [PaymentsController::class, 'store']);
         Route::put('/confirm/{payment}', [PaymentsController::class, 'confirm']);
+        Route::put('update-details/{payment}', [PaymentsController::class, 'updateDetails']);
         Route::get('daily-collections', [PaymentsController::class, 'repsDailyCollections']);
+        Route::get('show/{payment}', [PaymentsController::class, 'show']);
     });
 
     Route::group(['prefix' => 'products'], function () {
         Route::get('/', [ItemsController::class, 'index']);
         Route::get('fetch-warehouse-products', [ItemsController::class, 'fetchWarehouseProducts']);
         Route::get('my-products', [ItemsController::class, 'myProducts']);
+        Route::get('rep-products', [ItemsController::class, 'repProducts']);
         Route::post('update-basic-unit', [ItemsController::class, 'updateBulkItemBasicUnit']);
     });
     Route::group(['prefix' => 'regions'], function () {
@@ -173,18 +178,24 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix' => 'returns'], function () {
         Route::post('store', [ReturnsController::class, 'store']);
         Route::get('daily-returned-products', [ReturnsController::class, 'repsDailyReturns']);
+        Route::put('confirm/{returned_product}', [ReturnsController::class, 'confirm']);
     });
     Route::group(['prefix' => 'sales'], function () {
 
         Route::get('daily-sales', [TransactionsController::class, 'repsDailySales']);
         Route::get('orders', [TransactionsController::class, 'orders']);
+        Route::get('show/{transaction}', [TransactionsController::class, 'show']);
         Route::get('fetch', [TransactionsController::class, 'fetchSales']);
         Route::get('fetch-product-sales', [TransactionsController::class, 'fetchProductSales']);
 
         Route::get('fetch-debts', [TransactionsController::class, 'fetchDebts']);
 
-
+        Route::put('/confirm/{transaction}', [TransactionsController::class, 'confirm']);
         Route::post('store', [TransactionsController::class, 'store']); //->middleware('permission:create-sales');
+        Route::put('update-details/{transaction_detail}', [TransactionsController::class, 'updateDetails']);
+        Route::put('resolve-complaints/{transaction}', [TransactionsController::class, 'resolveComplaints']);
+
+
         Route::put('supply-orders/{transaction_detail}', [TransactionsController::class, 'supplyOrders']);
         // Route::get('customer-sales-report/{customer}', [TransactionsController::class, 'customerSalesReport']);
     });

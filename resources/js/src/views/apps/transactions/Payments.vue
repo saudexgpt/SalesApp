@@ -40,7 +40,7 @@
           slot="total_amount"
           slot-scope="props"
           class="alert alert-success"
-        >{{ currency + Number(props.row.total_amount).toLocaleString() }}</div>
+        >{{ currency + Number(props.row.amount).toLocaleString() }}</div>
         <div
           slot="payment_date"
           slot-scope="props"
@@ -55,9 +55,75 @@
         >{{ (row.confirmer) ? moment(row.updated_at).format('lll') : 'Pending' }}</div>
         <div
           slot="action"
-          slot-scope="props"
-        ><el-button v-if="props.row.confirmer === null && checkPermission(['confirm-payments'])" round type="success" size="small" @click="confirmPayment(props.index, props.row)">Confirm</el-button></div>
+          slot-scope="scope"
+        >
+          <!-- <el-button v-if="props.row.confirmer === null && checkPermission(['confirm-payments'])" round type="success" size="small" @click="confirmPayment(props.index, props.row)">Confirm</el-button> -->
+          <el-popover
+            v-if="checkPermission(['update-payments']) && scope.row.complain_status === 'pending'"
+            placement="right"
+            width="400"
+            trigger="click">
+            <table class="table table-bordered">
+              <tbody>
+                <tr>
+                  <td>Old Amount</td>
+                  <td>{{ currency }} {{ updateCollections.old_amount }}</td>
+                </tr>
+                <tr>
+                  <td>New Amount</td>
+                  <td>
+                    <el-input v-model="updateCollections.new_amount" type="number">
+                      <template #prepend>
+                        {{ currency }}
+                      </template>
+                    </el-input>
+                  </td>
+                </tr>
+                <tr>
+                  <td>New Amount</td>
+                  <td>
+                    <el-select
+                      v-model="updateCollections.payment_type"
+                      style="width: 100%"
+                    >
+                      <el-option value="Cash" label="Cash" />
+                      <el-option value="Cheque" label="Cheque" />
+                      <el-option value="Bank Deposit/Transfer" label="Bank Deposit/Transfer/POS" />
+                    </el-select>
+                  </td>
+                </tr>
 
+                <tr>
+                  <td colspan="2">
+                    <el-button
+                      type="primary"
+                      round
+                      @click="updateEntry()"
+                    >
+                      Submit
+                    </el-button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <el-button
+              slot="reference"
+              :id="`update_payment_${scope.row.id}`"
+              type="warning"
+              circle
+              icon="el-icon-edit"
+              @click="setUpdateDetailsForm(scope.row)"
+            />
+          </el-popover>
+        </div>
+        <template slot="attachments" slot-scope="{row}">
+          <el-button
+            v-if="row.attachments.length > 0"
+            type="primary"
+            round
+            @click="viewDetails(row)"
+          >View</el-button>
+        </template>
       </v-client-table>
     </el-row>
     <el-row :gutter="20">
@@ -69,6 +135,19 @@
         @pagination="fetchPayments(form)"
       />
     </el-row>
+    <el-dialog
+      :visible.sync="dialogVisible"
+      title="Attached Document"
+      width="50%">
+      <div v-if="details.complain_status === 'pending'">
+        <h4><el-alert :closable="false" type="error">Complaint: {{ details.complaints }}</el-alert></h4>
+      </div>
+      <el-carousel indicator-position="outside">
+        <el-carousel-item v-for="(attachment, index) in details.attachments" :key="index" style="overflow: auto">
+          <img :src="`/storage/${attachment.link}`">
+        </el-carousel-item>
+      </el-carousel>
+    </el-dialog>
   </vx-card>
 </template>
 <script>
@@ -81,15 +160,21 @@ export default {
   components: { Pagination, FilterOptions },
   data() {
     return {
+      dialogVisible: false,
+      details: '',
       payments: [],
       payments_columns: [
+        'action',
+        'id',
         'customer.business_name',
-        'confirmer.name',
-        'total_amount',
-        'payment_date',
+        'slip_no',
+        'amount',
         'payment_type',
         'updated_at',
         'customer.assigned_officer.name',
+        'payment_date',
+        'confirmer.name',
+        'attachments',
         // 'action',
       ],
 
@@ -98,7 +183,8 @@ export default {
           'customer.business_name': 'Customer',
           'confirmer.name': 'Confirmed By',
           updated_at: 'Confirmed at',
-          'customer.assigned_officer.name': 'Relating Officer',
+          payment_date: 'Date',
+          'customer.assigned_officer.name': 'Field Staff',
         },
         pagination: {
           dropdown: true,
@@ -138,6 +224,12 @@ export default {
       total_collections: {
         total_amount: 0,
       },
+      updateCollections: {
+        id: '',
+        old_amount: '',
+        new_amount: 0,
+        payment_type: '',
+      },
     };
   },
   created() {
@@ -148,6 +240,30 @@ export default {
   methods: {
     moment,
     checkPermission,
+    viewDetails(details){
+      this.details = details;
+      this.dialogVisible = true;
+    },
+    setUpdateDetailsForm(data) {
+      const app = this;
+      app.updateCollections.id = data.id;
+      app.updateCollections.old_amount = data.amount;
+      app.updateCollections.new_amount = 0;
+      app.updateCollections.payment_type = data.payment_type;
+    },
+    updateEntry() {
+      const app = this;
+      const updateSalesResource = new Resource('payments/update-details');
+      const param = app.updateCollections;
+      app.load = true;
+      updateSalesResource.update(param.id, param)
+        .then(() => {
+          app.fetchPayments(app.form);
+          document.getElementById(`update_payment_${param.id}`).click();
+        }).catch((e) => {
+          app.load = false;
+        });
+    },
     fetchPayments(param) {
       const app = this;
       app.form = param;
@@ -191,15 +307,28 @@ export default {
       import('@/vendor/Export2Excel').then(excel => {
         const multiHeader = [['Collections ' + this.sub_title, '', '', '', '', '', '', '']];
         const tHeader = [
+          'ID',
           'CUSTOMER',
-          'CONFIRMED BY',
+          'SLIP NO.',
           'AMOUNT',
-          'PAYMENT DATE',
           'PAYMENT TYPE',
+          'FIELD STAFF',
+          'PAYMENT DATE',
+          'CONFIRMED BY',
           'CONFIRMED AT',
-          'RELATING OFFICER',
         ];
-        const filterVal = this.payments_columns;
+        const filterVal = [
+          'id',
+          'customer.business_name',
+          'slip_no',
+          'amount',
+          'payment_type',
+          'customer.assigned_officer.name',
+          'payment_date',
+          'confirmer.name',
+          'updated_at',
+        // 'action',
+        ];
         const list = this.payments;
         const data = this.formatJson(filterVal, list);
         excel.export_json_to_excel({

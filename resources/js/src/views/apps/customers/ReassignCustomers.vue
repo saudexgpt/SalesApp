@@ -3,9 +3,18 @@
     <vx-card v-loading="load_table">
       <div class="vx-row">
         <div class="vx-col lg:w-3/4 w-full">
-          <div class="flex items-end px-3">
+          <!-- <div class="flex items-end px-3">
             <feather-icon svg-classes="w-6 h-6" icon="UsersIcon" class="mr-2" />
             <span class="font-medium text-lg">Reassign Customers to Reps</span>
+          </div> -->
+          <div class="flex items-end px-3">
+            <el-input
+              v-model="query.keyword"
+              placeholder="Search Customer"
+              style="width: 100%"
+              class="filter-item"
+              @input="handleFilter"
+            />
           </div>
           <vs-divider />
         </div>
@@ -46,7 +55,7 @@
           </el-col>
         </el-row> -->
         <el-row :gutter="20">
-          <el-col :xs="24" :sm="8" :md="8">
+          <!-- <el-col :xs="24" :sm="8" :md="8">
             <p>Select Reps Customers</p>
             <el-select
               v-model="query.rep_id"
@@ -62,7 +71,7 @@
                 :value="rep.id"
               />
             </el-select>
-          </el-col>
+          </el-col> -->
           <el-col :xs="24" :sm="8" :md="8">
             <p>Select Rep to Assign to</p>
             <el-select
@@ -110,9 +119,9 @@
             <small>{{ props.row.address }}</small><br>
             <small>{{ props.row.latitude }},{{ props.row.longitude }}</small>
           </template>
-          <template slot="assigned_officer" slot-scope="props">
+          <!-- <template slot="assigned_officer" slot-scope="props">
             <span>{{ (props.row.assigned_officer !== null) ? props.row.assigned_officer.name : 'Not Assigned' }}</span>
-          </template>
+          </template> -->
           <template slot="last_visited" slot-scope="scope">
             <span>{{ (scope.row.last_visited) ? moment(scope.row.last_visited.visit_date).format('ll') : 'Not visited' }}</span>
           </template>
@@ -127,6 +136,15 @@
           </template>
         </v-client-table>
       </div>
+      <el-row :gutter="20">
+        <pagination
+          v-show="total > 0"
+          :total="total"
+          :page.sync="query.page"
+          :limit.sync="query.limit"
+          @pagination="getList"
+        />
+      </el-row>
     </vx-card>
   </div>
 </template>
@@ -152,7 +170,7 @@ export default {
         // 'area',
         'last_visited',
         'registrar.name',
-        'assigned_officer',
+        // 'assigned_officer',
         // 'verifier.name',
         'created_at',
         // 'date_verified',
@@ -165,15 +183,15 @@ export default {
           'customer_type.name': 'Type',
           'last_visited': 'Last Visit',
           'registrar.name': 'Registered By',
-          'assigned_officer': 'Field Staff',
+          // 'assigned_officer': 'Field Staff',
           'verifier.name': 'Verified By',
         },
-        rowAttributesCallback(row) {
-          if (row.is_duplicate_entry === 1) {
-            return { style: 'background: #ffec43f2; color: #000000' };
-          }
-          // return { style: 'background: #36c15ecf; color: #000000' };
-        },
+        // rowAttributesCallback(row) {
+        //   if (row.is_duplicate_entry === 1) {
+        //     return { style: 'background: #ffec43f2; color: #000000' };
+        //   }
+        //   // return { style: 'background: #36c15ecf; color: #000000' };
+        // },
         pagination: {
           dropdown: true,
           chunk: 500,
@@ -196,18 +214,27 @@ export default {
         new_rep: '',
       },
       query: {
+        page: 1,
         rep_id: '',
-        paginate_option: 'all',
         verify_type: 'all',
+        keyword: '',
+        limit: 50,
+        role: '',
+        team_id: '',
       },
     };
   },
   created() {
     this.fetchSalesRep();
+    this.getList();
   },
   methods: {
     moment,
     checkPermission,
+    handleFilter() {
+      this.query.page = 1;
+      this.getList();
+    },
     fetchSalesRep() {
       const app = this;
       const salesRepResource = new Resource('users/fetch-sales-reps');
@@ -221,13 +248,21 @@ export default {
         });
     },
     getList() {
+      const { limit, page } = this.query;
+      this.options.perPage = limit;
       this.load_table = true;
-
       const customersResource = new Resource('customers');
       customersResource
         .list(this.query)
         .then((response) => {
-          this.list = response.customers;
+          this.states = response.states;
+          this.customer_types = response.customer_types;
+          const customers = response.customers;
+          this.list = customers.data;
+          this.list.forEach((element, index) => {
+            element['index'] = (page - 1) * limit + index + 1;
+          });
+          this.total = customers.total;
           this.load_table = false;
         })
         .catch((error) => {
@@ -235,6 +270,21 @@ export default {
           this.load_table = false;
         });
     },
+    // getList() {
+    //   this.load_table = true;
+
+    //   const customersResource = new Resource('customers');
+    //   customersResource
+    //     .list(this.query)
+    //     .then((response) => {
+    //       this.list = response.customers;
+    //       this.load_table = false;
+    //     })
+    //     .catch((error) => {
+    //       console.log(error);
+    //       this.load_table = false;
+    //     });
+    // },
     assignOfficer() {
       const app = this;
       app.load_table = true;
