@@ -317,7 +317,7 @@ class TransactionsController extends Controller
         foreach ($unsaved_orders as $unsaved_order) {
 
             $date = Carbon::now()->endOfMonth(); // $unsaved_order->due_date;
-            $invoice_items = $unsaved_order->invoice_items;
+            $invoice_items = (isset($unsaved_order->invoice_items)) ? $unsaved_order->invoice_items : NULL;
             $entry_exist = Transaction::where('unique_sales_id', $unsaved_order->unique_sales_id)->first();
             if (!$entry_exist) {
                 # code...
@@ -330,7 +330,7 @@ class TransactionsController extends Controller
                     $invoice->confirmed_by = $actor->id;
                     $invoice->payment_status = 'unpaid';
                     $invoice->amount_due     = $unsaved_order->amount;
-                    $invoice->main_amount     = $unsaved_order->main_amount;
+                    $invoice->main_amount     = (isset($unsaved_order->main_amount)) ? $unsaved_order->main_amount : $unsaved_order->amount;
 
                     $invoice->due_date       = date('Y-m-d', strtotime($date));
                     $invoice->entry_date = ($request->entry_date != '') ? date('Y-m-d H:i:s', strtotime($request->entry_date)) : date('Y-m-d H:i:s', strtotime('now'));
@@ -342,7 +342,10 @@ class TransactionsController extends Controller
                         $invoice->save();
 
                         $this->addCustomerDebt($invoice);
-                        $this->createInvoiceItems($invoice, $invoice_items);
+                        if ($invoice_items !== NULL && !empty($invoice_items)) {
+
+                            $this->createInvoiceItems($invoice, $invoice_items);
+                        }
                         // $customer_debt_obj = new CustomerDebt();
                         // $customer_debt_obj->settleDebt($invoice->customer_id);
 

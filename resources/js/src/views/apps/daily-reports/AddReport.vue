@@ -190,16 +190,16 @@ export default {
           if (sale.rep_coordinate === '' || sale.rep_coordinate === undefined) {
             errorCount++;
           }
-          if (sale.invoice_items === undefined) {
-            errorCount++;
-          } else {
-            const checkEmptyLines = sale.invoice_items.filter(
-              (detail) => detail.item_id === '' || detail.quantity === '' || detail.quantity === 0 || detail.rate === ''
-            );
-            if (checkEmptyLines.length > 0) {
-              errorCount++;
-            }
-          }
+        //   if (sale.invoice_items === undefined) {
+        //     errorCount++;
+        //   } else {
+        //     const checkEmptyLines = sale.invoice_items.filter(
+        //       (detail) => detail.item_id === '' || detail.quantity === '' || detail.quantity === 0 || detail.rate === ''
+        //     );
+        //     if (checkEmptyLines.length > 0) {
+        //       errorCount++;
+        //     }
+        //   }
         });
         if (errorCount > 0) {
           this.$alert('Kindly fill all empty fields under Sales Report before continuing');
@@ -362,7 +362,7 @@ export default {
               type: 'success',
               message: 'Sales Entries Submitted',
             });
-            app.customersSalesList = [];
+            // app.customersSalesList = [];
             app.loadForm = false;
           });
         }

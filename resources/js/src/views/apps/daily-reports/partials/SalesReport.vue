@@ -15,16 +15,22 @@
       <tbody>
         <tr v-for="(customer, index) in visitedCustomersList" :key="index">
           <td>
-            <el-tooltip :content="'Add Sales Details for ' + customer.business_name" class="item" effect="dark" placement="top-start">
+            <!-- <el-tooltip :content="'Add Sales Details for ' + customer.business_name" class="item" effect="dark" placement="top-start">
               <el-button circle type="primary" icon="el-icon-goods" @click="setCustomerSales(index, customer)" />
-            </el-tooltip>
+            </el-tooltip> -->
           </td>
           <td>
             {{ customer.business_name }}
             <el-button v-if="customer.can_delete === 'yes'" circle type="danger" icon="el-icon-delete" @click="removeExtraCustomer(customer.id)" />
           </td>
           <!-- <td>0</td> -->
-          <td>{{ customer.amount }}</td>
+          <td>
+            <!-- {{ customer.amount }} -->
+            <el-input
+              v-model="customer.amount"
+              placeholder="Enter Amount"
+            />
+          </td>
           <td>
             <el-date-picker
               v-model="customer.entry_date"
@@ -398,6 +404,7 @@ export default {
         app.myCustomers[value].customer_id = customer_id;
         // app.myCustomers[value].payment_mode = 'later';
         app.myCustomers[value].files = [];
+        app.myCustomers[value].entry_date = new Date();
         app.myCustomers[value].unique_sales_id = createUniqueString();
         app.myCustomers[value].can_delete = 'yes';
         app.visitedCustomersList.push(app.myCustomers[value]);
