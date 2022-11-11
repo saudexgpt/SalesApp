@@ -40,7 +40,7 @@ class CustomersController extends Controller
 
             file_put_contents($path, base64_decode($avatar->base64String));
         }
-        $actualpath = "https://sales.3coretechnology.com/$path";
+        $actualpath = env('APP_URL') . "/$path";
         // $actualpath = "http://localhost:8000/$path";
         return $actualpath;
     }
