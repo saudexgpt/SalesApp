@@ -350,7 +350,7 @@ class CustomersController extends Controller
 
         if (!$customer) {
 
-            $street = $unsaved_customer->street;
+            $street = isset($unsaved_customer->street) ? $unsaved_customer->street : NULL;
             $area = $unsaved_customer->area;
 
             $formatted_address = $unsaved_customer->address;
@@ -363,7 +363,7 @@ class CustomersController extends Controller
             //         list($lat, $long, $formatted_address, $street, $area) = getLocationFromAddress($formatted_address);
             //     }
             // }
-            $contacts = json_decode(json_encode($unsaved_customer->customer_contacts));
+            $contacts = (isset($unsaved_customer->customer_contacts)) ? json_decode(json_encode($unsaved_customer->customer_contacts)) : NULL;
             if (isset($unsaved_customer->id) && $unsaved_customer->id !== '') {
 
                 $customer = Customer::find($unsaved_customer->id);
@@ -378,8 +378,8 @@ class CustomersController extends Controller
             $customer->lga_id = $unsaved_customer->lga_id;
             $customer->state_id = $unsaved_customer->state_id;
             $customer->lga_text = (isset($unsaved_customer->lga_text)) ? $unsaved_customer->lga_text : NULL;
-            $customer->business_name = $unsaved_customer->business_name;
-            // $customer->email = $unsaved_customer->email;
+            $customer->business_name = strtoupper($unsaved_customer->business_name);
+            $customer->code = $unsaved_customer->code;
             // $customer->phone1 = $unsaved_customer->phone1;
             if (isset($unsaved_customer->avatar) && $unsaved_customer->avatar !== '') {
 
@@ -394,10 +394,13 @@ class CustomersController extends Controller
             $customer->registered_by = $user->id;
             $customer->registrar_lat = $reg_lat;
             $customer->registrar_lng = $reg_lng;
-            $customer->relating_officer = (isset($unsaved_customer->relating_officer)) ? $unsaved_customer->relating_officer : $user->id;
+            // $customer->relating_officer = (isset($unsaved_customer->relating_officer)) ? $unsaved_customer->relating_officer : $user->id;
             if ($customer->save()) {
-                if (count($contacts) > 0) {
-                    $this->saveCustomerContact($customer->id, $contacts);
+
+                if ($contacts !== NULL) {
+                    if (count($contacts) > 0) {
+                        $this->saveCustomerContact($customer->id, $contacts);
+                    }
                 }
 
                 // $customer_list[] = $this->show($customer);
@@ -407,40 +410,51 @@ class CustomersController extends Controller
                     $this->logUserActivity($title, $description, $user);
                 }
 
-                return $customer;
+                // return $customer;
             }
             // Generate notification before returning ///////////////////////
             // Write notification code here////////////////////////////
 
 
         }
+        $rep_id = $unsaved_customer->relating_officer;
+        if ($rep_id !== 'NULL') {
+
+            // assign customer to rep
+            $customer->reps()->attach($rep_id);
+        }
         return $customer;
     }
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
         set_time_limit(0);
-        $user = $this->getUser();
+        // $user = $this->getUser();
         $unsaved_customers = json_decode(json_encode($request->unsaved_customers));
         $customer_list = [];
         $unsaved_list = [];
         $error = [];
         foreach ($unsaved_customers as $unsaved_customer) {
             try {
-                $customer = $this->saveCustomersDetails($unsaved_customer);
-                if (!isset($unsaved_customer->id)) {
+                $coordinate = $unsaved_customer->coordinate;
+                $cordinate_array = explode(',', $coordinate); // since cordinate is in form of (lat, lng)
+                $request->customer_latitude = str_replace(' ', '', $cordinate_array[0]);
+                $request->customer_longitude = str_replace(' ', '', $cordinate_array[1]);
+                $unsaved_customer->relating_officer = 'NULL';
+                $request->business_name = $unsaved_customer->business_name;
+                $request->code = $unsaved_customer->code;
+                $request->address = $unsaved_customer->address;
+                $request->customer_type_id = $unsaved_customer->customer_type_id;
+                $request->area = $unsaved_customer->area;
 
-                    $unsaved_customer->customer_id = $customer->id;
-                    // we want to record visitation only if it is a new entry
-                    $visit_obj = new Visit();
-                    $visit_obj->saveAsVisits($user, $unsaved_customer);
-                }
-                // $customer_list[] = $this->show($customer);
+                $customer = $this->saveCustomersDetails($request);
+                // if (!isset($unsaved_customer->id)) {
+
+                //     $unsaved_customer->customer_id = $customer->id;
+                //     // we want to record visitation only if it is a new entry
+                //     $visit_obj = new Visit();
+                //     $visit_obj->saveAsVisits($user, $unsaved_customer);
+                // }
+                $customer_list[] = $this->show($customer);
             } catch (\Throwable $th) {
                 $unsaved_list[] =  $unsaved_customer;
                 $error[] =  $th;
@@ -448,6 +462,38 @@ class CustomersController extends Controller
         }
         return response()->json(['customers' => $customer_list, 'unsaved_list' => $unsaved_list, 'message' => 'success', 'error' => $error], 200);
     }
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    // public function store(Request $request)
+    // {
+    //     set_time_limit(0);
+    //     $user = $this->getUser();
+    //     $unsaved_customers = json_decode(json_encode($request->unsaved_customers));
+    //     $customer_list = [];
+    //     $unsaved_list = [];
+    //     $error = [];
+    //     foreach ($unsaved_customers as $unsaved_customer) {
+    //         try {
+    //             $customer = $this->saveCustomersDetails($unsaved_customer);
+    //             if (!isset($unsaved_customer->id)) {
+
+    //                 $unsaved_customer->customer_id = $customer->id;
+    //                 // we want to record visitation only if it is a new entry
+    //                 $visit_obj = new Visit();
+    //                 $visit_obj->saveAsVisits($user, $unsaved_customer);
+    //             }
+    //             // $customer_list[] = $this->show($customer);
+    //         } catch (\Throwable $th) {
+    //             $unsaved_list[] =  $unsaved_customer;
+    //             $error[] =  $th;
+    //         }
+    //     }
+    //     return response()->json(['customers' => $customer_list, 'unsaved_list' => $unsaved_list, 'message' => 'success', 'error' => $error], 200);
+    // }
 
     public function update(Request $request, Customer $customer)
     {
@@ -482,6 +528,7 @@ class CustomersController extends Controller
             try {
 
                 $business_name =  trim($data->BUSINESS_NAME);
+                $code =  trim($data->CODE);
 
                 $business_type = strtolower(trim($data->BUSINESS_TYPE));
                 // $email =  trim($data->EMAIL);
@@ -493,6 +540,7 @@ class CustomersController extends Controller
                 $contact_no = (isset($data->CONTACT_NUMBER)) ? trim($data->CONTACT_NUMBER) : 'NULL';
                 $relating_officer = (isset($data->REP_ID)) ? trim($data->REP_ID) : 'NULL';
                 $request->business_name = $business_name;
+                $request->code = $code;
                 $request->address = $address;
                 $request->relating_officer = $relating_officer;
                 $request->area = $area;
@@ -523,9 +571,10 @@ class CustomersController extends Controller
                 }
 
                 $request->customer_type_id = $customer_type->id;
+                if ($contact_no !== 'NULL') {
+                    $request->customer_contacts = [['name' => $contact_name, 'phone1' => $contact_no, 'phone2' => NULL, 'role' => NULL]];
+                }
 
-
-                $request->customer_contacts = [['name' => $contact_name, 'phone1' => $contact_no, 'phone2' => NULL, 'role' => NULL]];
 
                 $this->saveCustomersDetails($request, 'Confirmed');
             } catch (\Throwable $th) {
@@ -776,7 +825,7 @@ class CustomersController extends Controller
         $today  = date('Y-m-d', strtotime('now'));
         $user = $this->getUser();
         $customer_ids = json_decode(json_encode($request->customer_ids));
-        $relating_officer->customers()->sync($customer_ids);
+        $relating_officer->customers()->attach($customer_ids);
 
         $title = "Customer's Relating Officer Assigned";
         $description = $user->name . " successfully assigned $relating_officer->name to customers on $today";
@@ -785,31 +834,15 @@ class CustomersController extends Controller
         // return $this->prospectiveCustomers($request);
     }
 
-    public function unassignCustomersThatAreNotMine(Request $request)
+    public function unassignCustomersThatAreNotMine(Request $request, Customer $customer)
     {
         $today  = date('Y-m-d', strtotime('now'));
-        $user = $this->getUser();
-        $customer_ids = json_decode(json_encode($request->customer_ids));
-        $unassigned_customers = '';
-        foreach ($customer_ids as $customer_id) {
-            $customer = Customer::find($customer_id);
-            $name = $customer->business_name;
-            $address = $customer->address;
-            $duplicate = Customer::where('relating_officer', $user->id)
-                ->where('business_name', 'LIKE', '%' . $name . '%')
-                ->where('address', 'LIKE', '%' . $address . '%')
-                ->count();
-            $debtor = CustomerDebt::where('customer_id', $customer_id)->count();
-            $paid = Payment::where('customer_id', $customer_id)->count();
-            if ($duplicate > 1 && $debtor == 0 && $paid == 0) {
-                $customer->relating_officer = NULL;
-                $customer->save();
-                $unassigned_customers .= $customer->business_name . ', ';
-            }
-        }
+        $rep_id = $request->rep_id;
 
+        $user = User::find($rep_id);
+        $customer->reps()->detach($rep_id);
         $title = "Customers Unassigned from Rep";
-        $description = $user->name . " was unassigned from $unassigned_customers on $today";
+        $description = $user->name . " was unassigned from $customer->business_name on $today";
         $this->logUserActivity($title, $description, $user);
 
         // return $this->prospectiveCustomers($request);

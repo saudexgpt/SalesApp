@@ -155,6 +155,7 @@ class SalesRepDetailsRequest extends Command
                 $user = User::where('email', $email)->first();
                 if (!$user) {
                     $user = new User();
+                    $user->email = $email;
                     $user->password = bcrypt('password');
                     $user->password_status = 'default';
                     $user->rep_ids = addSingleElementToString('', $id);
@@ -164,7 +165,6 @@ class SalesRepDetailsRequest extends Command
                 $user->last_name = $last_name;
                 $user->name = $repUser->name;
                 $user->username = $email;
-                $user->email = $email;
                 $user->phone = $repUser->phone;
                 $user->user_type = 'staff';
 
@@ -251,11 +251,11 @@ class SalesRepDetailsRequest extends Command
     public function handle()
     {
         //
-        $this->updateScheduleDate();
-        $this->assignRepsToTheirCustomerSchedule();
-        $this->fetchWarehouseProducts();
-        $this->updateAllEmptyVisitAddresses();
+        // $this->updateScheduleDate();
+        // $this->assignRepsToTheirCustomerSchedule();
+        // $this->fetchWarehouseProducts();
+        // $this->updateAllEmptyVisitAddresses();
         $this->fetchWarehouseRepDetails();
-        $this->updateAllEmptyCustomerAddresses();
+        // $this->updateAllEmptyCustomerAddresses();
     }
 }

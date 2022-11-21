@@ -213,6 +213,17 @@
                 </el-button>
               </el-dropdown-item>
               <el-dropdown-item
+                v-permission="['assign-field-staff']"
+                divided
+              >
+                <el-button
+                  icon="el-icon-delete"
+                  @click="unAssignCustomer(scope.index, scope.row.id, scope.row.business_name)"
+                >
+                  Unassign Customer
+                </el-button>
+              </el-dropdown-item>
+              <!-- <el-dropdown-item
                 v-permission="['delete-customers']"
                 v-if="scope.row.date_verified === null"
                 divided
@@ -221,9 +232,9 @@
                   icon="el-icon-delete"
                   @click="deleteCustomer(scope.index, scope.row.id, scope.row.business_name)"
                 >
-                  Remove Customer
+                  Delete Customer
                 </el-button>
-              </el-dropdown-item>
+              </el-dropdown-item> -->
             </el-dropdown-menu>
           </el-dropdown>
         </template>
@@ -571,6 +582,26 @@ export default {
         storeResource.destroy(id)
           .then(() => {
             app.$message('Customer Removed Successful');
+            // app.customer = response.customer;
+            app.list.splice(index - 1, 1);
+            app.load_table = false;
+          });
+      }).catch(() => {
+        app.load_table = false;
+      });
+    },
+    unAssignCustomer(index, id, business_name) {
+      const app = this;
+      const storeResource = new Resource('customers/unassign-customers-that-are-not-mine');
+      app.$confirm('Are you sure you want to unassign ' + business_name + '?', 'Warning', {
+        confirmButtonText: 'OK',
+        cancelButtonText: 'Cancel',
+        type: 'warning',
+      }).then(() => {
+        app.load_table = true;
+        storeResource.update(id, { rep_id: app.query.rep_id })
+          .then(() => {
+            app.$message('Customer Unassigned Successful');
             // app.customer = response.customer;
             app.list.splice(index - 1, 1);
             app.load_table = false;

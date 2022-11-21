@@ -362,7 +362,7 @@ export default {
               type: 'success',
               message: 'Sales Entries Submitted',
             });
-            // app.customersSalesList = [];
+            app.customersSalesList = [];
             app.loadForm = false;
           });
         }
