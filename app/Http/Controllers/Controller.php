@@ -178,9 +178,8 @@ class Controller extends BaseController
         // }
         return array($all_team_members, $all_team_member_ids);
     }
-    public function getInvoiceNo($prefix, $next_no)
+    public function getInvoiceNo($prefix, $next_no, $no_of_digits = 7)
     {
-        $no_of_digits = 7;
 
         $digit_of_next_no = strlen($next_no);
         $unused_digit = $no_of_digits - $digit_of_next_no;

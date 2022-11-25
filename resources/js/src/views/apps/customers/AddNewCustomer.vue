@@ -34,7 +34,7 @@
             <th />
             <th>Name</th>
             <th>Coordinate</th>
-            <th>Code</th>
+            <!-- <th>Code</th> -->
             <th>Type</th>
             <th>Address</th>
             <th>Area</th>
@@ -62,13 +62,13 @@
                 outline
                 placeholder="Ex: 6.5365215,3.3658745"/>
             </td>
-            <td>
+            <!-- <td>
               <el-input
                 v-model="customer_detail.code"
                 type="text"
                 outline
                 placeholder="Ex: BEL-000001"/>
-            </td>
+            </td> -->
             <td>
               <el-select
                 v-model="customer_detail.customer_type_id"
@@ -170,7 +170,7 @@ export default {
       const checkEmptyLines = this.customer_details.filter(
         (detail) =>
           detail.business_name === '' ||
-          detail.code === '' ||
+          // detail.code === '' ||
           detail.customer_type_id === '' ||
           detail.coordinate === '' ||
           detail.address === '' ||
@@ -188,7 +188,7 @@ export default {
         this.customer_details.push({
           item_index: null,
           business_name: '',
-          code: '',
+          // code: '',
           customer_type_id: '',
           coordinate: '',
           address: '',

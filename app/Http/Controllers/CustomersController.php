@@ -23,6 +23,16 @@ use Carbon\Carbon;
 class CustomersController extends Controller
 {
     const ITEM_PER_PAGE = 200;
+
+    // public function updateCustomerCode()
+    // {
+    //     $customers = Customer::get();
+    //     foreach ($customers as $customer) {
+
+    //         $customer->code = $this->getInvoiceNo('BEL-', $customer->id, 6);
+    //         $customer->save();
+    //     }
+    // }
     /**
      * Display a listing of the resource.
      *
@@ -401,6 +411,8 @@ class CustomersController extends Controller
             // $customer->relating_officer = (isset($unsaved_customer->relating_officer)) ? $unsaved_customer->relating_officer : $user->id;
             if ($customer->save()) {
 
+                $customer->code = $this->getInvoiceNo('BEL-', $customer->id, 6);
+                $customer->save();
                 if ($contacts !== NULL) {
                     if (count($contacts) > 0) {
                         $this->saveCustomerContact($customer->id, $contacts);
@@ -445,7 +457,7 @@ class CustomersController extends Controller
                 $request->customer_longitude = str_replace(' ', '', $cordinate_array[1]);
                 $unsaved_customer->relating_officer = 'NULL';
                 $request->business_name = $unsaved_customer->business_name;
-                $request->code = $unsaved_customer->code;
+                // $request->code = $unsaved_customer->code;
                 $request->address = $unsaved_customer->address;
                 $request->customer_type_id = $unsaved_customer->customer_type_id;
                 $request->area = $unsaved_customer->area;
@@ -532,7 +544,7 @@ class CustomersController extends Controller
             try {
 
                 $business_name =  trim($data->BUSINESS_NAME);
-                $code =  trim($data->CODE);
+                // $code =  trim($data->CODE);
 
                 $business_type = strtolower(trim($data->BUSINESS_TYPE));
                 // $email =  trim($data->EMAIL);
@@ -544,7 +556,7 @@ class CustomersController extends Controller
                 $contact_no = (isset($data->CONTACT_NUMBER)) ? trim($data->CONTACT_NUMBER) : 'NULL';
                 $relating_officer = (isset($data->REP_ID)) ? trim($data->REP_ID) : 'NULL';
                 $request->business_name = $business_name;
-                $request->code = $code;
+                // $request->code = $code;
                 $request->address = $address;
                 $request->relating_officer = $relating_officer;
                 $request->area = $area;

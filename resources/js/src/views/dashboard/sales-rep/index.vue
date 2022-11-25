@@ -48,6 +48,7 @@
         </div>
         <div v-loading="load_table" class="w-full">
           <v-client-table
+            v-if="debts.length > 0"
             v-model="debts"
             :columns="columns"
             :options="options"

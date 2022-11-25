@@ -36,6 +36,8 @@ use App\Http\Controllers\TeamsController;
 
 
 Route::get('change-to-base64', [CustomersController::class, 'changeToBase64']);
+Route::get('update-customer-code', [CustomersController::class, 'updateCustomerCode']);
+
 // Route::get('test', [VisitsController::class, 'test']);
 
 Route::get('contact-specialties', [Controller::class, 'contactSpecialties']);
