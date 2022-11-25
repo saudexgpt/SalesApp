@@ -1,59 +1,103 @@
 <template>
-  <div class="vx-row">
+  <div v-loading="load" class="vx-row">
     <table class="table table-bordered">
       <thead>
         <tr>
           <th>Action</th>
-          <th>Customer Name</th>
-          <!-- <th>Opening Debt</th> -->
-          <!-- <th>Total Returns (NGN)</th>
-          <th>Payment Due Date</th> -->
+          <th>Rep</th>
+          <th>Customer</th>
+          <th>Date</th>
+          <th>Coordinates</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(customer, index) in customersReturnsList" :key="index">
+        <tr v-for="(rep_entry, index) in rep_entries" :key="index">
           <td>
-            <el-tooltip :content="'Add Products Returned from ' + customer.business_name" class="item" effect="dark" placement="top-start">
-              <el-button circle type="primary" icon="el-icon-goods" @click="setCustomerReturns(index, customer)" />
-            </el-tooltip>
+            <div class="demo-alignment">
+              <vs-button v-if="rep_entries.length > 1" radius color="danger" icon-pack="feather" icon="icon-trash" @click="removeRepEntry(index)" />
+              <vs-button v-if="index + 1 === rep_entries.length" radius color="primary" icon-pack="feather" icon="icon-plus" @click="addRepEntry(index)" />
+            </div>
           </td>
           <td>
-            {{ customer.business_name }}
-            <el-button v-if="customer.can_delete === 'yes'" circle type="danger" icon="el-icon-delete" @click="removeExtraCustomer(customer.id)" />
+            <el-select v-model="rep_entry.rep_id" filterable style="width: 100%" @change="fetchCustomers($event, index)">
+              <el-option
+                v-for="(rep, rep_index) in reps"
+                :key="rep_index"
+                :label="rep.name"
+                :value="rep.id"
+
+              />
+            </el-select>
           </td>
-          <!-- <td>0</td> -->
-          <!-- <td>{{ customer.amount }}</td>
           <td>
-            <el-date-picker
-              v-model="customer.due_date"
-              :picker-options="pickerOptions"
-              type="date"
-              placeholder="Due Date"
-              style="width: 100%;"
-              format="yyyy/MM/dd"
-              value-format="yyyy-MM-dd"
-            />
-          </td> -->
-        </tr>
-        <tr>
-          <td colspan="4">
             <el-select
-              v-model="extra_customers"
+              v-model="rep_entry.customer_details"
+              value-key="id"
               placeholder="Select Customer"
               filterable
               style="width: 100%"
-              @input="addExtraCustomers($event)"
+              @input="setCustomerDetails($event, index)"
             >
               <el-option
-                v-for="(customer, product_index) in myCustomers"
-                :key="product_index"
-                :value="product_index"
-                :label="customer.business_name + ' ' + customer.address"
+                v-for="(cust, cust_index) in rep_entry.customersList"
+                :key="cust_index"
+                :value="cust"
+                :label="cust.business_name + ' ' + cust.address"
               >
-                <span style="float: left"><strong>{{ customer.business_name }}</strong></span>
-                <span style="float: right; color: #8492a6; font-size: 12px">{{ customer.address }}</span>
+                <span style="float: left"><strong>{{ cust.business_name }}</strong></span>
+                <span style="float: right; color: #8492a6; font-size: 12px">{{ cust.address }}</span>
               </el-option>
             </el-select>
+            <!--Uncomment when you want to activate sales details-->
+            <br><br>
+            <el-button v-if="rep_entry.customer_id !== ''" round type="danger" icon="el-icon-goods" @click="setCustomerReturns(index, rep_entry)">Add Details</el-button>
+          </td>
+          <td>
+            <el-date-picker
+              v-model="rep_entry.entry_date"
+              :picker-options="pickerOptions"
+              type="date"
+              placeholder="Transaction Date"
+              style="width: 100%;"
+              format="yyyy-MM-dd"
+              value-format="yyyy-MM-dd"
+            />
+          </td>
+          <td>
+            <strong>Rep's</strong>
+            <el-input
+              v-model="rep_entry.rep_coordinate"
+              placeholder="6.5270061,3.3766094"
+            />
+            <br>
+            <strong>Manager's</strong>
+            <el-input
+              v-model="rep_entry.manager_coordinate"
+              placeholder="6.5270161,3.3756094"
+            />
+          </td>
+          <!-- <td>
+            <input
+              type="file"
+              class="form-control"
+              multiple
+              @change="onImageChange($event, index)"
+            ><br>
+            <span v-for="(file, file_index) in uploadedFiles[index].files" :key="file_index">
+              <img :src="`/storage/${file}`" width="50">
+            </span>
+          </td> -->
+        </tr>
+        <tr v-if="fill_rep_fields_error">
+          <td colspan="5">
+            <label
+              class="label label-danger"
+            >Please fill all empty fields before adding another row</label>
+          </td>
+        </tr>
+        <tr v-if="!isRepRowEmpty()" >
+          <td colspan="5">
+            <el-button round type="success" @click="submitSalesReport()">Submit Report</el-button>
           </td>
         </tr>
       </tbody>
@@ -67,10 +111,7 @@
           <tr>
             <th/>
             <th>Product</th>
-            <!-- <th>Package Type</th> -->
             <th>Quantity Return</th>
-            <!-- <th>Rate</th>
-            <th>Batch No.</th> -->
             <th>Expiry Date</th>
             <th>Reason</th>
           </tr>
@@ -168,31 +209,30 @@
   </div>
 </template>
 <script>
-// import Resource from '@/api/resource';
+import Resource from '@/api/resource';
+import { createUniqueString } from '@/utils/index';
+
 export default {
   props: {
-    customersReturnsList: {
-      type: Array,
-      default: () => [],
+    teamId: {
+      type: Number,
+      default: () => null,
     },
-    myCustomers: {
-      type: Array,
-      default: () => [],
-    },
-    products: {
+    reps: {
       type: Array,
       default: () => [],
     },
   },
   data() {
     return {
-    //   pickerOptions: {
-    //     disabledDate(date) {
-    //       var d = new Date(); // today
-    //       d.setDate(d.getDate() - 1);
-    //       return date < d;
-    //     },
-    //   },
+      pickerOptions: {
+        disabledDate(date) {
+          var d = new Date(); // today
+          d.setDate(d.getDate());
+          return date >= d;
+        },
+      },
+      rep_entries: [],
       activeName: '1',
       returned_items: [],
       customer_name: '',
@@ -200,38 +240,19 @@ export default {
       total: 0,
       dialogVisible: false,
       fill_fields_error: false,
+      fill_rep_fields_error: false,
       showSaveButton: true,
       extra_customers: '',
+      // eslint-disable-next-line no-array-constructor
+      uploadedFiles: [],
+      products: [],
+      load: false,
     };
   },
+  created() {
+    this.addRepEntry();
+  },
   methods: {
-    fetchItemDetails(index) {
-      const app = this;
-      const product_index = app.returned_items[index].product_index;
-      const item = app.products[product_index];
-      app.returned_items[index].product_id = item.id;
-      app.returned_items[index].rate = item.price.sale_price;
-      app.returned_items[index].package_type = item.package_type;
-      app.calculateTotal(index);
-    },
-    setCustomerReturns(index, customer) {
-      this.selected_index = index;
-      this.returned_items = [];
-      if (!customer.returns) {
-        this.addRow();
-      } else {
-        this.returned_items = customer.returns;
-      }
-      this.customer_name = customer.business_name;
-      this.dialogVisible = true;
-    },
-    addCustomerReturns() {
-      const app = this;
-      const returned_items = app.returned_items;
-      app.customersReturnsList[app.selected_index].returns = returned_items;
-      // console.log(app.customersReturnsList[app.selected_index]);
-      this.dialogVisible = false;
-    },
     cancelAction(){
       for (let index = 0; index < this.returned_items.length; index++) {
         const detail = this.returned_items[index];
@@ -293,23 +314,78 @@ export default {
       this.addRow();
       this.addCustomerReturns();
     },
-    addExtraCustomers(value) {
+    addCustomerReturns() {
       const app = this;
-      const customer_id = app.myCustomers[value].id;
-      if (!app.customersReturnsList.filter(e => e.id === customer_id).length > 0) {
-        app.myCustomers[value].customer_id = customer_id;
-        // app.myCustomers[value].payment_mode = 'later';
-        app.myCustomers[value].can_delete = 'yes';
-        app.customersReturnsList.push(app.myCustomers[value]);
+      const returned_items = app.returned_items;
+      app.rep_entries[app.selected_index].returns = returned_items;
+      // console.log(app.rep_entries[app.selected_index]);
+      this.dialogVisible = false;
+    },
+    setCustomerReturns(index, customer) {
+      this.selected_index = index;
+      this.returned_items = [];
+      if (!customer.returns) {
+        this.addRow();
+      } else {
+        this.returned_items = customer.returns;
+      }
+      this.customer_name = customer.business_name;
+      this.dialogVisible = true;
+    },
+    setCustomerDetails(customer, rowIndex){
+      const app = this;
+      app.rep_entries[rowIndex].customer_id = customer.id;
+      app.rep_entries[rowIndex].business_name = customer.business_name;
+    },
+    isRepRowEmpty() {
+      const checkEmptyLines = this.rep_entries.filter(
+        (detail) =>
+          detail.rep_id === '' ||
+          detail.customer_id === '' ||
+          detail.rep_coordinate === ''
+      );
+      if (checkEmptyLines.length > 0) {
+        return true;
+      }
+      return false;
+    },
+    addRepEntry() {
+      this.fill_rep_fields_error = false;
+
+      if (this.isRepRowEmpty()) {
+        this.fill_rep_fields_error = true;
+        // this.returned_items[index].seleted_category = true;
+        return;
+      } else {
+        // if (this.returned_items.length > 0)
+        //     this.returned_items[index].grade = '';
+        this.rep_entries.push({
+          rep_id: '',
+          customer_details: {},
+          business_name: '',
+          customer_id: '',
+          customersList: [],
+          entry_date: new Date(),
+          unique_sales_id: createUniqueString(),
+          rep_coordinate: '',
+          manager_coordinate: '',
+        });
       }
     },
-    removeExtraCustomer(customer_id) {
-      const app = this;
-      for (let count = 0; count < app.customersReturnsList.length; count++) {
-        if (app.customersReturnsList[count].id === customer_id) {
-          app.customersReturnsList.splice(count, 1);
-        }
+    removeRepEntry(detailId) {
+      this.fill_rep_fields_error = false;
+      if (!this.repBlockRemoval) {
+        this.rep_entries.splice(detailId, 1);
       }
+    },
+    fetchItemDetails(index) {
+      const app = this;
+      const product_index = app.returned_items[index].product_index;
+      const item = app.products[product_index];
+      app.returned_items[index].product_id = item.id;
+      app.returned_items[index].rate = item.price.sale_price;
+      app.returned_items[index].package_type = item.package_type;
+      app.calculateTotal(index);
     },
     calculateTotal(index) {
       const app = this;
@@ -321,29 +397,104 @@ export default {
         app.returned_items[index].amount = parseFloat(
           quantity * unit_rate,
         ).toFixed(2);
-        // app.returned_items[index].main_amount = parseFloat(
-        //   quantity * main_unit_rate,
-        // ).toFixed(2);// + parseFloat(tax);
-        // app.returned_items[index].quantity_supplied = quantity;
       }
-
-      // we now calculate the running total of items invoiceed for with tax //////////
-      // let total_tax = 0;
-    //   let subtotal = 0;
-    //   for (let count = 0; count < app.returned_items.length; count++) {
-    //     // const tax_rate = app.returned_items[count].tax;
-    //     // const quantity = app.returned_items[count].quantity;
-    //     // const unit_rate = app.returned_items[count].rate;
-    //     // total_tax += parseFloat(tax_rate * quantity * unit_rate);
-    //     subtotal += parseFloat(app.returned_items[count].amount);
+    },
+    fetchCustomers(rep_id, index) {
+      const app = this;
+      // if (!app.hideCustomersList) {
+      const customerResource = new Resource('customers/rep-customers');
+      const param = { rep_id, team_id: app.teamId };
+      app.fetchRepProducts(param);
+      customerResource.list(param)
+        .then(response => {
+          // app.customers = response.customers;
+          app.rep_entries[index].customersList = response.customers;
+        });
+      // }
+    },
+    fetchRepProducts(param) {
+      const app = this;
+      const getProducts = new Resource('products/rep-products');
+      getProducts.list(param).then((response) => {
+        app.products = response.team_products;
+      });
+    },
+    // onImageChange(e, index) {
+    //   const app = this;
+    //   const files = e.target.files;
+    //   let filesToBeUploaded = '';
+    //   for (let i = 0; i < files.length; i++) {
+    //     filesToBeUploaded = e.target.files[i];
+    //     // console.log(file);
+    //     // const filesToBeUploaded = file[0];
+    //     app.submitUpload(filesToBeUploaded, index);
     //   }
-    //   // app.form.tax = total_tax.toFixed(2);
-    //   app.form.subtotal = subtotal.toFixed(2);
-    //   app.form.discount = parseFloat(
-    //     (app.discount_rate / 100) * subtotal,
-    //   ).toFixed(2);
-    //   // subtract discount
-    //   app.form.amount = parseFloat(subtotal - app.form.discount).toFixed(2);
+    //   // app.rep_entries[index].files = filesToBeUploaded;
+    // },
+    // submitUpload(filesToBeUploaded, index) {
+    //   const app = this;
+    //   app.loading = true;
+    //   const formData = new FormData();
+    //   formData.append('files', filesToBeUploaded);
+    //   formData.append('type', 'sales');
+    //   const updatePhotoResource = new Resource('attach/files');
+    //   updatePhotoResource.store(formData)
+    //     .then(response => {
+    //       app.rep_entries[index].files.push(response);
+    //       app.uploadedFiles[index].files.push(response);
+    //     })
+    //     .catch(e => {
+    //       console.log(e);
+    //     });
+    // },
+    submitSalesReport() {
+      const app = this;
+      app.$confirm('Are you sure you want to submit these entries?', 'Warning', {
+        confirmButtonText: 'Yes Submit',
+        cancelButtonText: 'Cancel',
+        type: 'warning',
+      }).then(() => {
+        this.$message({
+          type: 'info',
+          message: 'Sending...',
+        });
+        app.load = true;
+        if (app.rep_entries.length > 0) {
+          const formattedEntries = [];
+          app.rep_entries.forEach(entry => {
+            formattedEntries.push({
+              rep_id: entry.rep_id,
+              customer_id: entry.customer_id,
+              entry_date: entry.entry_date,
+              unique_sales_id: entry.unique_sales_id,
+              rep_coordinate: entry.rep_coordinate,
+              manager_coordinate: entry.manager_coordinate,
+              returns: entry.returns,
+              // main_amount: entry.main_amount,
+            });
+          });
+          const unsaved_returns = { unsaved_returns: formattedEntries };
+          const storeResource = new Resource('returns/store');
+          storeResource.store(unsaved_returns).then(() => {
+            this.$message({
+              type: 'success',
+              message: 'Sales Entries Submitted',
+            });
+            app.rep_entries = [];
+            app.addRepEntry();
+            app.load = false;
+          }).catch(() => {
+            this.$message({
+              type: 'danger',
+              message: 'An error Occured',
+            });
+            app.load = false;
+          });
+        }
+        // app.loadForm = false;
+      }).catch(() => {
+        app.load = false;
+      });
     },
   },
 };

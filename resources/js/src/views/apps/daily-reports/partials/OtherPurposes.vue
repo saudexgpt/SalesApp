@@ -6,8 +6,7 @@
           <th>Action</th>
           <th>Rep</th>
           <th>Customer</th>
-          <th>Amount (NGN)</th>
-          <th>Slip No.</th>
+          <th>Purpose</th>
           <th>Date</th>
           <th>Coordinates</th>
         </tr>
@@ -51,30 +50,11 @@
           </td>
           <!-- <td>0</td> -->
           <td>
+            <!-- {{ customer.amount }} -->
             <el-input
-              v-model="rep_entry.amount_collected"
-              type="number"
-              outline
-              placeholder="Amount Collected"
-              min="1"
-            /><br>
-            <strong>Payment Method</strong>
-            <el-select
-              v-model="rep_entry.payment_mode"
-              style="width: 100%"
-            >
-              <el-option value="Cash" label="Cash" />
-              <el-option value="Cheque" label="Cheque" />
-              <el-option value="Bank Deposit/Transfer" label="Bank Deposit/Transfer/POS" />
-            </el-select>
-          </td>
-          <td>
-            <el-input
-              v-model="rep_entry.slip_no"
-              type="text"
-              outline
-              placeholder="Receipt|Teller|Cheque No."
-              style="width: 100%"
+              v-model="rep_entry.purpose"
+              placeholder="Specify purpose(s)"
+              type="textarea"
             />
           </td>
           <td>
@@ -122,7 +102,7 @@
         </tr>
         <tr v-if="!isRepRowEmpty()" >
           <td colspan="6">
-            <el-button round type="success" @click="submitCollectionsReport()">Submit Collections Report</el-button>
+            <el-button round type="success" @click="submitVisitsReport()">Submit Report</el-button>
           </td>
         </tr>
       </tbody>
@@ -155,7 +135,6 @@ export default {
       },
       rep_entries: [],
       activeName: '1',
-      invoice_items: [],
       customer_name: '',
       selected_index: '',
       total: 0,
@@ -179,7 +158,6 @@ export default {
         (detail) =>
           detail.rep_id === '' ||
           detail.customer_id === '' ||
-          detail.amount_collected === '' ||
           detail.rep_coordinate === ''
       );
       if (checkEmptyLines.length > 0) {
@@ -192,21 +170,19 @@ export default {
 
       if (this.isRepRowEmpty()) {
         this.fill_rep_fields_error = true;
-        // this.invoice_items[index].seleted_category = true;
+        // this.hospital_visit_details[index].seleted_category = true;
         return;
       } else {
-        // if (this.invoice_items.length > 0)
-        //     this.invoice_items[index].grade = '';
+        // if (this.hospital_visit_details.length > 0)
+        //     this.hospital_visit_details[index].grade = '';
         this.rep_entries.push({
           rep_id: '',
+          customersList: [],
           business_name: '',
           customer_id: '',
-          customersList: [],
           entry_date: new Date(),
-          unique_collection_id: createUniqueString(),
-          amount_collected: '',
-          payment_mode: 'Cash',
-          slip_no: '',
+          unique_visits_id: createUniqueString(),
+          purpose: '',
           rep_coordinate: '',
           manager_coordinate: '',
         });
@@ -230,9 +206,9 @@ export default {
         });
       // }
     },
-    submitCollectionsReport() {
+    submitVisitsReport() {
       const app = this;
-      app.$confirm('Are you sure you want to submit these collection entries?', 'Warning', {
+      app.$confirm('Are you sure you want to submit these visit entries?', 'Warning', {
         confirmButtonText: 'Yes Submit',
         cancelButtonText: 'Cancel',
         type: 'warning',
@@ -249,22 +225,18 @@ export default {
               rep_id: entry.rep_id,
               customer_id: entry.customer_id,
               entry_date: entry.entry_date,
-              unique_collection_id: entry.unique_collection_id,
-              amount_collected: entry.amount_collected,
-              payment_mode: entry.payment_mode,
-              slip_no: entry.slip_no,
+              unique_visits_id: entry.unique_visits_id,
+              purpose: entry.purpose,
               rep_coordinate: entry.rep_coordinate,
               manager_coordinate: entry.manager_coordinate,
-              // invoice_items: entry.invoice_items,
-              // main_amount: entry.main_amount,
             });
           });
-          const unsaved_payments = { unsaved_collections: formattedEntries };
-          const submitCollections = new Resource('payments/store');
-          submitCollections.store(unsaved_payments).then(() => {
+          const unsaved_visits = { unsaved_visits: formattedEntries };
+          const storeResource = new Resource('visits/store');
+          storeResource.store(unsaved_visits).then(() => {
             this.$message({
               type: 'success',
-              message: 'Collections Entries Submitted',
+              message: 'Visit Entries Submitted',
             });
             app.rep_entries = [];
             app.addRepEntry();

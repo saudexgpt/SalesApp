@@ -76,23 +76,27 @@ class CustomersController extends Controller
             $rep = User::find($request->rep_id);
 
             $userQuery = $rep->customers();
-        } else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+        }
+        // else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+        //     $userQuery = Customer::query();
+        //     list($sales_reps, $sales_reps_ids) = $this->teamMembers($request->team_id);
+        //     $userQuery->whereHas('reps', function ($q) use ($sales_reps_ids) {
+        //         $q->whereIn('user_id', $sales_reps_ids);
+        //     });
+        // }
+        else {
             $userQuery = Customer::query();
-            list($sales_reps, $sales_reps_ids) = $this->teamMembers($request->team_id);
-            $userQuery->whereHas('reps', function ($q) use ($sales_reps_ids) {
-                $q->whereIn('user_id', $sales_reps_ids);
-            });
-        } else {
             if (isset($request->team_id) && $request->team_id != '') {
-                $userQuery = Customer::query();
+                // $userQuery = Customer::query();
                 list($sales_reps, $sales_reps_ids) = $this->teamMembers($request->team_id);
                 $userQuery->whereHas('reps', function ($q) use ($sales_reps_ids) {
                     $q->whereIn('user_id', $sales_reps_ids);
                 });
-            } else {
-
-                $userQuery = Customer::query();
             }
+            // else {
+
+            //     $userQuery = Customer::query();
+            // }
         }
 
         $limit = Arr::get($searchParams, 'limit', static::ITEM_PER_PAGE);
@@ -228,7 +232,7 @@ class CustomersController extends Controller
 
         $date_from = Carbon::now()->startOfWeek();
         $date_to = Carbon::now()->endOfWeek();
-        $customers = $userQuery->with(['lastVisited' => function ($q) {
+        $customers = $userQuery->with(['customerContacts', 'lastVisited' => function ($q) {
             $q->orderBy('id', 'DESC');
         }])
             // ->where(['relating_officer' => $rep_id])
@@ -680,9 +684,8 @@ class CustomersController extends Controller
     }
     public function addCustomerContact(Request $request)
     {
-        $user = $this->getUser();
+        // $user = $this->getUser();
         $customer_id = $request->customer_id;
-        $customer = Customer::find($customer_id);
         $contacts = json_decode(json_encode($request->customer_contacts));
         if (count($contacts) > 0) {
 
@@ -694,11 +697,11 @@ class CustomersController extends Controller
             // }
             $this->saveCustomerContact($customer_id, $contacts);
 
-            $title = "Customer Contacts Added";
-            $description = "Contacts added for $customer->business_name by $user->name";
-            $this->logUserActivity($title, $description, $user);
+            // $title = "Customer Contacts Added";
+            // $description = "Contacts added for $customer->business_name by $user->name";
+            // $this->logUserActivity($title, $description, $user);
         }
-        $contacts = CustomerContact::where('customer_id', $customer_id)->get();
+        $contacts = CustomerContact::where('customer_id', $customer_id)->orderBy('id', 'DESC')->get();
         return $contacts;
     }
     public function removeCustomerContact(CustomerContact $contact)

@@ -125,34 +125,34 @@ class Visit extends Model
                 }
 
                 $date = $visit_date;
-                $visit = Visit::where(['customer_id' => $customer_id, 'visitor' => $user->id, 'visit_date' => $date])->first();
+                // $visit = Visit::where(['customer_id' => $customer_id, 'visitor' => $user->id, 'visit_date' => $date])->first();
 
-                if (!$visit) {
+                // if (!$visit) {
 
-                    $visit = new Visit();
-                    $visit->customer_id = $customer_id;
-                    $visit->visitor = $user->id;
-                    $visit->visit_date = $date;
-                    $visit->rep_latitude = $lat;
-                    $visit->rep_longitude = $long;
-                    $visit->manager_latitude = $manager_lat;
-                    $visit->manager_longitude = $manager_long;
-                    $visit->address = NULL; //$formatted_address;
-                    $visit->accuracy = (isset($unsaved_visit->accuracy)) ? $unsaved_visit->accuracy : NULL;
-                    $visit->proximity = $distance;
-                    $visit->visiting_partner_id = (isset($unsaved_visit->visiting_partner_id)) ? $unsaved_visit->visiting_partner_id : NULL;
-                    $visit->customer_contact_id = $customer_contact_id;
-                    $visit->visit_type = $visit_type;
-                    $visit->purpose = $purpose;
-                    $visit->description = (isset($unsaved_visit->description)) ? $unsaved_visit->description : NULL;
-                    $visit->visit_duration = (isset($unsaved_visit->description)) ? $unsaved_visit->visit_duration : NULL;
-                } else {
-                    $visit->purpose = str_replace('~', ',', addSingleElementToString($visit->purpose, $purpose));
-                    $visit->rep_latitude = $lat;
-                    $visit->rep_longitude = $long;
-                    $visit->manager_latitude = $manager_lat;
-                    $visit->manager_longitude = $manager_long;
-                }
+                $visit = new Visit();
+                $visit->customer_id = $customer_id;
+                $visit->visitor = $user->id;
+                $visit->visit_date = $date;
+                $visit->rep_latitude = $lat;
+                $visit->rep_longitude = $long;
+                $visit->manager_latitude = $manager_lat;
+                $visit->manager_longitude = $manager_long;
+                $visit->address = NULL; //$formatted_address;
+                $visit->accuracy = (isset($unsaved_visit->accuracy)) ? $unsaved_visit->accuracy : NULL;
+                $visit->proximity = $distance;
+                $visit->visiting_partner_id = (isset($unsaved_visit->visiting_partner_id)) ? $unsaved_visit->visiting_partner_id : NULL;
+                $visit->customer_contact_id = $customer_contact_id;
+                $visit->visit_type = $visit_type;
+                $visit->purpose = $purpose;
+                $visit->description = (isset($unsaved_visit->description)) ? $unsaved_visit->description : NULL;
+                $visit->visit_duration = (isset($unsaved_visit->description)) ? $unsaved_visit->visit_duration : NULL;
+                // } else {
+                //     $visit->purpose = str_replace('~', ',', addSingleElementToString($visit->purpose, $purpose));
+                //     $visit->rep_latitude = $lat;
+                //     $visit->rep_longitude = $long;
+                //     $visit->manager_latitude = $manager_lat;
+                //     $visit->manager_longitude = $manager_long;
+                // }
 
                 $visit->save();
                 // $this->saveVisitDetails($unsaved_visit, $visit);
@@ -182,19 +182,32 @@ class Visit extends Model
         // }
         return $unsaved_list;
     }
-
     private function saveDetailedProducts($unsaved_visit, $visit)
     {
         $detailed_products = $unsaved_visit->detailed_products;
         foreach ($detailed_products as $detailed_product) {
+            $products_array = json_decode(json_encode($detailed_product->products));
             $detailing = new VisitDetailedProduct();
             $detailing->visit_id = $visit->id;
             $detailing->customer_id = $visit->customer_id;
-            $detailing->product_id = $detailed_product->product_id;
-            $detailing->ratings = $detailed_product->ratings;
+            $detailing->products = implode(',', $products_array);
+            $detailing->contacted_personnel = $detailed_product->contacted_personnel;
+            $detailing->comments =  $detailed_product->comments;
             $detailing->save();
         }
     }
+    // private function saveDetailedProducts($unsaved_visit, $visit)
+    // {
+    //     $detailed_products = $unsaved_visit->detailed_products;
+    //     foreach ($detailed_products as $detailed_product) {
+    //         $detailing = new VisitDetailedProduct();
+    //         $detailing->visit_id = $visit->id;
+    //         $detailing->customer_id = $visit->customer_id;
+    //         $detailing->product_id = $detailed_product->product_id;
+    //         $detailing->ratings = $detailed_product->ratings;
+    //         $detailing->save();
+    //     }
+    // }
     private function saveStockBalances($unsaved_visit, $visit)
     {
         $stock_balances = $unsaved_visit->stock_balances;

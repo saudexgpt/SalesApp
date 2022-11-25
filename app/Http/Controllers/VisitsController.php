@@ -508,12 +508,19 @@ class VisitsController extends Controller
      */
     public function store(Request $request)
     {
-        $user = $this->getUser();
+        $actor = $this->getUser();
         $unsaved_visits = json_decode(json_encode($request->unsaved_visits));
         $visit_list = [];
         $visit_obj = new Visit();
         $unsaved_list = [];
         foreach ($unsaved_visits as $unsaved_visit) {
+            if (isset($unsaved_visit->rep_id) && $unsaved_visit->rep_id != '') {
+
+                $rep_id = $unsaved_visit->rep_id;
+                $user = User::find($rep_id);
+            } else {
+                $user = $actor;
+            }
 
             $visit_obj->saveAsVisits($user, $unsaved_visit);
         }

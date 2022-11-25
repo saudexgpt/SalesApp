@@ -174,7 +174,7 @@ export default {
         'customer.assigned_officer.name',
         'payment_date',
         'confirmer.name',
-        'attachments',
+        // 'attachments',
         // 'action',
       ],
 

@@ -304,21 +304,22 @@ class TransactionsController extends Controller
         // return $request;
         $prefix = 'INV-';
         $actor = $this->getUser();
-        if (isset($request->rep_id) && $request->rep_id != '') {
-
-            $rep_id = $request->rep_id;
-            $user = User::find($rep_id);
-        } else {
-            $user = $actor;
-        }
         $unsaved_orders = json_decode(json_encode($request->unsaved_orders));
         $order_list = [];
         $unsaved_list = [];
         foreach ($unsaved_orders as $unsaved_order) {
 
-            $date = Carbon::now()->endOfMonth(); // $unsaved_order->due_date;
+            if (isset($unsaved_order->rep_id) && $unsaved_order->rep_id != '') {
+
+                $rep_id = $unsaved_order->rep_id;
+                $user = User::find($rep_id);
+            } else {
+                $user = $actor;
+            }
+            $due_date = Carbon::now()->endOfMonth(); // $unsaved_order->due_date;
+            $entry_date = date('Y-m-d H:i:s', strtotime($unsaved_order->entry_date));
             $invoice_items = (isset($unsaved_order->invoice_items)) ? $unsaved_order->invoice_items : NULL;
-            $entry_exist = Transaction::where('unique_sales_id', $unsaved_order->unique_sales_id)->first();
+            $entry_exist = Transaction::where(['unique_sales_id' => $unsaved_order->unique_sales_id])->first();
             if (!$entry_exist) {
                 # code...
                 try {
@@ -332,8 +333,8 @@ class TransactionsController extends Controller
                     $invoice->amount_due     = $unsaved_order->amount;
                     $invoice->main_amount     = (isset($unsaved_order->main_amount)) ? $unsaved_order->main_amount : $unsaved_order->amount;
 
-                    $invoice->due_date       = date('Y-m-d', strtotime($date));
-                    $invoice->entry_date = ($request->entry_date != '') ? date('Y-m-d H:i:s', strtotime($request->entry_date)) : date('Y-m-d H:i:s', strtotime('now'));
+                    $invoice->due_date       = date('Y-m-d', strtotime($due_date));
+                    $invoice->entry_date = $entry_date;
                     // $invoice->created_at = $invoice->entry_date;
                     // $invoice->updated_at = $invoice->entry_date;
                     if ($invoice->save()) {

@@ -100,7 +100,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         Route::put('update/{customer}', [CustomersController::class, 'update'])->middleware('permission:update-customers');
 
-        Route::post('add-customer-contact', [CustomersController::class, 'addCustomerContact'])->middleware('permission:update-customers');
+        Route::post('add-customer-contact', [CustomersController::class, 'addCustomerContact']);
+        // ->middleware('permission:update-customers');
 
         Route::delete('remove-customer-contact/{contact}', [CustomersController::class, 'removeCustomerContact'])->middleware('permission:create-customers');
 

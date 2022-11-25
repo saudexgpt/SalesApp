@@ -161,14 +161,14 @@ class PaymentsController extends Controller
         $unsaved_collections = json_decode(json_encode($request->unsaved_collections));
         $unsaved_list = [];
         $actor = $this->getUser();
-        if (isset($request->rep_id) && $request->rep_id != '') {
-
-            $rep_id = $request->rep_id;
-            $user = User::find($rep_id);
-        } else {
-            $user = $actor;
-        }
         foreach ($unsaved_collections as $collection) {
+            if (isset($collection->rep_id) && $collection->rep_id != '') {
+
+                $rep_id = $collection->rep_id;
+                $user = User::find($rep_id);
+            } else {
+                $user = $actor;
+            }
 
             $original_amount = $collection->amount_collected;
             $amount = $collection->amount_collected;

@@ -236,7 +236,7 @@ export default {
       sales: [],
       reps: [],
       sales_columns: [
-        'attachments',
+        // 'attachments',
         'customer.business_name',
         'invoice_no',
         'amount_due',

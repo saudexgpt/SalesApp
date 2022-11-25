@@ -1,39 +1,72 @@
 <template>
-  <div class="vx-row">
+  <div v-loading="load" class="vx-row">
     <table class="table table-bordered">
       <thead>
         <tr>
           <th>Action</th>
-          <th>Customer Name</th>
+          <th>Rep</th>
+          <th>Customer</th>
           <!-- <th>Opening Debt</th> -->
           <th>Total Sales (NGN)</th>
           <th>Date</th>
           <th>Coordinates</th>
-          <th>Attach File</th>
+          <!-- <th>Attach File</th> -->
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(customer, index) in visitedCustomersList" :key="index">
+        <tr v-for="(rep_entry, index) in rep_entries" :key="index">
           <td>
-            <!-- <el-tooltip :content="'Add Sales Details for ' + customer.business_name" class="item" effect="dark" placement="top-start">
-              <el-button circle type="primary" icon="el-icon-goods" @click="setCustomerSales(index, customer)" />
-            </el-tooltip> -->
+            <div class="demo-alignment">
+              <vs-button v-if="rep_entries.length > 1" radius color="danger" icon-pack="feather" icon="icon-trash" @click="removeRepEntry(index)" />
+              <vs-button v-if="index + 1 === rep_entries.length" radius color="primary" icon-pack="feather" icon="icon-plus" @click="addRepEntry(index)" />
+            </div>
           </td>
           <td>
-            {{ customer.business_name }}
-            <el-button v-if="customer.can_delete === 'yes'" circle type="danger" icon="el-icon-delete" @click="removeExtraCustomer(customer.id)" />
+            <el-select v-model="rep_entry.rep_id" filterable style="width: 100%" @change="fetchCustomers($event, index)">
+              <el-option
+                v-for="(rep, rep_index) in reps"
+                :key="rep_index"
+                :label="rep.name"
+                :value="rep.id"
+
+              />
+            </el-select>
+          </td>
+          <td>
+            <el-select
+              v-model="rep_entry.customer_details"
+              value-key="id"
+              placeholder="Select Customer"
+              filterable
+              style="width: 100%"
+              @input="setCustomerDetails($event, index)"
+            >
+              <el-option
+                v-for="(cust, cust_index) in rep_entry.customersList"
+                :key="cust_index"
+                :value="cust"
+                :label="cust.business_name + ' ' + cust.address"
+              >
+                <span style="float: left"><strong>{{ cust.business_name }}</strong></span>
+                <span style="float: right; color: #8492a6; font-size: 12px">{{ cust.address }}</span>
+              </el-option>
+            </el-select>
+            <!--Uncomment when you want to activate sales details-->
+            <!-- <br><br>
+            <el-button v-if="rep_entry.customer_id !== ''" round type="danger" icon="el-icon-goods" @click="setCustomerSales(index, rep_entry)">Add Sales Details</el-button> -->
           </td>
           <!-- <td>0</td> -->
           <td>
             <!-- {{ customer.amount }} -->
             <el-input
-              v-model="customer.amount"
+              v-model="rep_entry.amount"
               placeholder="Enter Amount"
+              type="number"
             />
           </td>
           <td>
             <el-date-picker
-              v-model="customer.entry_date"
+              v-model="rep_entry.entry_date"
               :picker-options="pickerOptions"
               type="date"
               placeholder="Transaction Date"
@@ -45,17 +78,17 @@
           <td>
             <strong>Rep's</strong>
             <el-input
-              v-model="customer.rep_coordinate"
+              v-model="rep_entry.rep_coordinate"
               placeholder="6.5270061,3.3766094"
             />
             <br>
             <strong>Manager's</strong>
             <el-input
-              v-model="customer.manager_coordinate"
+              v-model="rep_entry.manager_coordinate"
               placeholder="6.5270161,3.3756094"
             />
           </td>
-          <td>
+          <!-- <td>
             <input
               type="file"
               class="form-control"
@@ -65,27 +98,18 @@
             <span v-for="(file, file_index) in uploadedFiles[index].files" :key="file_index">
               <img :src="`/storage/${file}`" width="50">
             </span>
+          </td> -->
+        </tr>
+        <tr v-if="fill_rep_fields_error">
+          <td colspan="6">
+            <label
+              class="label label-danger"
+            >Please fill all empty fields before adding another row</label>
           </td>
         </tr>
-        <tr>
-          <td colspan="7">
-            <el-select
-              v-model="extra_customers"
-              placeholder="Select Customer"
-              filterable
-              style="width: 100%"
-              @input="addExtraCustomers($event)"
-            >
-              <el-option
-                v-for="(customer, item_index) in myCustomers"
-                :key="item_index"
-                :value="item_index"
-                :label="customer.business_name + ' ' + customer.address"
-              >
-                <span style="float: left"><strong>{{ customer.business_name }}</strong></span>
-                <span style="float: right; color: #8492a6; font-size: 12px">{{ customer.address }}</span>
-              </el-option>
-            </el-select>
+        <tr v-if="!isRepRowEmpty()" >
+          <td colspan="6">
+            <el-button round type="success" @click="submitSalesReport()">Submit Sales Report</el-button>
           </td>
         </tr>
       </tbody>
@@ -178,15 +202,11 @@ import { createUniqueString } from '@/utils/index';
 
 export default {
   props: {
-    visitedCustomersList: {
-      type: Array,
-      default: () => [],
+    teamId: {
+      type: Number,
+      default: () => null,
     },
-    myCustomers: {
-      type: Array,
-      default: () => [],
-    },
-    products: {
+    reps: {
       type: Array,
       default: () => [],
     },
@@ -200,6 +220,7 @@ export default {
           return date >= d;
         },
       },
+      rep_entries: [],
       activeName: '1',
       invoice_items: [],
       customer_name: '',
@@ -207,11 +228,17 @@ export default {
       total: 0,
       dialogVisible: false,
       fill_fields_error: false,
+      fill_rep_fields_error: false,
       showSaveButton: true,
       extra_customers: '',
       // eslint-disable-next-line no-array-constructor
       uploadedFiles: [],
+      products: [],
+      load: false,
     };
+  },
+  created() {
+    this.addRepEntry();
   },
   methods: {
     cancelAction(){
@@ -247,6 +274,54 @@ export default {
       this.customer_name = customer.business_name;
       this.dialogVisible = true;
     },
+    setCustomerDetails(customer, rowIndex){
+      const app = this;
+      app.rep_entries[rowIndex].customer_id = customer.id;
+      app.rep_entries[rowIndex].business_name = customer.business_name;
+    },
+    isRepRowEmpty() {
+      const checkEmptyLines = this.rep_entries.filter(
+        (detail) =>
+          detail.rep_id === '' ||
+          detail.customer_id === '' ||
+          detail.amount === '' ||
+          detail.rep_coordinate === ''
+      );
+      if (checkEmptyLines.length > 0) {
+        return true;
+      }
+      return false;
+    },
+    addRepEntry() {
+      this.fill_rep_fields_error = false;
+
+      if (this.isRepRowEmpty()) {
+        this.fill_rep_fields_error = true;
+        // this.invoice_items[index].seleted_category = true;
+        return;
+      } else {
+        // if (this.invoice_items.length > 0)
+        //     this.invoice_items[index].grade = '';
+        this.rep_entries.push({
+          rep_id: '',
+          customer_details: {},
+          business_name: '',
+          customer_id: '',
+          customersList: [],
+          entry_date: new Date(),
+          unique_sales_id: createUniqueString(),
+          amount: '',
+          rep_coordinate: '',
+          manager_coordinate: '',
+        });
+      }
+    },
+    removeRepEntry(detailId) {
+      this.fill_rep_fields_error = false;
+      if (!this.repBlockRemoval) {
+        this.rep_entries.splice(detailId, 1);
+      }
+    },
     addCustomerSales() {
       const app = this;
       const invoice_items = app.invoice_items;
@@ -260,10 +335,10 @@ export default {
         total_sales += parseFloat(app.invoice_items[count].amount);
         original_total_amount += parseFloat(app.invoice_items[count].main_amount);
       }
-      app.visitedCustomersList[app.selected_index].amount = total_sales;
-      app.visitedCustomersList[app.selected_index].main_amount = original_total_amount;
-      app.visitedCustomersList[app.selected_index].invoice_items = invoice_items;
-      // console.log(app.visitedCustomersList[app.selected_index]);
+      app.rep_entries[app.selected_index].amount = total_sales;
+      app.rep_entries[app.selected_index].main_amount = original_total_amount;
+      app.rep_entries[app.selected_index].invoice_items = invoice_items;
+      // console.log(app.rep_entries[app.selected_index]);
       this.dialogVisible = false;
     },
     addLine() {
@@ -397,56 +472,104 @@ export default {
     //   // subtract discount
     //   app.form.amount = parseFloat(subtotal - app.form.discount).toFixed(2);
     },
-    addExtraCustomers(value) {
+    fetchCustomers(rep_id, index) {
       const app = this;
-      const customer_id = app.myCustomers[value].id;
-      if (!app.visitedCustomersList.filter(e => e.id === customer_id).length > 0) {
-        app.myCustomers[value].customer_id = customer_id;
-        // app.myCustomers[value].payment_mode = 'later';
-        app.myCustomers[value].files = [];
-        app.myCustomers[value].entry_date = new Date();
-        app.myCustomers[value].unique_sales_id = createUniqueString();
-        app.myCustomers[value].can_delete = 'yes';
-        app.visitedCustomersList.push(app.myCustomers[value]);
-        app.uploadedFiles.push({ files: [] });
-      }
-      app.extra_customers = '';
-    },
-    removeExtraCustomer(customer_id) {
-      const app = this;
-      for (let count = 0; count < app.visitedCustomersList.length; count++) {
-        if (app.visitedCustomersList[count].id === customer_id) {
-          app.visitedCustomersList.splice(count, 1);
-        }
-      }
-    },
-    onImageChange(e, index) {
-      const app = this;
-      const files = e.target.files;
-      let filesToBeUploaded = '';
-      for (let i = 0; i < files.length; i++) {
-        filesToBeUploaded = e.target.files[i];
-        // console.log(file);
-        // const filesToBeUploaded = file[0];
-        app.submitUpload(filesToBeUploaded, index);
-      }
-      // app.visitedCustomersList[index].files = filesToBeUploaded;
-    },
-    submitUpload(filesToBeUploaded, index) {
-      const app = this;
-      app.loading = true;
-      const formData = new FormData();
-      formData.append('files', filesToBeUploaded);
-      formData.append('type', 'sales');
-      const updatePhotoResource = new Resource('attach/files');
-      updatePhotoResource.store(formData)
+      // if (!app.hideCustomersList) {
+      const customerResource = new Resource('customers/rep-customers');
+      const param = { rep_id, team_id: app.teamId };
+      app.fetchRepProducts(param);
+      customerResource.list(param)
         .then(response => {
-          app.visitedCustomersList[index].files.push(response);
-          app.uploadedFiles[index].files.push(response);
-        })
-        .catch(e => {
-          console.log(e);
+          // app.customers = response.customers;
+          app.rep_entries[index].customersList = response.customers;
         });
+      // }
+    },
+    fetchRepProducts(param) {
+      const app = this;
+      const getProducts = new Resource('products/rep-products');
+      getProducts.list(param).then((response) => {
+        app.products = response.rep_products;
+        app.all_products = response.team_products;
+      });
+    },
+    // onImageChange(e, index) {
+    //   const app = this;
+    //   const files = e.target.files;
+    //   let filesToBeUploaded = '';
+    //   for (let i = 0; i < files.length; i++) {
+    //     filesToBeUploaded = e.target.files[i];
+    //     // console.log(file);
+    //     // const filesToBeUploaded = file[0];
+    //     app.submitUpload(filesToBeUploaded, index);
+    //   }
+    //   // app.rep_entries[index].files = filesToBeUploaded;
+    // },
+    // submitUpload(filesToBeUploaded, index) {
+    //   const app = this;
+    //   app.loading = true;
+    //   const formData = new FormData();
+    //   formData.append('files', filesToBeUploaded);
+    //   formData.append('type', 'sales');
+    //   const updatePhotoResource = new Resource('attach/files');
+    //   updatePhotoResource.store(formData)
+    //     .then(response => {
+    //       app.rep_entries[index].files.push(response);
+    //       app.uploadedFiles[index].files.push(response);
+    //     })
+    //     .catch(e => {
+    //       console.log(e);
+    //     });
+    // },
+    submitSalesReport() {
+      const app = this;
+      app.$confirm('Are you sure you want to submit these sales entries?', 'Warning', {
+        confirmButtonText: 'Yes Submit',
+        cancelButtonText: 'Cancel',
+        type: 'warning',
+      }).then(() => {
+        // this.$message({
+        //   type: 'info',
+        //   message: 'Sending...',
+        // });
+        app.load = true;
+        if (app.rep_entries.length > 0) {
+          const formattedEntries = [];
+          app.rep_entries.forEach(entry => {
+            formattedEntries.push({
+              rep_id: entry.rep_id,
+              customer_id: entry.customer_id,
+              entry_date: entry.entry_date,
+              unique_sales_id: entry.unique_sales_id,
+              amount: entry.amount,
+              rep_coordinate: entry.rep_coordinate,
+              manager_coordinate: entry.manager_coordinate,
+              // invoice_items: entry.invoice_items,
+              // main_amount: entry.main_amount,
+            });
+          });
+          const unsaved_orders = { unsaved_orders: formattedEntries };
+          const submitSales = new Resource('sales/store');
+          submitSales.store(unsaved_orders).then(() => {
+            this.$message({
+              type: 'success',
+              message: 'Sales Entries Submitted',
+            });
+            app.rep_entries = [];
+            app.addRepEntry();
+            app.load = false;
+          }).catch(() => {
+            this.$message({
+              type: 'danger',
+              message: 'An error Occured',
+            });
+            app.load = false;
+          });
+        }
+        // app.loadForm = false;
+      }).catch(() => {
+        app.load = false;
+      });
     },
   },
 };

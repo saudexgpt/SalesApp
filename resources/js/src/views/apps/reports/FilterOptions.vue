@@ -47,7 +47,7 @@
         </el-select>
       </el-col>
       <el-col :lg="6" :md="6" :sm="6" :xs="24">
-        <div v-if="panel === 'month'">
+        <div v-if="panel !== 'date'">
 
           <label for="">&nbsp;</label><br>
           <el-popover placement="right" trigger="click">

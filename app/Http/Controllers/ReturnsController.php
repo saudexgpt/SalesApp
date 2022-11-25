@@ -85,15 +85,16 @@ class ReturnsController extends Controller
     {
         // return $request;
         $actor = $this->getUser();
-        if (isset($request->rep_id) && $request->rep_id != '') {
-
-            $rep_id = $request->rep_id;
-            $user = User::find($rep_id);
-        } else {
-            $user = $actor;
-        }
         $unsaved_returns = json_decode(json_encode($request->unsaved_returns));
         foreach ($unsaved_returns as $unsaved_return) {
+
+            if (isset($unsaved_return->rep_id) && $unsaved_return->rep_id != '') {
+
+                $rep_id = $unsaved_return->rep_id;
+                $user = User::find($rep_id);
+            } else {
+                $user = $actor;
+            }
             if (isset($unsaved_return->returns) && $unsaved_return->returns !== '') {
 
                 $details = json_decode(json_encode($unsaved_return->returns));
