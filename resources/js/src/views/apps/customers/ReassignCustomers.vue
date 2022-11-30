@@ -166,6 +166,7 @@ export default {
       columns: [
         'id',
         'business_name',
+        'code',
         'customer_type.name',
         // 'area',
         'last_visited',
@@ -202,8 +203,8 @@ export default {
         //   filter: 'Search:',
         // },
         // editableColumns:['name', 'category.name', 'sku'],
-        sortable: ['id', 'business_name'],
-        filterable: ['id', 'business_name'],
+        sortable: ['id', 'business_name', 'code'],
+        filterable: ['id', 'business_name', 'code'],
       },
       total: 0,
       loading: false,

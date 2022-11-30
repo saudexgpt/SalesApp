@@ -500,6 +500,26 @@ class VisitsController extends Controller
             ->get();
         return response()->json(compact('visits'), 200);
     }
+    public function storeManagerVisits(Request $request)
+    {
+        $actor = $this->getUser();
+        $unsaved_visits = json_decode(json_encode($request->unsaved_visits));
+        $visit_list = [];
+        $visit_obj = new Visit();
+        $unsaved_list = [];
+        foreach ($unsaved_visits as $unsaved_visit) {
+            if (isset($unsaved_visit->rep_id) && $unsaved_visit->rep_id != '') {
+
+                $rep_id = $unsaved_visit->rep_id;
+                $user = User::find($rep_id);
+            } else {
+                $user = $actor;
+            }
+
+            $visit_obj->saveAsManagersVisits($user, $unsaved_visit);
+        }
+        return response()->json(compact('unsaved_list'), 200);
+    }
     /**
      * Store a newly created resource in storage.
      *

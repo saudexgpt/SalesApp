@@ -264,6 +264,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix' => 'visits'], function () {
         Route::get('fetch', [VisitsController::class, 'index']);
         Route::post('store', [VisitsController::class, 'store']);
+        Route::post('store-managers', [VisitsController::class, 'storeManagerVisits']);
+
         // Route::get('fetch-hospital-visits', [VisitsController::class, 'fetchHospitalVisits']);
         Route::get('fetch-general-visits', [VisitsController::class, 'fetchGeneralVisits']);
         Route::get('fetch-footprints', [VisitsController::class, 'fetchFootPrints']);

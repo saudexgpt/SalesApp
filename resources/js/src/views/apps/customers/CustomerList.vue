@@ -367,6 +367,7 @@ export default {
       columns: [
         'action',
         'business_name',
+        'code',
         'customer_type.name',
         // 'area',
         'last_visited',
@@ -403,8 +404,8 @@ export default {
         //   filter: 'Search:',
         // },
         // editableColumns:['name', 'category.name', 'sku'],
-        sortable: ['business_name', 'last_visited', 'customer_type.name', 'created_at', 'date_verified'],
-        filterable: ['business_name', 'customer_type.name', 'registrar.name'],
+        sortable: ['business_name', 'code', 'last_visited', 'customer_type.name', 'created_at', 'date_verified'],
+        filterable: ['business_name', 'code', 'customer_type.name', 'registrar.name'],
       },
       total: 0,
       loading: false,

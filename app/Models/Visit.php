@@ -44,6 +44,46 @@ class Visit extends Model
     {
         return $this->belongsTo(User::class, 'visiting_partner_id', 'id');
     }
+    public function saveAsManagersVisits($user, $unsaved_visit)
+    {
+
+        if (isset($unsaved_visit->manager_coordinate) && $unsaved_visit->manager_coordinate != '') {
+            $manager_coordinate_array = explode(',', $unsaved_visit->manager_coordinate);
+            $manager_lat = $manager_coordinate_array[0];
+            $manager_long = $manager_coordinate_array[1];
+        } else {
+            $manager_lat = NULL;
+            $manager_long =  NULL;
+        }
+        //foreach ($unsaved_visits as $unsaved_visit) {
+        $unsaved_list = '';
+        $visit_date = date('Y-m-d', strtotime($unsaved_visit->entry_date));
+        $purpose = strtoupper($unsaved_visit->purpose);
+        $customer_id = (isset($unsaved_visit->customer_id)) ? $unsaved_visit->customer_id : NULL;
+        if ($customer_id !== NULL) {
+            try {
+                //check for first visit where proximity is less than or equal to 100m
+                $visit = Visit::where([
+                    'customer_id' => $customer_id,
+                    'visitor' => $unsaved_visit->rep_id,
+                    'purpose' => $purpose,
+                    'visit_date' => $visit_date
+                ])
+                    ->where('manager_latitude', NULL)
+                    ->first();
+                if ($visit) {
+                    $visit->manager_latitude = $manager_lat;
+                    $visit->manager_longitude = $manager_long;
+
+                    $visit->save();
+                }
+            } catch (\Throwable $th) {
+                $unsaved_list = $unsaved_visit;
+            }
+        }
+        // }
+        return $unsaved_list;
+    }
     public function saveAsVisits($user, $unsaved_visit)
     {
         if (isset($unsaved_visit->rep_coordinate) && $unsaved_visit->rep_coordinate != '') {
@@ -98,11 +138,11 @@ class Visit extends Model
                         }
                     }
                 }
-                $visit_date = (isset($unsaved_visit->visit_date)) ? date('Y-m-d', strtotime($unsaved_visit->visit_date)) : date('Y-m-d', strtotime('now')); // $unsaved_visit->visit_date;
+                $visit_date = (isset($unsaved_visit->entry_date)) ? date('Y-m-d', strtotime($unsaved_visit->entry_date)) : date('Y-m-d', strtotime('now')); // $unsaved_visit->visit_date;
                 $customer_contact_id = (isset($unsaved_visit->contact_id)) ? $unsaved_visit->contact_id : null;
 
                 // $purposes = json_decode(json_encode($unsaved_visit->purpose));
-                $purpose = (isset($unsaved_visit->purpose)) ? $unsaved_visit->purpose : 'Mere Visit';
+                $purpose = (isset($unsaved_visit->purpose)) ? $unsaved_visit->purpose : 'OTHERS';
                 $visit_type = 'off site';
                 $distance = NULL;
                 if ($lat != NULL && $lat != '') {
@@ -143,7 +183,7 @@ class Visit extends Model
                 $visit->visiting_partner_id = (isset($unsaved_visit->visiting_partner_id)) ? $unsaved_visit->visiting_partner_id : NULL;
                 $visit->customer_contact_id = $customer_contact_id;
                 $visit->visit_type = $visit_type;
-                $visit->purpose = $purpose;
+                $visit->purpose = strtoupper($purpose);
                 $visit->description = (isset($unsaved_visit->description)) ? $unsaved_visit->description : NULL;
                 $visit->visit_duration = (isset($unsaved_visit->description)) ? $unsaved_visit->visit_duration : NULL;
                 // } else {

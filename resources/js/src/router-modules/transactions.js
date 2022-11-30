@@ -24,7 +24,7 @@ const transactionsRoutes = {
       },
     },
     {
-      hidden: false,
+      hidden: true,
       component: () => import('@/views/apps/transactions/Sales'),
       path: '/transactions/sales',
       name: 'Sales',
@@ -35,7 +35,7 @@ const transactionsRoutes = {
       },
     },
     {
-      hidden: false,
+      hidden: true,
       component: () => import('@/views/apps/transactions/Payments'),
       path: '/transactions/collections',
       name: 'Collections',
@@ -46,7 +46,7 @@ const transactionsRoutes = {
       },
     },
     {
-      hidden: false,
+      hidden: true,
       component: () => import('@/views/apps/transactions/Debts'),
       path: '/transactions/debts',
       name: 'Debts',

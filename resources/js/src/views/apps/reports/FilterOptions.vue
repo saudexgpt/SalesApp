@@ -79,7 +79,7 @@
           />
         </div>
       </el-col>
-      <el-col v-if="showButton" :lg="6" :md="6" :sm="6" :xs="24">
+      <el-col v-if="showButton && panel === 'date'" :lg="6" :md="6" :sm="6" :xs="24">
         <label for="">&nbsp;</label><br>
         <el-button type="primary" @click="submitQuery()">Fetch</el-button>
       </el-col>

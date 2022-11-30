@@ -44,7 +44,7 @@
           <tr v-for="(customer_detail, index) in customer_details" :key="index">
             <td>
               <span>
-                <vs-button radius color="danger" type="filled" icon-pack="feather" icon="icon-trash-2" @click="removeLine(index)"/>
+                <vs-button v-if="customer_details.length > 1" radius color="danger" type="filled" icon-pack="feather" icon="icon-trash-2" @click="removeLine(index)"/>
                 <vs-button v-if="index + 1 === customer_details.length" radius color="success" type="filled" icon-pack="feather" icon="icon-plus" @click="addLine(index)"/>
               </span>
             </td>

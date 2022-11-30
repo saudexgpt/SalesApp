@@ -35,6 +35,9 @@
       <el-tab-pane label="Others">
         <other-purposes :team-id="form.team_id" :reps="reps" />
       </el-tab-pane>
+      <el-tab-pane label="Managers' Entries">
+        <managers-entries :team-id="form.team_id" :reps="reps" />
+      </el-tab-pane>
     </el-tabs>
   </el-card>
 </template>
@@ -49,6 +52,7 @@ import SalesReport from './partials/SalesReport';
 import ReturnsReport from './partials/ReturnsReport';
 import HospitalVisitReport from './partials/HospitalVisitReport';
 import OtherPurposes from './partials/OtherPurposes';
+import ManagersEntries from './partials/ManagersEntries';
 import Resource from '@/api/resource';
 export default {
   components: {
@@ -61,6 +65,7 @@ export default {
     ReturnsReport,
     HospitalVisitReport,
     OtherPurposes,
+    ManagersEntries,
   },
   data() {
     return {
