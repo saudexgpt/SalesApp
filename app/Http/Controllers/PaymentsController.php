@@ -124,7 +124,7 @@ class PaymentsController extends Controller
             $payment->save();
 
             $customer_debt_obj = new CustomerDebt();
-            $customer_debt_obj->settleDebt($payment->customer_id);
+            $customer_debt_obj->settleDebt($payment->customer_id, $payment->received_by);
 
             $title = "Payment Details Updated for ID #$payment->id";
             $description = $user->name . " updated collections details from ₦$old_amount to ₦$payment->amount for $customer->business_name";
@@ -197,7 +197,7 @@ class PaymentsController extends Controller
                             }
                         }
                         $customer_debt_obj = new CustomerDebt();
-                        $customer_debt_obj->settleDebt($customer_id);
+                        $customer_debt_obj->settleDebt($customer_id, $user->id);
 
                         $collection->purpose = 'collections';
                         $visit_obj = new Visit();

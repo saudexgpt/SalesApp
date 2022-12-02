@@ -6,9 +6,9 @@
     <el-tab-pane v-if="checkPermission(['create-customers'])" label="Register New Customer">
       <add-new-customer />
     </el-tab-pane>
-    <el-tab-pane v-if="checkPermission(['assign-field-staff'])" label="Assign Reps to Customers">
+    <!-- <el-tab-pane v-if="checkPermission(['assign-field-staff'])" label="Assign Reps to Customers">
       <reassign-customers />
-    </el-tab-pane>
+    </el-tab-pane> -->
   </el-tabs>
 </template>
 

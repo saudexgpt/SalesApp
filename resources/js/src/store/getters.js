@@ -36,6 +36,8 @@ const getters = {
   notifications: state => state.user.notifications,
   unreadNotificationCount: state => state.user.unreadNotificationCount,
   pStatus: state => state.user.p_status,
+
+  customers: state => state.customer.customers,
 //   sidebar: state => state.app.sidebar,
 //   language: state => state.app.language,
 //   size: state => state.app.size,

@@ -38,12 +38,12 @@
               style="width: 100%"
             >
               <el-option
-                v-for="(cust, cust_index) in rep_entry.customersList"
+                v-for="(cust, cust_index) in customersList"
                 :key="cust_index"
                 :value="cust.id"
                 :label="cust.business_name + ' ' + cust.address"
               >
-                <span style="float: left"><strong>{{ cust.business_name }}</strong></span>
+                <span style="float: left"><strong>{{ cust.business_name }} [{{ cust.code }}]</strong></span>
                 <span style="float: right; color: #8492a6; font-size: 12px">{{ cust.address }}</span>
               </el-option>
             </el-select>
@@ -123,6 +123,10 @@ export default {
       type: Array,
       default: () => [],
     },
+    customersList: {
+      type: Array,
+      default: () => [],
+    },
   },
   data() {
     return {
@@ -195,16 +199,16 @@ export default {
       }
     },
     fetchCustomers(rep_id, index) {
-      const app = this;
-      // if (!app.hideCustomersList) {
-      const customerResource = new Resource('customers/rep-customers');
-      const param = { rep_id, team_id: app.teamId };
-      customerResource.list(param)
-        .then(response => {
-          // app.customers = response.customers;
-          app.rep_entries[index].customersList = response.customers;
-        });
-      // }
+    //   const app = this;
+    //   // if (!app.hideCustomersList) {
+    //   const customerResource = new Resource('customers/rep-customers');
+    //   const param = { rep_id, team_id: app.teamId };
+    //   customerResource.list(param)
+    //     .then(response => {
+    //       // app.customers = response.customers;
+    //       app.rep_entries[index].customersList = response.customers;
+    //     });
+    //   // }
     },
     submitVisitsReport() {
       const app = this;

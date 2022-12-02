@@ -35,89 +35,6 @@
       </div>
       <vs-divider />
     </div>
-    <div class="filter-container">
-      <!-- <el-row v-if="checkPermission(['assign-field-staff'])" :gutter="20">
-          <el-col :xs="24" :sm="24" :md="24">
-            <h4>Assign Rep to Customers</h4>
-            <aside>
-              <el-select
-                v-model="assignRep.relating_officer"
-                placeholder="Select Rep"
-                filterable
-              >
-                <el-option
-                  v-for="(rep, index) in sales_reps"
-                  :key="index"
-                  :label="rep.name"
-                  :value="rep.id"
-                />
-              </el-select>
-              <el-select
-                v-model="assignRep.customer_ids"
-                placeholder="Select Customers"
-                multiple
-                filterable
-                collapse-tags
-              >
-                <el-option
-                  v-for="(customer, customer_index) in list"
-                  :key="customer_index"
-                  :label="customer.business_name"
-                  :value="customer.id"
-                />
-              </el-select>
-              <el-button type="primary" @click="assignOfficer()">Assign</el-button>
-            </aside>
-          </el-col>
-        </el-row> -->
-      <!-- <el-row :gutter="20">
-        <el-col :xs="24" :sm="8" :md="8">
-          Search Customer
-          <el-input
-            v-model="query.keyword"
-            placeholder="Search Customer"
-            style="width: 100%"
-            class="filter-item"
-            @input="handleFilter"
-          />
-        </el-col>
-        <el-col :xs="24" :sm="8" :md="8">
-          Filter by Rep
-          <el-select
-            v-model="query.rep_id"
-            placeholder="Select Rep"
-            filterable
-            style="width: 100%"
-            @input="getList()"
-          >
-            <el-option
-              v-for="(rep, index) in sales_reps"
-              :key="index"
-              :label="rep.name"
-              :value="rep.id"
-            />
-          </el-select>
-        </el-col>
-        <el-col :xs="24" :sm="8" :md="8">
-          Filter by Verification
-          <el-select
-            v-model="query.verify_type"
-            placeholder="Filter by Verification"
-            style="width: 100%"
-            @input="getList()"
-          >
-            <el-option label="All" value="all"/>
-            <el-option label="Verified" value="verified"/>
-            <el-option label="Unverified" value="unverified"/>
-          </el-select>
-        </el-col>
-      </el-row> -->
-      <el-row :gutter="20">
-        <el-col :span="24">
-          <filter-options :hide-customers-list="true" :show-button="true" panel="none" @submitQuery="setParam" />
-        </el-col>
-      </el-row>
-    </div>
     <div>
       <!-- <el-button
           :loading="downloading"
@@ -436,7 +353,7 @@ export default {
     };
   },
   created() {
-    // this.getList();
+    this.getList();
     // this.fetchSalesRep();
   },
   methods: {

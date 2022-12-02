@@ -3,6 +3,10 @@
   <el-card>
     <div slot="header" class="clearfix">
       <span>Transaction Entry Form</span>
+      <span class="pull-right">
+        <el-button circle type="danger" icon="el-icon-refresh" @click="loadCustomers()" />
+      </span>
+
     </div>
     <el-row :gutter="10">
       <el-col :lg="12" :md="12" :sm="24" :xs="24">
@@ -21,22 +25,22 @@
     <br><br>
     <el-tabs type="border-card">
       <el-tab-pane label="Sales">
-        <sales-report :team-id="form.team_id" :reps="reps"/>
+        <sales-report :team-id="form.team_id" :reps="reps" :customers-list="customersList" />
       </el-tab-pane>
       <el-tab-pane label="Collections">
-        <collection-report :team-id="form.team_id" :reps="reps" />
+        <collection-report :team-id="form.team_id" :reps="reps" :customers-list="customersList" />
       </el-tab-pane>
       <el-tab-pane label="Detailing/Clinical Meetings">
-        <hospital-visit-report :team-id="form.team_id" :reps="reps" />
+        <hospital-visit-report :team-id="form.team_id" :reps="reps" :customers-list="customersList" />
       </el-tab-pane>
       <el-tab-pane label="Returns">
-        <returns-report :team-id="form.team_id" :reps="reps" />
+        <returns-report :team-id="form.team_id" :reps="reps" :customers-list="customersList" />
       </el-tab-pane>
       <el-tab-pane label="Others">
-        <other-purposes :team-id="form.team_id" :reps="reps" />
+        <other-purposes :team-id="form.team_id" :reps="reps" :customers-list="customersList" />
       </el-tab-pane>
       <el-tab-pane label="Managers' Entries">
-        <managers-entries :team-id="form.team_id" :reps="reps" />
+        <managers-entries :team-id="form.team_id" :reps="reps" :customers-list="customersList" />
       </el-tab-pane>
     </el-tabs>
   </el-card>
@@ -96,9 +100,14 @@ export default {
       loadForm: false,
     };
   },
+  computed: {
+    customersList() {
+      return this.$store.getters.customers;
+    },
+  },
   created() {
     this.fetchTeams();
-    // this.fetchRepProducts();
+    this.loadCustomers();
   },
   methods: {
     fetchTeams() {
@@ -132,6 +141,10 @@ export default {
         .catch((error) => {
           console.log(error);
         });
+    },
+    loadCustomers(){
+      const app = this;
+      app.$store.dispatch('customer/fetch').then(app.$message('Customers Reloaded'));
     },
     // setFormParams(param){
     //   const app = this;

@@ -26,16 +26,16 @@ class CustomerDebt extends Model
         return $this->belongsTo(User::class, 'field_staff', 'id');
     }
 
-    public function settleDebt($customer_id)
+    public function settleDebt($customer_id, $rep_id)
     {
 
-        $payments = Payment::where('customer_id', $customer_id)->whereRaw('amount - used_to_clear_debt > 0')->where('confirmed_by', '!=', NULL)->orderBy('id')->get();
+        $payments = Payment::where(['customer_id' => $customer_id, 'received_by' => $rep_id])->whereRaw('amount - used_to_clear_debt > 0')->where('confirmed_by', '!=', NULL)->orderBy('id')->get();
         if ($payments->isNotEmpty()) {
             foreach ($payments as $payment) {
                 $payment_id = $payment->id;
                 $amount = $payment->amount - $payment->used_to_clear_debt;
 
-                $customer_debts = CustomerDebt::where('customer_id', $customer_id)->whereRaw('amount - paid > 0')->orderBy('id')->get();
+                $customer_debts = CustomerDebt::where(['customer_id' => $customer_id, 'field_staff' => $rep_id])->whereRaw('amount - paid > 0')->orderBy('id')->get();
                 if ($customer_debts->isNotEmpty()) {
                     foreach ($customer_debts as $customer_debt) {
                         $debt = $customer_debt->amount - $customer_debt->paid;
