@@ -3,7 +3,7 @@
 
     <div class="vx-col w-full sm:w-1/2 md:w-1/2 lg:w-1/4 xl:w-1/4">
       <statistics-card-line
-        :statistic="dashboardData.customers.length"
+        :statistic="dashboardData.customers"
         hide-chart
         class="mb-base"
         icon="UsersIcon"
