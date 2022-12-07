@@ -219,7 +219,7 @@ class CustomersController extends Controller
         //     list($sales_reps, $sales_reps_ids) = $this->teamMembers();
         //     $customers = Customer::with('customerContacts')->whereIn('relating_officer', $sales_reps_ids)->orderBy('business_name')->get();
         //     return response()->json(compact('customers'), 200);
-        // } 
+        // }
         else {
             // admin and super admin only
             $customers = Customer::with('customerContacts')->orderBy('business_name')->get();
@@ -546,7 +546,7 @@ class CustomersController extends Controller
         foreach ($bulk_data as $data) {
             try {
 
-                $business_name =  trim($data->BUSINESS_NAME);
+                $business_name =  htmlentities(trim($data->BUSINESS_NAME));
                 // $code =  trim($data->CODE);
 
                 $business_type = strtolower(trim($data->BUSINESS_TYPE));

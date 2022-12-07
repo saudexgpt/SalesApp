@@ -195,6 +195,10 @@ class Visit extends Model
                 // }
 
                 $visit->save();
+                //////////// let's assign this rep to the customer/////////////////////
+                $rep_id = $user->id;
+                $customer->reps()->attach($rep_id);
+                /////////////////////////////////////////////////////////////////////////
                 // $this->saveVisitDetails($unsaved_visit, $visit);
 
                 if (isset($unsaved_visit->hospital_follow_up_schedule) && $unsaved_visit->hospital_follow_up_schedule != null) {
