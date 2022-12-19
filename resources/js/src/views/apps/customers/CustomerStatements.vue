@@ -70,17 +70,31 @@
             </tr>
           </thead>
           <tbody>
+            <template v-for="(statement, index) in statements">
+              <template v-if="statement.remark === 'total'">
 
-            <tr v-for="(statement, index) in statements" :key="index">
-              <td>{{ moment(statement.date).format('ll') }}</td>
-              <td>{{ statement.description }}</td>
-              <td ><strong v-if="statement.remark === 'opening'">{{ statement.debt }}</strong></td>
-              <td :style="'color: '+ statement.color"><span v-if="statement.remark !== 'opening' && statement.remark !== 'closing'">{{ (statement.debt != '') ? Number(statement.debt).toLocaleString() : '' }}</span></td>
-              <td :style="'color: '+ statement.color"><span v-if="statement.remark !== 'opening' && statement.remark !== 'closing'">{{ (statement.paid != '') ? Number(statement.paid).toLocaleString() : '' }}</span></td>
-              <td><strong v-if="statement.remark === 'closing'">{{ statement.debt }}</strong></td>
+                <tr v-if="statement.paid !== '' || statement.debt !== ''" :key="index">
+                  <td>{{ moment(statement.date).format('ll') }}</td>
+                  <td>{{ statement.description }}</td>
+                  <td ><strong v-if="statement.remark === 'opening'">{{ statement.opening_bal }}</strong></td>
+                  <td :style="'color: '+ statement.color"><span v-if="statement.remark !== 'opening' && statement.remark !== 'closing'">{{ (statement.debt != '') ? Number(statement.debt).toLocaleString() : '' }}</span></td>
+                  <td :style="'color: '+ statement.color"><span v-if="statement.remark !== 'opening' && statement.remark !== 'closing'">{{ (statement.paid != '') ? Number(statement.paid).toLocaleString() : '' }}</span></td>
+                  <td><strong v-if="statement.remark === 'closing'">{{ statement.closing_bal }}</strong></td>
+                  <!-- <td>{{ statement.balance }}</td> -->
+                  <!-- <td>{{ statement.remark }}</td> -->
+                </tr>
+              </template>
+              <tr v-else :key="index">
+                <td>{{ moment(statement.date).format('ll') }}</td>
+                <td>{{ statement.description }}</td>
+                <td ><strong v-if="statement.remark === 'opening'">{{ statement.opening_bal }}</strong></td>
+                <td :style="'color: '+ statement.color"><span v-if="statement.remark !== 'opening' && statement.remark !== 'closing'">{{ (statement.debt != '') ? Number(statement.debt).toLocaleString() : '' }}</span></td>
+                <td :style="'color: '+ statement.color"><span v-if="statement.remark !== 'opening' && statement.remark !== 'closing'">{{ (statement.paid != '') ? Number(statement.paid).toLocaleString() : '' }}</span></td>
+                <td><strong v-if="statement.remark === 'closing'">{{ statement.closing_bal }}</strong></td>
               <!-- <td>{{ statement.balance }}</td> -->
               <!-- <td>{{ statement.remark }}</td> -->
-            </tr>
+              </tr>
+            </template>
           </tbody>
         </table>
 
@@ -104,7 +118,7 @@ export default {
       items: [],
       statements: [],
       currency: '',
-      columns: ['date', 'description', 'debt', 'paid'],
+      columns: ['date', 'description', 'opening_bal', 'debt', 'paid', 'closing_bal'],
 
       product_name: '',
       page: {
@@ -228,7 +242,9 @@ export default {
           'type': 'debt',
           'date': app.moment(app.form.from).format('ll'),
           'description': '',
-          'debt': Number(app.brought_forward).toLocaleString(),
+          'opening_bal': Number(app.brought_forward).toLocaleString(),
+          'closing_bal': '',
+          'debt': '',
           'paid': '',
           'color': '#000000',
           // 'balance': '',
@@ -241,6 +257,8 @@ export default {
           'type': 'debt',
           'date': app.moment(app.form.to).format('ll'),
           'description': 'Total',
+          'opening_bal': '',
+          'closing_bal': '',
           'debt': (total_debt > 0) ? total_debt : '',
           'paid': (total_paid > 0) ? total_paid : '',
           // 'balance': '',
@@ -251,7 +269,9 @@ export default {
           'type': 'debt',
           'date': app.moment(app.form.to).format('ll'),
           'description': '',
-          'debt': Number(balance).toLocaleString(),
+          'opening_bal': '',
+          'closing_bal': Number(balance).toLocaleString(),
+          'debt': '',
           'paid': '',
           'color': '#000000',
           // 'balance': balance,
@@ -262,8 +282,8 @@ export default {
     handleDownload() {
       this.downloadLoading = true;
       import('@/vendor/Export2Excel').then(excel => {
-        const multiHeader = [['Statement for ' + this.table_title, '', '', '', '']];
-        const tHeader = ['DATE', 'DESCRIPTION', 'DEBT', 'PAID'];
+        const multiHeader = [['Statement for ' + this.table_title, '', '', '', '', '']];
+        const tHeader = ['DATE', 'DESCRIPTION', 'OPENING BAL (NGN)', 'SALES (NGN)', 'COLLECTIONS (NGN)', 'CLOSING BAL (NGN)'];
         const filterVal = this.columns;
         const list = this.statements;
         const data = this.formatJson(filterVal, list);
