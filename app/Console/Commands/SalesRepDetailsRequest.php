@@ -264,7 +264,7 @@ class SalesRepDetailsRequest extends Command
                     $lat,
                     $long,
                     $manager_lat,
-                    $manager_long,
+                    $manager_long
                 );
                 //converting miles to metres
                 $distance = mileToMetre($distance);
