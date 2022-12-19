@@ -94,7 +94,7 @@ export default {
         .list()
         .then((response) => {
           this.customers = response.customers;
-          this.center = { lat: this.customers[0].latitude, lng: this.customers[0].longitude };
+          // this.center = { lat: this.customers[0].latitude, lng: this.customers[0].longitude };
           this.addMarker();
           this.loader = false;
         });
@@ -103,11 +103,13 @@ export default {
       var markers = [];
       const icon = '/images/map-marker.png';
       this.customers.forEach(customer => {
-        const position = {
-          lat: customer.latitude,
-          lng: customer.longitude,
-        };
-        markers.push({ position: position, icon: icon, detail: customer });
+        if (customer.latitude !== null) {
+          const position = {
+            lat: customer.latitude,
+            lng: customer.longitude,
+          };
+          markers.push({ position: position, icon: icon, detail: customer });
+        }
       });
       this.markers = markers;
     },

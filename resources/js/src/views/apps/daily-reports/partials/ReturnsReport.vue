@@ -30,7 +30,25 @@
             </el-select>
           </td>
           <td>
-            <el-select
+            <el-button
+              v-if="rep_entry.customer_id === ''"
+              round
+              class="filter-item"
+              type="primary"
+              @click="requestCustomer(index)"
+            >Select Customer
+            </el-button>
+            <el-button
+              v-else
+              round
+              class="filter-item"
+              type="warning"
+              @click="requestCustomer(index)"
+            >Change Customer
+            </el-button>
+            <br>
+            {{ rep_entry.business_name }}
+            <!-- <el-select
               v-model="rep_entry.customer_details"
               value-key="id"
               placeholder="Select Customer"
@@ -47,7 +65,7 @@
                 <span style="float: left"><strong>{{ cust.business_name }} [{{ cust.code }}]</strong></span>
                 <span style="float: right; color: #8492a6; font-size: 12px">{{ cust.address }}</span>
               </el-option>
-            </el-select>
+            </el-select> -->
             <!--Uncomment when you want to activate sales details-->
             <br><br>
             <el-button v-if="rep_entry.customer_id !== ''" round type="danger" icon="el-icon-goods" @click="setCustomerReturns(index, rep_entry)">Add Details</el-button>
@@ -251,12 +269,27 @@ export default {
       uploadedFiles: [],
       products: [],
       load: false,
+      rowIndex: '',
     };
+  },
+  watch: {
+    selectedCustomer(){
+      // console.log('Value Changed');
+      const app = this;
+      const customer = app.selectedCustomer;
+      const rowIndex = app.rowIndex;
+      this.setCustomerDetails(customer, rowIndex);
+    },
   },
   created() {
     this.addRepEntry();
   },
   methods: {
+    requestCustomer(index) {
+      const app = this;
+      app.rowIndex = index;
+      app.$emit('selectCustomer', 'returns');
+    },
     cancelAction(){
       for (let index = 0; index < this.returned_items.length; index++) {
         const detail = this.returned_items[index];

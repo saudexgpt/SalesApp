@@ -20,6 +20,10 @@ class Payment extends Model
     {
         return $this->belongsTo(User::class, 'confirmed_by', 'id');
     }
+    public function staff()
+    {
+        return $this->belongsTo(User::class, 'received_by', 'id');
+    }
     public function attachments()
     {
         return $this->hasMany(TransactionFile::class, 'tnx_id', 'id');

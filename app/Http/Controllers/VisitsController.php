@@ -330,7 +330,7 @@ class VisitsController extends Controller
         // }
         else {
             list($sales_reps, $sales_reps_ids) = $this->teamMembers($request->team_id);
-            $visitsQuery = Visit::with('visitedBy', 'visitPartner', 'customer.registrar', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
+            $visitsQuery = Visit::with('visitedBy', 'customer.customerType',/*'visitPartner','contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item'*/)
                 ->where('created_at', '<=',  $date_to)
                 ->where('created_at', '>=',  $date_from)
                 ->where($condition)

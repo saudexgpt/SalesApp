@@ -11,470 +11,75 @@
         </el-col>
       </el-row>
       <br><br>
-      <el-row v-if="show_chart" :gutter="10">
-        <el-col :md="12">
-          <el-card shadow="always">
-            <div slot="header" class="clearfix">
-              <span>Total Visits: {{ total }}</span>
-            </div>
-            <!-- <h4>Scheduled: {{ scheduled_visits.length }}</h4>
-            <h4>Unscheduled: {{ unscheduled_visits.length }}</h4> -->
-            <vue-apex-charts
-              :options="chartOptions1"
-              :series="[scheduled_visits.length, unscheduled_visits.length]"
-            />
-          </el-card>
-        </el-col>
-        <el-col :md="12">
-          <el-card shadow="always">
-            <div slot="header" class="clearfix">
-              <span>Total Schedules: {{ parseInt(scheduled_visits.length + unvisited_schedule.length) }}</span>
-            </div>
-            <!-- <h4>Visited: {{ scheduled_visits.length }}</h4>
-            <h4>Unvisited: {{ unvisited_schedule.length }}</h4> -->
-            <vue-apex-charts
-              :options="chartOptions2"
-              :series="[scheduled_visits.length, unvisited_schedule.length]"
-            />
-          </el-card>
-        </el-col>
-        <el-col :md="12">
-          <el-card shadow="always">
-            <div slot="header" class="clearfix">
-              <span>Company's Customers: {{ company_customers }}</span>
-            </div>
-            <!-- <h4>Visited: {{ company_customers_visits.length }}</h4>
-            <h4>Unvisited: {{ notvisited_company_customers.length }}</h4> -->
-            <vue-apex-charts
-              :options="chartOptions2"
-              :series="[company_customers_visits.length, notvisited_company_customers.length]"
-            />
-          </el-card>
-        </el-col>
-        <el-col :md="12">
-          <el-card shadow="always">
-            <div slot="header" class="clearfix">
-              <span>Rep's Customers: {{ reps_customers }}</span>
-            </div>
-            <!-- <h4>Visited: {{ reps_customers_visits.length }}</h4>
-            <h4>Unvisited: {{ notvisited_rep_customers.length }}</h4> -->
-            <vue-apex-charts
-              :options="chartOptions2"
-              :series="[reps_customers_visits.length, notvisited_rep_customers.length]"
-            />
-          </el-card>
-        </el-col>
-      </el-row>
-      <hr>
       <el-row v-loading="load" :gutter="10">
-        <vs-tabs position="left" color="danger">
-          <vs-tab label="All Visits">
-            <div class="clearfix">
-              <h3>All Visits</h3>
+        <el-col :span="24">
+          <div class="clearfix">
+            <h3>All Visits</h3>
+          </div>
+          <span style="float: right">
+            <el-button
+              v-if="visits.length > 0"
+              :loading="downloadLoading"
+              round
+              style="margin:0 0 20px 20px;"
+              type="success"
+              icon="el-icon-download"
+              size="small"
+              @click="handleDownload(visits, 'All Visits Report')"
+            >Export Excel</el-button>
+          </span>
+          <v-client-table v-model="visits" :columns="visits_columns" :options="visits_options">
+            <div
+              slot="customer.business_name"
+              slot-scope="props">
+              {{ (props.row.customer) ? props.row.customer.business_name : '' }} <br>
+              <small>{{ (props.row.customer) ? props.row.customer.address : '' }}</small>
             </div>
-            <span style="float: right">
-              <el-button
-                v-if="visits.length > 0"
-                :loading="downloadLoading"
-                round
-                style="margin:0 0 20px 20px;"
-                type="success"
-                icon="el-icon-download"
-                size="small"
-                @click="handleDownload(visits, 'All Visits Report')"
-              >Export Excel</el-button>
-            </span>
-            <v-client-table v-model="visits" :columns="visits_columns" :options="visits_options">
-              <div
-                slot="customer.business_name"
-                slot-scope="props">
-                {{ (props.row.customer) ? props.row.customer.business_name : '' }} <br>
-                <small>{{ (props.row.customer) ? props.row.customer.address : '' }}</small>
-              </div>
-              <div
-                slot="next_appointment_date"
-                slot-scope="props"
-              >{{ (props.row.next_appointment_date) ? moment(props.row.next_appointment_date).format('lll') : '' }}
-              </div>
-              <div
-                slot="created_at"
-                slot-scope="props"
-              >{{ moment(props.row.created_at).format('lll') }}</div>
-              <div
-                slot="action"
-                slot-scope="props"
+            <div
+              slot="rep_coordinate"
+              slot-scope="props"
+            >{{ (props.row.rep_latitude) ? props.row.rep_latitude + ', ' + props.row.rep_longitude : '-' }}
+            </div>
+            <div
+              slot="manager_coordinate"
+              slot-scope="props"
+            >{{ (props.row.manager_latitude) ? props.row.manager_latitude + ', ' + props.row.manager_longitude : '-' }}
+            </div>
+            <div
+              slot="created_at"
+              slot-scope="props"
+            >{{ moment(props.row.created_at).format('lll') }}</div>
+            <div
+              slot="action"
+              slot-scope="props"
+            >
+              <el-tooltip
+                class="item"
+                effect="dark"
+                content="Visit Details"
+                placement="top-start"
               >
-                <el-tooltip
-                  class="item"
-                  effect="dark"
-                  content="Visit Details"
-                  placement="top-start"
-                >
-                  <el-button
-                    round
-                    type="primary"
-                    size="small"
-                    icon="el-icon-tickets"
-                    @click="showDetails(props.row)"
-                  />
-                </el-tooltip>
-              </div>
-            </v-client-table>
+                <el-button
+                  round
+                  type="primary"
+                  size="small"
+                  icon="el-icon-tickets"
+                  @click="showDetails(props.row)"
+                />
+              </el-tooltip>
+            </div>
+          </v-client-table>
 
-            <el-row :gutter="20">
-              <pagination
-                v-show="total > 0"
-                :total="total"
-                :page.sync="form.page"
-                :limit.sync="form.limit"
-                @pagination="fetchReports(form)"
-              />
-            </el-row>
-          </vs-tab>
-          <vs-tab label="Scheduled Visits">
-            <div class="clearfix">
-              <h3>Scheduled Visits</h3>
-            </div>
-            <span style="float: right">
-              <el-button
-                v-if="scheduled_visits.length > 0"
-                :loading="downloadLoading"
-                round
-                style="margin:0 0 20px 20px;"
-                type="success"
-                icon="el-icon-download"
-                size="small"
-                @click="handleDownload(scheduled_visits, 'Scheduled Customers Visits Report')"
-              >Export Excel</el-button>
-            </span>
-            <v-client-table v-model="scheduled_visits" :columns="visits_columns" :options="visits_options">
-              <div
-                slot="customer.business_name"
-                slot-scope="props">
-                {{ (props.row.customer) ? props.row.customer.business_name : '' }} <br>
-                <small>{{ (props.row.customer) ? props.row.customer.address : '' }}</small>
-              </div>
-              <div
-                slot="next_appointment_date"
-                slot-scope="props"
-              >{{ (props.row.next_appointment_date) ? moment(props.row.next_appointment_date).format('lll') : '' }}
-              </div>
-              <div
-                slot="created_at"
-                slot-scope="props"
-              >{{ moment(props.row.created_at).format('lll') }}</div>
-              <div
-                slot="action"
-                slot-scope="props"
-              >
-                <el-tooltip
-                  class="item"
-                  effect="dark"
-                  content="Visit Details"
-                  placement="top-start"
-                >
-                  <el-button
-                    round
-                    type="primary"
-                    size="small"
-                    icon="el-icon-tickets"
-                    @click="showDetails(props.row)"
-                  />
-                </el-tooltip>
-              </div>
-            </v-client-table>
-          </vs-tab>
-          <vs-tab label="Unscheduled Visits">
-            <div class="clearfix">
-              <h3>Unscheduled Visits</h3>
-            </div>
-            <span style="float: right">
-              <el-button
-                v-if="unscheduled_visits.length > 0"
-                :loading="downloadLoading"
-                round
-                style="margin:0 0 20px 20px;"
-                type="success"
-                icon="el-icon-download"
-                size="small"
-                @click="handleDownload(unscheduled_visits, 'Unscheduled Customers Visits Report')"
-              >Export Excel</el-button>
-            </span>
-            <v-client-table v-model="unscheduled_visits" :columns="visits_columns" :options="visits_options">
-              <div
-                slot="customer.business_name"
-                slot-scope="props">
-                {{ (props.row.customer) ? props.row.customer.business_name : '' }} <br>
-                <small>{{ (props.row.customer) ? props.row.customer.address : '' }}</small>
-              </div>
-              <div
-                slot="next_appointment_date"
-                slot-scope="props"
-              >{{ (props.row.next_appointment_date) ? moment(props.row.next_appointment_date).format('lll') : '' }}
-              </div>
-              <div
-                slot="created_at"
-                slot-scope="props"
-              >{{ moment(props.row.created_at).format('lll') }}</div>
-              <div
-                slot="action"
-                slot-scope="props"
-              >
-                <el-tooltip
-                  class="item"
-                  effect="dark"
-                  content="Visit Details"
-                  placement="top-start"
-                >
-                  <el-button
-                    round
-                    type="primary"
-                    size="small"
-                    icon="el-icon-tickets"
-                    @click="showDetails(props.row)"
-                  />
-                </el-tooltip>
-              </div>
-            </v-client-table>
-          </vs-tab>
-          <vs-tab label="Unvisited Schedules">
-            <div class="clearfix">
-              <h3>Unvisited Schedules</h3>
-            </div>
-            <span style="float: right">
-              <el-button
-                v-if="visits.length > 0"
-                :loading="downloadLoading"
-                round
-                style="margin:0 0 20px 20px;"
-                type="success"
-                icon="el-icon-download"
-                size="small"
-                @click="handleDownload3(unvisited_schedule, 'Unvisited Schedule Report')"
-              >Export Excel</el-button>
-            </span>
-            <v-client-table v-model="unvisited_schedule" :columns="unvisited_schedule_columns" :options="unvisited_schedule_options">
-              <div
-                slot="customer.business_name"
-                slot-scope="props">
-                {{ (props.row.customer) ? props.row.customer.business_name : '' }} <br>
-                <small>{{ (props.row.customer) ? props.row.customer.longitude + ',' + props.row.customer.latitude : '' }}</small>
-              </div>
-            </v-client-table>
-          </vs-tab>
-          <vs-tab label="Company's Visited">
-            <div class="clearfix">
-              <h3>Company's Visited</h3>
-            </div>
-            <span style="float: right">
-              <el-button
-                v-if="company_customers_visits.length > 0"
-                :loading="downloadLoading"
-                round
-                style="margin:0 0 20px 20px;"
-                type="success"
-                icon="el-icon-download"
-                size="small"
-                @click="handleDownload(company_customers_visits, 'Company\'s Visited Customers Report')"
-              >Export Excel</el-button>
-            </span>
-            <v-client-table v-model="company_customers_visits" :columns="visits_columns" :options="visits_options">
-              <div
-                slot="customer.business_name"
-                slot-scope="props">
-                {{ (props.row.customer) ? props.row.customer.business_name : '' }} <br>
-                <small>{{ (props.row.customer) ? props.row.customer.address : '' }}</small>
-              </div>
-              <div
-                slot="next_appointment_date"
-                slot-scope="props"
-              >{{ (props.row.next_appointment_date) ? moment(props.row.next_appointment_date).format('lll') : '' }}
-              </div>
-              <div
-                slot="created_at"
-                slot-scope="props"
-              >{{ moment(props.row.created_at).format('lll') }}</div>
-              <div
-                slot="action"
-                slot-scope="props"
-              >
-                <el-tooltip
-                  class="item"
-                  effect="dark"
-                  content="Visit Details"
-                  placement="top-start"
-                >
-                  <el-button
-                    round
-                    type="primary"
-                    size="small"
-                    icon="el-icon-tickets"
-                    @click="showDetails(props.row)"
-                  />
-                </el-tooltip>
-              </div>
-            </v-client-table>
-          </vs-tab>
-          <vs-tab label="Company's Unvisited">
-            <div class="clearfix">
-              <h3>Company's Unvisited</h3>
-            </div>
-            <span style="float: right">
-              <el-button
-                v-if="notvisited_company_customers.length > 0"
-                :loading="downloadLoading"
-                round
-                style="margin:0 0 20px 20px;"
-                type="success"
-                icon="el-icon-download"
-                size="small"
-                @click="handleDownload2(notvisited_company_customers, 'Company\'s Unvisited Customers Report')"
-              >Export Excel</el-button>
-            </span>
-            <v-client-table v-model="notvisited_company_customers" :columns="unvisited_cust_columns" :options="unvisited_cust_options">
-              <div
-                slot="customer.business_name"
-                slot-scope="props">
-                {{ (props.row.customer) ? props.row.customer.business_name : '' }} <br>
-                <small>{{ (props.row.customer) ? props.row.customer.address : '' }}</small>
-              </div>
-              <div
-                slot="next_appointment_date"
-                slot-scope="props"
-              >{{ (props.row.next_appointment_date) ? moment(props.row.next_appointment_date).format('lll') : '' }}
-              </div>
-              <div
-                slot="created_at"
-                slot-scope="props"
-              >{{ moment(props.row.created_at).format('lll') }}</div>
-              <div
-                slot="action"
-                slot-scope="props"
-              >
-                <el-tooltip
-                  class="item"
-                  effect="dark"
-                  content="Visit Details"
-                  placement="top-start"
-                >
-                  <el-button
-                    round
-                    type="primary"
-                    size="small"
-                    icon="el-icon-tickets"
-                    @click="showDetails(props.row)"
-                  />
-                </el-tooltip>
-              </div>
-            </v-client-table>
-          </vs-tab>
-          <vs-tab label="Rep's Visited">
-            <div class="clearfix">
-              <h3>Rep's Visited</h3>
-            </div>
-            <span style="float: right">
-              <el-button
-                v-if="reps_customers_visits.length > 0"
-                :loading="downloadLoading"
-                round
-                style="margin:0 0 20px 20px;"
-                type="success"
-                icon="el-icon-download"
-                size="small"
-                @click="handleDownload(reps_customers_visits, 'Rep\'s Visited Customers Report')"
-              >Export Excel</el-button>
-            </span>
-            <v-client-table v-model="reps_customers_visits" :columns="visits_columns" :options="visits_options">
-              <div
-                slot="customer.business_name"
-                slot-scope="props">
-                {{ (props.row.customer) ? props.row.customer.business_name : '' }} <br>
-                <small>{{ (props.row.customer) ? props.row.customer.address : '' }}</small>
-              </div>
-              <div
-                slot="next_appointment_date"
-                slot-scope="props"
-              >{{ (props.row.next_appointment_date) ? moment(props.row.next_appointment_date).format('lll') : '' }}
-              </div>
-              <div
-                slot="created_at"
-                slot-scope="props"
-              >{{ moment(props.row.created_at).format('lll') }}</div>
-              <div
-                slot="action"
-                slot-scope="props"
-              >
-                <el-tooltip
-                  class="item"
-                  effect="dark"
-                  content="Visit Details"
-                  placement="top-start"
-                >
-                  <el-button
-                    round
-                    type="primary"
-                    size="small"
-                    icon="el-icon-tickets"
-                    @click="showDetails(props.row)"
-                  />
-                </el-tooltip>
-              </div>
-            </v-client-table>
-          </vs-tab>
-          <vs-tab label="Rep's Unvisited">
-            <div class="clearfix">
-              <h3>Rep's Unvisited</h3>
-            </div>
-            <span style="float: right">
-              <el-button
-                v-if="notvisited_rep_customers.length > 0"
-                :loading="downloadLoading"
-                round
-                style="margin:0 0 20px 20px;"
-                type="success"
-                icon="el-icon-download"
-                size="small"
-                @click="handleDownload2(notvisited_rep_customers, 'Rep\'s Unvisited Customers Report')"
-              >Export Excel</el-button>
-            </span>
-            <v-client-table v-model="notvisited_rep_customers" :columns="unvisited_cust_columns" :options="unvisited_cust_options">
-              <div
-                slot="customer.business_name"
-                slot-scope="props">
-                {{ (props.row.customer) ? props.row.customer.business_name : '' }} <br>
-                <small>{{ (props.row.customer) ? props.row.customer.address : '' }}</small>
-              </div>
-              <div
-                slot="next_appointment_date"
-                slot-scope="props"
-              >{{ (props.row.next_appointment_date) ? moment(props.row.next_appointment_date).format('lll') : '' }}
-              </div>
-              <div
-                slot="created_at"
-                slot-scope="props"
-              >{{ moment(props.row.created_at).format('lll') }}</div>
-              <div
-                slot="action"
-                slot-scope="props"
-              >
-                <el-tooltip
-                  class="item"
-                  effect="dark"
-                  content="Visit Details"
-                  placement="top-start"
-                >
-                  <el-button
-                    round
-                    type="primary"
-                    size="small"
-                    icon="el-icon-tickets"
-                    @click="showDetails(props.row)"
-                  />
-                </el-tooltip>
-              </div>
-            </v-client-table>
-          </vs-tab>
-        </vs-tabs>
+          <el-row :gutter="20">
+            <pagination
+              v-show="total > 0"
+              :total="total"
+              :page.sync="form.page"
+              :limit.sync="form.limit"
+              @pagination="fetchReports(form)"
+            />
+          </el-row>
+        </el-col>
       </el-row>
     </div>
     <div v-if="page === 'details'">
@@ -610,16 +215,20 @@ export default {
       visits_columns: [
         'action',
         'customer.business_name',
-        'visit_type',
-        'proximity',
-        // 'next_appointment_date',
-        'contact.name',
+        'customer.customer_type.name',
         'purpose',
-        // 'market_feedback',
-        'customer.registrar.name',
         'visited_by.name',
-        'visit_duration',
+        'rep_coordinate',
+        'proximity',
+        // 'visit_type',
+        'manager_coordinate',
+        'manager_proximity',
         'created_at',
+        // 'next_appointment_date',
+        // 'contact.name',
+        // // 'market_feedback',
+        // 'customer.registrar.name',
+        // 'visit_duration',
       ],
       unvisited_cust_columns: [
         'business_name',
@@ -640,11 +249,13 @@ export default {
       visits_options: {
         headings: {
           next_appointment_date: 'Next Appointment',
-          proximity: 'Proximity (M)',
+          proximity: 'Rep-Customer Proximity(m)',
+          manager_proximity: 'Manager-REP Proximity(m)',
           'customer.business_name': 'Customer',
-          'customer.registrar.name': 'Registered By',
-          'visited_by.name': 'Visited By',
-          'contact.name': 'Personnel Contacted',
+          'customer.customer_type.name': 'Type',
+          // 'customer.registrar.name': 'Registered By',
+          'visited_by.name': 'REP',
+          // 'contact.name': 'Personnel Contacted',
           created_at: 'Date',
           action: '',
         },
@@ -796,26 +407,25 @@ export default {
         const multiHeader = [[title + ' ' + this.sub_title, '', '', '', '', '', '', '', '', '', '']];
         const tHeader = [
           'CUSTOMER',
-          'VISIT TYPE',
-          'PROXIMITY (M)',
-          // 'FOLLOW-UP SCHEDULE',
-          'CONTACTED PERSONNEL',
+          'TYPE',
           'PURPOSE',
-          'REGISTERED BY',
-          'RELATING OFFICER',
-          'VISIT DURATION',
-          'CREATED AT',
+          'REP',
+          'REP COORDINATE',
+          'REP-CUSTOMER PROXIMITY(m)',
+          'MANAGER COORDINATE',
+          'MANAGER-REP PROXIMITY(m)',
+          'DATE',
         ];
         const filterVal = [
           'customer.business_name',
-          'visit_type',
-          'proximity',
-          // 'next_appointment_date',
-          'contact.name',
+          'customer.customer_type.name',
           'purpose',
-          'customer.registrar.name',
           'visited_by.name',
-          'visit_duration',
+          'rep_coordinate',
+          'proximity',
+          // 'visit_type',
+          'manager_coordinate',
+          'manager_proximity',
           'created_at',
         ];
         const data = this.formatJson(filterVal, list);
@@ -900,6 +510,15 @@ export default {
           }
           if (j === 'customer.business_name') {
             return (v['customer']) ? v['customer']['business_name'] : '';
+          }
+          if (j === 'customer.customer_type.name') {
+            return (v['customer']) ? v['customer']['customer_type']['name'] : '';
+          }
+          if (j === 'rep_coordinate') {
+            return (v['rep_latitude']) ? v['rep_latitude'] + ',' + v['rep_longitude'] : '';
+          }
+          if (j === 'manager_coordinate') {
+            return (v['manager_latitude']) ? v['manager_latitude'] + ',' + v['manager_longitude']: '';
           }
           if (j === 'customer.address') {
             return (v['customer']) ? v['customer']['address'] : '';

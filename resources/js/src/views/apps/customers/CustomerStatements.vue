@@ -57,12 +57,16 @@
         <table class="table table-bordered table-striped">
           <thead>
             <tr>
-              <th>DATE</th>
-              <th>Description</th>
-              <th>DEBT (NGN)</th>
-              <th>PAID (NGN)</th>
-              <!-- <th>BALANCE</th> -->
+              <th rowspan="2">DATE</th>
+              <th rowspan="2">DESCRIPTION</th>
+              <th rowspan="2">OPENING BAL (NGN)</th>
+              <th colspan="2"><div align="center">TRANSACTION</div></th>
+              <th rowspan="2">CLOSING BAL (NGN)</th>
               <!-- <th>REMARK</th> -->
+            </tr>
+            <tr>
+              <th>SALES (NGN)</th>
+              <th>COLLECTION (NGN)</th>
             </tr>
           </thead>
           <tbody>
@@ -70,13 +74,10 @@
             <tr v-for="(statement, index) in statements" :key="index">
               <td>{{ moment(statement.date).format('ll') }}</td>
               <td>{{ statement.description }}</td>
-              <td v-if="statement.remark === 'opening' || statement.remark === 'closing'" style="background: #EA5455; color: #ffffff"><strong>{{ statement.debt }}</strong></td>
-              <td v-else-if="statement.remark === 'total'" style="background: #000 ; color: #ffffff">{{ statement.debt }}</td>
-              <td v-else style="background: #EA5455 ; color: #ffffff">{{ statement.debt }}</td>
-
-              <td v-if="statement.remark === 'opening' || statement.remark === 'closing'" style="background: #28C76F ; color: #ffffff"><strong>{{ statement.paid }}</strong></td>
-              <td v-else-if="statement.remark === 'total'" style="background: #000 ; color: #ffffff">{{ statement.paid }}</td>
-              <td v-else style="background: #28C76F ; color: #ffffff">{{ statement.paid }}</td>
+              <td ><strong v-if="statement.remark === 'opening'">{{ statement.debt }}</strong></td>
+              <td :style="'color: '+ statement.color"><span v-if="statement.remark !== 'opening' && statement.remark !== 'closing'">{{ (statement.debt != '') ? Number(statement.debt).toLocaleString() : '' }}</span></td>
+              <td :style="'color: '+ statement.color"><span v-if="statement.remark !== 'opening' && statement.remark !== 'closing'">{{ (statement.paid != '') ? Number(statement.paid).toLocaleString() : '' }}</span></td>
+              <td><strong v-if="statement.remark === 'closing'">{{ statement.debt }}</strong></td>
               <!-- <td>{{ statement.balance }}</td> -->
               <!-- <td>{{ statement.remark }}</td> -->
             </tr>
@@ -226,9 +227,10 @@ export default {
         {
           'type': 'debt',
           'date': app.moment(app.form.from).format('ll'),
-          'description': 'Opening Balance',
+          'description': '',
           'debt': Number(app.brought_forward).toLocaleString(),
           'paid': '',
+          'color': '#000000',
           // 'balance': '',
           'remark': 'opening',
         },
@@ -238,18 +240,20 @@ export default {
         {
           'type': 'debt',
           'date': app.moment(app.form.to).format('ll'),
-          'description': 'Running Total',
-          'debt': (total_debt > 0) ? Number(total_debt).toLocaleString() : '',
-          'paid': (total_paid > 0) ? Number(total_paid).toLocaleString() : '',
+          'description': 'Total',
+          'debt': (total_debt > 0) ? total_debt : '',
+          'paid': (total_paid > 0) ? total_paid : '',
           // 'balance': '',
+          'color': '#EA5455',
           'remark': 'total',
         },
         {
           'type': 'debt',
           'date': app.moment(app.form.to).format('ll'),
-          'description': 'Closing Balance',
+          'description': '',
           'debt': Number(balance).toLocaleString(),
           'paid': '',
+          'color': '#000000',
           // 'balance': balance,
           'remark': 'closing',
         },

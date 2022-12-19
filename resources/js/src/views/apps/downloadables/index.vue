@@ -189,13 +189,14 @@ export default {
       ],
       visits_columns: [
         'customer.business_name',
-        'visit_type',
-        'proximity',
-        // 'next_appointment_date',
-        'contact.name',
+        'customer.customer_type.name',
         'purpose',
         'visited_by.name',
-        'visit_duration',
+        'rep_coordinate',
+        'proximity',
+        // 'visit_type',
+        'manager_coordinate',
+        'manager_proximity',
         'created_at',
       ],
       unvisited_cust_columns: [
@@ -367,30 +368,30 @@ export default {
       const salesResource = new Resource('visits/fetch-general-visits');
       const header = [
         'CUSTOMER',
-        'VISIT TYPE',
-        'PROXIMITY (M)',
-        // 'FOLLOW-UP SCHEDULE',
-        'CONTACTED PERSONNEL',
+        'TYPE',
         'PURPOSE',
-        'RELATING OFFICER',
-        'VISIT DURATION',
-        'CREATED AT',
-      ];
-      const header2 = [
-        'CUSTOMER',
-        'ADDRESS',
-        'LATITUDE',
-        'LONGITUDE',
         'REP',
+        'REP COORDINATE',
+        'REP-CUSTOMER PROXIMITY(m)',
+        'MANAGER COORDINATE',
+        'MANAGER-REP PROXIMITY(m)',
+        'DATE',
       ];
-      const header3 = [
-        'CUSTOMER',
-        'ADDRESS',
-        'DAY',
-        'SCHEDULE DATE',
-        'REP',
-        'SCHEDULED BY',
-      ];
+      //   const header2 = [
+      //     'CUSTOMER',
+      //     'ADDRESS',
+      //     'LATITUDE',
+      //     'LONGITUDE',
+      //     'REP',
+      //   ];
+      //   const header3 = [
+      //     'CUSTOMER',
+      //     'ADDRESS',
+      //     'DAY',
+      //     'SCHEDULE DATE',
+      //     'REP',
+      //     'SCHEDULED BY',
+      //   ];
       app.downloadLoading = true;
       salesResource.list(param)
         .then(response => {
@@ -398,25 +399,25 @@ export default {
 
           app.handleDownload(response.visits, app.visits_columns, header, sub_title);
         });
-      const visitsResource = new Resource('visits/customer-visit-stat');
-      visitsResource.list(param)
-        .then(response => {
-          app.handleDownload(response.scheduled_visits, app.visits_columns, header, 'Scheduled Visits Report');
+    //   const visitsResource = new Resource('visits/customer-visit-stat');
+    //   visitsResource.list(param)
+    //     .then(response => {
+    //       app.handleDownload(response.scheduled_visits, app.visits_columns, header, 'Scheduled Visits Report');
 
-          app.handleDownload(response.unscheduled_visits, app.visits_columns, header, 'Unscheduled Visits Report');
+    //       app.handleDownload(response.unscheduled_visits, app.visits_columns, header, 'Unscheduled Visits Report');
 
-          app.handleDownload(response.unvisited_schedule, app.unvisited_schedule_columns, header3, 'Unvisited Schedule Report');
+    //       app.handleDownload(response.unvisited_schedule, app.unvisited_schedule_columns, header3, 'Unvisited Schedule Report');
 
-          app.handleDownload(response.company_customers_visits, app.visits_columns, header, 'Company\'s Customers Visits Report');
+    //       app.handleDownload(response.company_customers_visits, app.visits_columns, header, 'Company\'s Customers Visits Report');
 
-          app.handleDownload(response.reps_customers_visits, app.reps_customers_visits, header, 'Rep\'s Customers Visits Report');
+    //       app.handleDownload(response.reps_customers_visits, app.reps_customers_visits, header, 'Rep\'s Customers Visits Report');
 
-          app.handleDownload(response.notvisited_company_customers, app.unvisited_cust_columns, header2, 'Unvisited Company\'s Customers Report');
+    //       app.handleDownload(response.notvisited_company_customers, app.unvisited_cust_columns, header2, 'Unvisited Company\'s Customers Report');
 
-          app.handleDownload(response.notvisited_rep_customers, app.unvisited_cust_columns, header2, 'Unvisited Rep\'s Customers Report');
+    //       app.handleDownload(response.notvisited_rep_customers, app.unvisited_cust_columns, header2, 'Unvisited Rep\'s Customers Report');
 
-          app.downloadLoading = false;
-        });
+    //       app.downloadLoading = false;
+    //     });
     },
     downloadCustomers() {
       const app = this;
@@ -592,6 +593,15 @@ export default {
           }
           if (j === 'item.name') {
             return v['item']['name'];
+          }
+          if (j === 'customer.customer_type.name') {
+            return (v['customer']) ? v['customer']['customer_type']['name'] : '';
+          }
+          if (j === 'rep_coordinate') {
+            return (v['rep_latitude']) ? v['rep_latitude'] + ',' + v['rep_longitude'] : '';
+          }
+          if (j === 'manager_coordinate') {
+            return (v['manager_latitude']) ? v['manager_latitude'] + ',' + v['manager_longitude'] : '';
           }
           return v[j];
         }),

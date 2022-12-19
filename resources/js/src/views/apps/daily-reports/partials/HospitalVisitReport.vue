@@ -31,7 +31,25 @@
             </el-select>
           </td>
           <td>
-            <el-select
+            <el-button
+              v-if="rep_entry.customer_id === ''"
+              round
+              class="filter-item"
+              type="primary"
+              @click="requestCustomer(index)"
+            >Select Customer
+            </el-button>
+            <el-button
+              v-else
+              round
+              class="filter-item"
+              type="warning"
+              @click="requestCustomer(index)"
+            >Change Customer
+            </el-button>
+            <br>
+            {{ rep_entry.business_name }}
+            <!-- <el-select
               v-model="rep_entry.customer_details"
               value-key="id"
               placeholder="Select Customer"
@@ -48,7 +66,7 @@
                 <span style="float: left"><strong>{{ cust.business_name }} [{{ cust.code }}]</strong></span>
                 <span style="float: right; color: #8492a6; font-size: 12px">{{ cust.address }}</span>
               </el-option>
-            </el-select>
+            </el-select> -->
           </td>
           <!-- <td>0</td> -->
           <td>
@@ -243,9 +261,9 @@ export default {
       type: Array,
       default: () => [],
     },
-    customersList: {
-      type: Array,
-      default: () => [],
+    selectedCustomer: {
+      type: Object,
+      default: () => null,
     },
   },
   data() {
@@ -282,12 +300,27 @@ export default {
       uploadedFiles: [],
       products: [],
       load: false,
+      rowIndex: '',
     };
+  },
+  watch: {
+    selectedCustomer(){
+      // console.log('Value Changed');
+      const app = this;
+      const customer = app.selectedCustomer;
+      const rowIndex = app.rowIndex;
+      this.setCustomerDetails(customer, rowIndex);
+    },
   },
   created() {
     this.addRepEntry();
   },
   methods: {
+    requestCustomer(index) {
+      const app = this;
+      app.rowIndex = index;
+      app.$emit('selectCustomer', 'detailing');
+    },
     cancelAction(){
       for (let index = 0; index < this.detailed_products.length; index++) {
         const detail = this.detailed_products[index];
@@ -307,14 +340,14 @@ export default {
       }
       this.customer_name = customer.business_name;
       this.customer_id = customer.customer_id;
-      this.contacts = customer.customer_details.customer_contacts;
+      this.contacts = customer.contacts;
       this.dialogVisible = true;
     },
     setCustomerDetails(customer, rowIndex){
       const app = this;
       app.rep_entries[rowIndex].customer_id = customer.id;
       app.rep_entries[rowIndex].business_name = customer.business_name;
-      app.rep_entries[rowIndex].contacts = customer.contacts;
+      app.rep_entries[rowIndex].contacts = customer.customer_contacts;
     },
     isRepRowEmpty() {
       const checkEmptyLines = this.rep_entries.filter(
@@ -340,7 +373,7 @@ export default {
         //     this.detailed_products[index].grade = '';
         this.rep_entries.push({
           rep_id: '',
-          customer_details: {},
+          contacts: [],
           business_name: '',
           customer_id: '',
           customersList: [],

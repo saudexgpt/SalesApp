@@ -61,6 +61,16 @@ class Visit extends Model
         $purpose = strtoupper($unsaved_visit->purpose);
         $customer_id = (isset($unsaved_visit->customer_id)) ? $unsaved_visit->customer_id : NULL;
         if ($customer_id !== NULL) {
+            $customer = Customer::find($customer_id);
+            $first_visit = Visit::where('customer_id', $customer_id)->where('manager_proximity', '<=', 100)->first();
+            if ($customer->latitude2 === NULL || (!$first_visit)) {
+                if ($manager_lat !== NULL && $manager_lat !== $customer->latitude2) {
+                    // check if any such customer exists
+                    $customer->latitude2 = $manager_lat;
+                    $customer->longitude2 = $manager_long;
+                    $customer->save();
+                }
+            }
             try {
                 //check for first visit where proximity is less than or equal to 100m
                 $visit = Visit::where([
@@ -72,9 +82,26 @@ class Visit extends Model
                     ->where('manager_latitude', NULL)
                     ->first();
                 if ($visit) {
+                    $distance = NULL;
+                    if ($manager_lat != NULL && $manager_lat != '') {
+
+                        // this distance is in Miles. We are going to convert it to metres
+                        $distance = haversineGreatCircleDistanceBetweenTwoPoints(
+                            $visit->rep_latitude,
+                            $visit->rep_longitude,
+                            $manager_lat,
+                            $manager_long,
+                        );
+                        //converting miles to metres
+                        $distance = mileToMetre($distance);
+                        // we are giving 1000 metre allowance
+                        // if ($distance < 100) {
+                        //     $visit_type = 'on site';
+                        // }
+                    }
                     $visit->manager_latitude = $manager_lat;
                     $visit->manager_longitude = $manager_long;
-
+                    $visit->manager_proximity = $distance;
                     $visit->save();
                 }
             } catch (\Throwable $th) {
@@ -110,32 +137,24 @@ class Visit extends Model
             try {
                 $customer = Customer::find($customer_id);
                 //check for first visit where proximity is less than or equal to 100m
-                $first_visit = Visit::where('customer_id', $customer_id)->where('proximity', '<=', 500)->first();
+                $first_visit = Visit::where('customer_id', $customer_id)->where('proximity', '<=', 100)->first();
 
 
 
                 if ($customer->latitude === NULL || (!$first_visit)) {
                     if ($lat !== NULL && $lat !== $customer->latitude) {
                         // check if any such customer exists
-                        $exisiting_customer = Customer::where(['business_name' => $customer->business_name, 'latitude' => $lat, 'longitude' => $long])->first();
-                        if (!$exisiting_customer) {
-
-                            $customer->latitude = $lat;
-                            $customer->longitude = $long;
-                            $customer->save();
-                        }
+                        $customer->latitude = $lat;
+                        $customer->longitude = $long;
+                        $customer->save();
                     }
                 }
                 if ($customer->latitude2 === NULL || (!$first_visit)) {
                     if ($manager_lat !== NULL && $manager_lat !== $customer->latitude2) {
                         // check if any such customer exists
-                        $exisiting_customer = Customer::where(['business_name' => $customer->business_name, 'latitude2' => $manager_lat, 'longitude2' => $manager_long])->first();
-                        if (!$exisiting_customer) {
-
-                            $customer->latitude2 = $manager_lat;
-                            $customer->longitude2 = $manager_long;
-                            $customer->save();
-                        }
+                        $customer->latitude2 = $manager_lat;
+                        $customer->longitude2 = $manager_long;
+                        $customer->save();
                     }
                 }
                 $visit_date = (isset($unsaved_visit->entry_date)) ? date('Y-m-d', strtotime($unsaved_visit->entry_date)) : date('Y-m-d', strtotime('now')); // $unsaved_visit->visit_date;
@@ -159,7 +178,7 @@ class Visit extends Model
                     //converting miles to metres
                     $distance = mileToMetre($distance);
                     // we are giving 1000 metre allowance
-                    if ($distance < 1000) {
+                    if ($distance < 100) {
                         $visit_type = 'on site';
                     }
                 }

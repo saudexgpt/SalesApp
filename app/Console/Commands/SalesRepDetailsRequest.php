@@ -248,6 +248,35 @@ class SalesRepDetailsRequest extends Command
             }
         });
     }
+    public function updateManagerVisitProximity()
+    {
+        $visits = Visit::where('manager_latitude', '!=', NULL)->where('manager_proximity', '=', NULL)->get();
+        foreach ($visits as $visit) {
+            $lat = $visit->rep_latitude;
+            $long = $visit->rep_longitude;
+            $manager_lat = $visit->manager_latitude;
+            $manager_long =  $visit->manager_longitude;
+            $distance = NULL;
+            if ($manager_lat != NULL && $manager_lat != '') {
+
+                // this distance is in Miles. We are going to convert it to metres
+                $distance = haversineGreatCircleDistanceBetweenTwoPoints(
+                    $lat,
+                    $long,
+                    $manager_lat,
+                    $manager_long,
+                );
+                //converting miles to metres
+                $distance = mileToMetre($distance);
+                // we are giving 1000 metre allowance
+                // if ($distance < 100) {
+                //     $visit_type = 'on site';
+                // }
+            }
+            $visit->manager_proximity = $distance;
+            $visit->save();
+        }
+    }
     public function handle()
     {
         //
@@ -256,6 +285,7 @@ class SalesRepDetailsRequest extends Command
         // $this->fetchWarehouseProducts();
         // $this->updateAllEmptyVisitAddresses();
         $this->fetchWarehouseRepDetails();
+        $this->updateManagerVisitProximity();
         // $this->updateAllEmptyCustomerAddresses();
     }
 }
