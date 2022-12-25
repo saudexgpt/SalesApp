@@ -262,6 +262,45 @@ class ReportsController extends Controller
     }
 
     /////////////////////////DOWNLOADABLES/////////////////////
+    public function sales(Request $request)
+    {
+        $date_from = $this->start_date; // Carbon::now()->startOfMonth();
+        $date_to = Carbon::now()->endOfMonth();
+        $panel = 'quarter';
+        $currency = $this->currency();
+        if (isset($request->from, $request->to)) {
+            $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
+            $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
+            $panel = $request->panel;
+        }
+        $rep_field_name = 'field_staff';
+        $condition = $this->setQueryConditions($request, $rep_field_name);
+        $total_sales = 0;
+        list($sales_reps, $sales_reps_ids) = $this->allTeamMembers($request->team_id);
+        $salesQuery = Transaction::join('customers', 'transactions.customer_id', 'customers.id')
+            ->join('users', 'transactions.field_staff', 'users.id')
+            ->where('transactions.created_at', '<=',  $date_to)
+            ->where('transactions.created_at', '>=',  $date_from)
+            ->where($condition)
+            ->whereIn('transactions.field_staff', $sales_reps_ids)
+            ->orderBy('transactions.id', 'DESC')
+            ->select('*', 'transactions.id as id', 'transactions.created_at as created_at');
+
+        // $total_sales = Transaction::where(
+        //     'created_at',
+        //     '<=',
+        //     $date_to
+        // )
+        //     ->where('created_at', '>=',  $date_from)
+        //     ->where($condition)
+        //     ->whereIn('field_staff', $sales_reps_ids)
+        //     ->select(\DB::raw('SUM(amount_due) as total_amount'))->first();
+
+        $sales = $salesQuery->get();
+        $date_from = getDateFormatWords($date_from);
+        $date_to = getDateFormatWords($date_to);
+        return response()->json(compact('sales', /*'currency', 'date_from', 'date_to', 'total_sales'*/), 200);
+    }
     public function productSales(Request $request)
     {
         $date_from = $this->start_date; // Carbon::now()->startOfMonth();
@@ -287,11 +326,11 @@ class ReportsController extends Controller
             ->orderBy('transaction_details.id', 'DESC')
             ->select('*', 'transaction_details.id as id');
 
-        $total_sales = TransactionDetail::where('created_at', '<=',  $date_to)
-            ->where('created_at', '>=',  $date_from)
-            ->where($condition)
-            ->whereIn('field_staff', $sales_reps_ids)
-            ->select(\DB::raw('SUM(amount) as total_amount'))->first();
+        // $total_sales = TransactionDetail::where('created_at', '<=',  $date_to)
+        //     ->where('created_at', '>=',  $date_from)
+        //     ->where($condition)
+        //     ->whereIn('field_staff', $sales_reps_ids)
+        //     ->select(\DB::raw('SUM(amount) as total_amount'))->first();
 
         $sales = $salesQuery->get();
         $date_from = getDateFormatWords($date_from);

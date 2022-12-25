@@ -220,7 +220,7 @@ export default {
         'visited_by.name',
         'rep_coordinate',
         'proximity',
-        // 'visit_type',
+        'visit_type',
         'manager_coordinate',
         'manager_proximity',
         'created_at',
@@ -253,6 +253,7 @@ export default {
           manager_proximity: 'Manager-REP Proximity(m)',
           'customer.business_name': 'Customer',
           'customer.customer_type.name': 'Type',
+          visit_type: 'Mode',
           // 'customer.registrar.name': 'Registered By',
           'visited_by.name': 'REP',
           // 'contact.name': 'Personnel Contacted',
@@ -404,7 +405,7 @@ export default {
     handleDownload(list, title) {
       this.downloadLoading = true;
       import('@/vendor/Export2Excel').then(excel => {
-        const multiHeader = [[title + ' ' + this.sub_title, '', '', '', '', '', '', '', '', '', '']];
+        const multiHeader = [[title + ' ' + this.sub_title, '', '', '', '', '', '', '', '', '', '', '']];
         const tHeader = [
           'CUSTOMER',
           'TYPE',
@@ -412,6 +413,7 @@ export default {
           'REP',
           'REP COORDINATE',
           'REP-CUSTOMER PROXIMITY(m)',
+          'MODE',
           'MANAGER COORDINATE',
           'MANAGER-REP PROXIMITY(m)',
           'DATE',
@@ -423,7 +425,7 @@ export default {
           'visited_by.name',
           'rep_coordinate',
           'proximity',
-          // 'visit_type',
+          'visit_type',
           'manager_coordinate',
           'manager_proximity',
           'created_at',

@@ -17,6 +17,28 @@
               size="large"
               @click="downloadSales()"
             >Download Sales Report</el-button>
+            <el-input :value="`${baseUrl}/report/download/sales${strParams}`" class="form-control" readonly>
+              <template #append>
+                <el-button @click="copyToClipboard(`${baseUrl}/report/download/sales${strParams}`)">Copy API</el-button>
+              </template>
+            </el-input>
+
+          </span>
+          <hr>
+        </div>
+      </el-col>
+      <el-col :span="24">
+        <div>
+          <span >
+            <el-button
+              :loading="downloadLoading"
+              round
+              style="margin:0 0 20px 20px;"
+              type="primary"
+              icon="el-icon-download"
+              size="large"
+              @click="downloadProductSales()"
+            >Download Product Sales Report</el-button>
             <el-input :value="`${baseUrl}/report/download/product-sales${strParams}`" class="form-control" readonly>
               <template #append>
                 <el-button @click="copyToClipboard(`${baseUrl}/report/download/product-sales${strParams}`)">Copy API</el-button>
@@ -158,6 +180,13 @@ export default {
   data() {
     return {
       sales_columns: [
+        'customer.business_name',
+        'invoice_no',
+        'amount_due',
+        'staff.name', // field staff
+        'created_at',
+      ],
+      product_sales_columns: [
         'transaction.customer.business_name',
         'transaction.invoice_no',
         'product',
@@ -194,7 +223,7 @@ export default {
         'visited_by.name',
         'rep_coordinate',
         'proximity',
-        // 'visit_type',
+        'visit_type',
         'manager_coordinate',
         'manager_proximity',
         'created_at',
@@ -277,6 +306,30 @@ export default {
       return false;
     },
     downloadSales() {
+      const app = this;
+      if (app.emptyDateRange()) {
+        app.$alert('Kindly pick a date range to continue');
+        return;
+      }
+      const param = app.form;
+      param.paginate_option = 'all';
+      const salesResource = new Resource('sales/fetch');
+      app.downloadLoading = true;
+      salesResource.list(param)
+        .then(response => {
+          const sub_title = 'Sales from ' + response.date_from + ' to ' + response.date_to;
+          const header = [
+            'CUSTOMER',
+            'INVOICE NUMBER',
+            'AMOUNT',
+            'FIELD STAFF',
+            'DATE',
+          ];
+          app.handleDownload(response.sales, app.sales_columns, header, sub_title);
+          app.downloadLoading = false;
+        });
+    },
+    downloadProductSales() {
       const app = this;
       if (app.emptyDateRange()) {
         app.$alert('Kindly pick a date range to continue');
@@ -373,6 +426,7 @@ export default {
         'REP',
         'REP COORDINATE',
         'REP-CUSTOMER PROXIMITY(m)',
+        'MODE',
         'MANAGER COORDINATE',
         'MANAGER-REP PROXIMITY(m)',
         'DATE',
@@ -587,6 +641,9 @@ export default {
           }
           if (j === 'rep.name') {
             return v['rep']['name'];
+          }
+          if (j === 'staff.name') {
+            return v['staff']['name'];
           }
           if (j === 'scheduled_by.name') {
             return v['scheduled_by']['name'];

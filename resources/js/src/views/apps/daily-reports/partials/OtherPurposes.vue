@@ -68,12 +68,12 @@
           </td>
           <!-- <td>0</td> -->
           <td>
-            <!-- {{ customer.amount }} -->
-            <el-input
+            {{ rep_entry.purpose }}
+            <!-- <el-input
               v-model="rep_entry.purpose"
               placeholder="Specify purpose(s)"
               type="textarea"
-            />
+            /> -->
           </td>
           <td>
             <el-date-picker
@@ -224,7 +224,7 @@ export default {
           customer_id: '',
           entry_date: new Date(),
           unique_visits_id: createUniqueString(),
-          purpose: '',
+          purpose: 'Others',
           rep_coordinate: '',
           manager_coordinate: '',
         });

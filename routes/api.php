@@ -54,6 +54,7 @@ Route::group(['prefix' => 'auth'], function () {
 });
 Route::group(['prefix' => 'report'], function () {
     Route::group(['prefix' => 'download'], function () {
+        Route::get('sales', [ReportsController::class, 'sales']);
         Route::get('product-sales', [ReportsController::class, 'productSales']);
         Route::get('collections', [ReportsController::class, 'collections']);
         Route::get('debts', [ReportsController::class, 'debts']);
