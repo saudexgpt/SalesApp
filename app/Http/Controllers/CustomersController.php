@@ -6,19 +6,23 @@ use App\Models\Customer;
 use App\Models\CustomerCall;
 use App\Models\CustomerContact;
 use App\Models\CustomerDebt;
+use App\Models\CustomerDebtPayment;
 use App\Models\CustomerType;
 use App\Models\CustomerVerification;
 use App\Models\LocalGovernmentArea;
 use App\Models\Payment;
+use App\Models\ReturnedProduct;
 use App\Models\SalesReports;
 use App\Models\SampleCustomer;
 use App\Models\Schedule;
 use App\Models\State;
+use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Visit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class CustomersController extends Controller
 {
@@ -888,5 +892,58 @@ class CustomersController extends Controller
         $customer->save();
         return $this->customerDetails($customer);
         // return response()->json(compact('customer_detail'), 200);
+    }
+    public function removeDuplicateCustomers(Request $request)
+    {
+
+        $bulk_data = json_decode(json_encode($request->unsaved_duplicate_entries));
+        $unsaved_entry = [];
+        $error = [];
+        foreach ($bulk_data as $data) {
+            try {
+                $duplicate_customer_codes = explode(',', $data->duplicate_customer_codes);
+                $customer_ids = Customer::whereIn('code', $duplicate_customer_codes)->pluck('id');
+                $customer_to_remain = $data->customer_to_remain;
+                $customer_to_remain_id = Customer::where('code', $customer_to_remain)->first()->id;
+
+                $this->adjustDuplicateCustomerTransactions($customer_ids, $customer_to_remain_id);
+            } catch (\Throwable $th) {
+
+                $unsaved_entry[] = $data;
+                $error[] = $th;
+            }
+        }
+        return response()->json(compact('unsaved_entry', 'error'), 200);
+    }
+    private function adjustDuplicateCustomerTransactions($customer_ids, $customer_to_remain_id)
+    {
+        CustomerContact::whereIn('customer_id', $customer_ids)
+            ->update(['customer_id' => $customer_to_remain_id]);
+        CustomerDebt::whereIn('customer_id', $customer_ids)
+            ->update(['customer_id' => $customer_to_remain_id]);
+        CustomerDebtPayment::whereIn('customer_id', $customer_ids)
+            ->update(['customer_id' => $customer_to_remain_id]);
+        Payment::whereIn('customer_id', $customer_ids)
+            ->update(['customer_id' => $customer_to_remain_id]);
+        ReturnedProduct::whereIn('customer_id', $customer_ids)
+            ->update(['customer_id' => $customer_to_remain_id]);
+        Transaction::whereIn('customer_id', $customer_ids)
+            ->update(['customer_id' => $customer_to_remain_id]);
+        Visit::whereIn('customer_id', $customer_ids)
+            ->update(['customer_id' => $customer_to_remain_id]);
+
+
+        $customers_to_remove =  Customer::whereIn('id', $customer_ids)->get();
+        foreach ($customers_to_remove as $customer_to_remove) {
+            if ($customer_to_remove->id !== $customer_to_remain_id) {
+                $customer_to_remove->duplicate_with = $customer_to_remain_id;
+
+                $customer_to_remove->save();
+                DB::table('customer_user')->where('customer_id', $customer_to_remove->id)->delete();
+
+
+                $customer_to_remove->delete();
+            }
+        }
     }
 }

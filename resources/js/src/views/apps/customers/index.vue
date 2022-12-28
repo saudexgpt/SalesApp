@@ -9,18 +9,22 @@
     <!-- <el-tab-pane v-if="checkPermission(['assign-field-staff'])" label="Assign Reps to Customers">
       <reassign-customers />
     </el-tab-pane> -->
+    <el-tab-pane v-if="checkPermission(['delete-customers'])" label="Handle Duplicates">
+      <handle-duplicates />
+    </el-tab-pane>
   </el-tabs>
 </template>
 
 <script>
 import ReassignCustomers from './ReassignCustomers';
+import HandleDuplicates from './HandleDuplicates';
 import AddNewCustomer from './AddNewCustomer';
 import CustomerList from './CustomerList';
 import checkPermission from '@/utils/permission';
 
 export default {
   name: 'Customers',
-  components: { ReassignCustomers, CustomerList, AddNewCustomer },
+  components: { ReassignCustomers, HandleDuplicates, CustomerList, AddNewCustomer },
   data() {
     return {
 
