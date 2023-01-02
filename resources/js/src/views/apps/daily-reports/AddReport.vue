@@ -62,6 +62,9 @@
       <el-tab-pane label="Managers' Entries">
         <managers-entries :team-id="form.team_id" :reps="reps" :selected-customer="managerSelectedCustomer" @selectCustomer="selectCustomer"/>
       </el-tab-pane>
+      <el-tab-pane label="Add Debtors">
+        <add-debtors :team-id="form.team_id" :reps="reps" :selected-customer="debtor" @selectCustomer="selectCustomer"/>
+      </el-tab-pane>
     </el-tabs>
   </el-card>
 </template>
@@ -77,6 +80,7 @@ import ReturnsReport from './partials/ReturnsReport';
 import HospitalVisitReport from './partials/HospitalVisitReport';
 import OtherPurposes from './partials/OtherPurposes';
 import ManagersEntries from './partials/ManagersEntries';
+import AddDebtors from './partials/AddDebtors';
 import Resource from '@/api/resource';
 export default {
   components: {
@@ -90,6 +94,7 @@ export default {
     HospitalVisitReport,
     OtherPurposes,
     ManagersEntries,
+    AddDebtors,
   },
   data() {
     return {
@@ -119,6 +124,7 @@ export default {
       returnsSelectedCustomer: {},
       othersSelectedCustomer: {},
       managerSelectedCustomer: {},
+      debtor: {},
       my_hospital_customers: [],
       my_customers: [],
       products: [],
@@ -213,6 +219,9 @@ export default {
           break;
         case 'manager':
           app.managerSelectedCustomer = customer;
+          break;
+        case 'debtor':
+          app.debtor = customer;
           break;
         default:
           break;

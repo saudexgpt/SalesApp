@@ -87,6 +87,13 @@ const customersRoutes = {
       slug: 'CustomerStatement',
       component: () => import('@/views/apps/customers/CustomerStatements'),
     },
+    {
+      hidden: true,
+      path: '/report/customer-statement/:id(\\d+)/:rep_id(\\d+)',
+      name: 'CustomerStatement',
+      slug: 'CustomerStatement',
+      component: () => import('@/views/apps/customers/RepCustomerStatements'),
+    },
   ],
 };
 

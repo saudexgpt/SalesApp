@@ -662,7 +662,12 @@ class TransactionsController extends Controller
             $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
             $panel = $request->panel;
         }
-        list($total_debt_till_date, $past_payments_till_date, $past_returns_till_date, $payments, $returns, $debts) = $this->getCustomerTransactions($customer_id, $date_from, $date_to);
+        if (isset($request->rep_id)) {
+            list($total_debt_till_date, $past_payments_till_date, $past_returns_till_date, $payments, $returns, $debts) = $this->getRepCustomerTransactions($customer_id, $request->rep_id, $date_from, $date_to);
+        } else {
+
+            list($total_debt_till_date, $past_payments_till_date, $past_returns_till_date, $payments, $returns, $debts) = $this->getCustomerTransactions($customer_id, $date_from, $date_to);
+        }
 
         $past_debt = ($total_debt_till_date) ? $total_debt_till_date->total_amount_due : 0;
         $past_payments = ($past_payments_till_date) ? $past_payments_till_date->total_amount_paid : 0;
@@ -801,9 +806,69 @@ class TransactionsController extends Controller
      * @param  \App\Models\Transaction  $transaction
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Transaction $transaction)
+    private function getRepCustomerTransactions($customer_id, $rep_id, $date_from, $date_to)
     {
-        //
+
+        // $total_debt_till_date = Transaction::groupBy('customer_id')
+        //     ->where('customer_id', $customer_id)
+        //     ->where('entry_date', '<', $date_from)
+        //     // ->where('confirmed_by', '!=', null)
+        //     ->select('*', \DB::raw('SUM(amount_due) as total_amount_due'))
+        //     ->first();
+        $total_debt_till_date = CustomerDebt::groupBy('customer_id')
+            ->where('customer_id', $customer_id)
+            ->where('created_at', '<', $date_from)
+            ->where('field_staff', $rep_id)
+            // ->where('confirmed_by', '!=', null)
+            ->select('*', \DB::raw('SUM(amount) as total_amount_due'))
+            ->first();
+        $past_payments_till_date = Payment::groupBy('customer_id')
+            ->with('staff')
+            ->where('customer_id', $customer_id)
+            ->where('received_by', $rep_id)
+            ->where('payment_date', '<', $date_from)
+            // ->where('confirmed_by', '!=', null)
+            ->select('*', \DB::raw('SUM(amount) as total_amount_paid'))
+            ->first();
+        $past_returns_till_date = ReturnedProduct::groupBy('customer_id')
+            ->where('customer_id', $customer_id)
+            ->where('date', '<', $date_from)
+            ->where('stocked_by', $rep_id)
+            // ->where('confirmed_by', '!=', null)
+            ->select('*', \DB::raw('SUM(amount) as total_amount_returned'))
+            ->first();
+
+        $payments = Payment::groupBy('payment_date')
+            ->where(['customer_id' => $customer_id])
+            ->where('payment_date', '>=', $date_from)
+            ->where('payment_date', '<=', $date_to)
+            ->where('received_by', $rep_id)
+            ->select('*', \DB::raw('SUM(amount) as total_amount_paid'))
+            ->orderBy('payment_date')
+            ->get();
+        $returns = ReturnedProduct::groupBy('date')
+            ->where('customer_id', $customer_id)
+            ->where('date', '>=', $date_from)
+            ->where('date', '<=', $date_to)
+            ->where('stocked_by', $rep_id)
+            ->select('*', \DB::raw('SUM(amount) as total_amount_returned'))
+            ->orderBy('date')
+            ->get();
+        // $debts = Transaction::groupBy('entry_date')
+        //     ->where('customer_id', $customer_id)
+        //     ->where('entry_date', '>=', $date_from)
+        //     ->where('entry_date', '<=', $date_to)
+        //     ->orderBy('entry_date')
+        //     ->get();
+        $debts = CustomerDebt::groupBy('created_at')
+            ->with('sale', 'staff')
+            ->where('customer_id', $customer_id)
+            ->where('field_staff', $rep_id)
+            ->where('created_at', '>=', $date_from)
+            ->where('created_at', '<=', $date_to)
+            ->orderBy('created_at')
+            ->get();
+        return array($total_debt_till_date, $past_payments_till_date, $past_returns_till_date, $payments, $returns, $debts);
     }
 
     /**

@@ -46,7 +46,7 @@
           />
         </el-select>
       </el-col>
-      <el-col :lg="6" :md="6" :sm="6" :xs="24">
+      <el-col v-if="showDatePicker" :lg="6" :md="6" :sm="6" :xs="24">
         <div v-if="panel !== 'date'">
 
           <label for="">&nbsp;</label><br>
@@ -108,6 +108,10 @@ export default {
     showButton: {
       type: Boolean,
       default: () => false,
+    },
+    showDatePicker: {
+      type: Boolean,
+      default: () => true,
     },
     submitOnRepChange: {
       type: Boolean,

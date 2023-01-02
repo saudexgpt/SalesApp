@@ -644,7 +644,7 @@ class CustomersController extends Controller
     }
     public function loadDebts(Request $request)
     {
-        $user = $this->getUser();
+        // $user = $this->getUser();
         $debtors = json_decode(json_encode($request->debtors));
         foreach ($debtors as $debtor) {
 
@@ -652,7 +652,7 @@ class CustomersController extends Controller
             $customer_debt->customer_id = $debtor->customer_id;
             $customer_debt->amount = $debtor->amount;
             // $customer_debt->age = $age;
-            $customer_debt->field_staff = $user->id;
+            $customer_debt->field_staff = $debtor->rep_id;
             $customer_debt->created_at = $debtor->created_at;
             $customer_debt->save();
         }

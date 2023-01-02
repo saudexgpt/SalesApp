@@ -23,6 +23,17 @@ const transactionsRoutes = {
         // roles: ['sales_rep'],
       },
     },
+    // {
+    //   hidden: false,
+    //   component: () => import('@/views/apps/transactions/AddDebtors'),
+    //   path: '/daily-reports/new',
+    //   name: 'AddDebtors',
+    //   slug: 'add-debtors',
+    //   i18n: 'Add Debtors',
+    //   meta: {
+    //     // roles: ['sales_rep'],
+    //   },
+    // },
     {
       hidden: true,
       component: () => import('@/views/apps/transactions/Sales'),

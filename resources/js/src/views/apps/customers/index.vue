@@ -1,7 +1,10 @@
 <template>
   <el-tabs type="border-card">
-    <el-tab-pane label="Customer List">
+    <el-tab-pane label="All Customers List">
       <customer-list />
+    </el-tab-pane>
+    <el-tab-pane label="Reps' Customers List">
+      <rep-customers />
     </el-tab-pane>
     <el-tab-pane v-if="checkPermission(['create-customers'])" label="Register New Customer">
       <add-new-customer />
@@ -20,11 +23,12 @@ import ReassignCustomers from './ReassignCustomers';
 import HandleDuplicates from './HandleDuplicates';
 import AddNewCustomer from './AddNewCustomer';
 import CustomerList from './CustomerList';
+import RepCustomers from './RepCustomers';
 import checkPermission from '@/utils/permission';
 
 export default {
   name: 'Customers',
-  components: { ReassignCustomers, HandleDuplicates, CustomerList, AddNewCustomer },
+  components: { ReassignCustomers, HandleDuplicates, CustomerList, RepCustomers, AddNewCustomer },
   data() {
     return {
 
