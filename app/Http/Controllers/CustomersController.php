@@ -365,9 +365,9 @@ class CustomersController extends Controller
             $lat = $reg_lat;
             $long = $reg_lng;
         }
-
-        $customer = Customer::where(['business_name' => $unsaved_customer->business_name, 'latitude' => $lat, 'longitude' => $long])->first();
-
+        $address = $unsaved_customer->address;
+        // $customer = Customer::where(['business_name' => $unsaved_customer->business_name, 'latitude' => $lat, 'longitude' => $long])->first();
+        $customer = Customer::where(['business_name' => $unsaved_customer->business_name, 'address' => $address])->first();
 
         if (!$customer) {
 
