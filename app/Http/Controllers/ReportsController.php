@@ -468,6 +468,7 @@ class ReportsController extends Controller
             'lga',
             'customerType', 'registrar', 'assignedOfficer',
 
+
             'lastVisited' => function ($q) {
                 $q->orderBy('id', 'DESC');
             },
