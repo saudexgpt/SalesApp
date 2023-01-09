@@ -279,8 +279,8 @@ class ReportsController extends Controller
         list($sales_reps, $sales_reps_ids) = $this->allTeamMembers($request->team_id);
         $salesQuery = Transaction::join('customers', 'transactions.customer_id', 'customers.id')
             ->join('users', 'transactions.field_staff', 'users.id')
-            ->where('transactions.created_at', '<=',  $date_to)
-            ->where('transactions.created_at', '>=',  $date_from)
+            ->where('transactions.entry_date', '<=',  $date_to)
+            ->where('transactions.entry_date', '>=',  $date_from)
             ->where($condition)
             ->whereIn('transactions.field_staff', $sales_reps_ids)
             ->orderBy('transactions.id', 'DESC')
@@ -319,8 +319,8 @@ class ReportsController extends Controller
         $salesQuery = TransactionDetail::join('transactions', 'transactions.id', 'transaction_details.transaction_id')
             ->join('customers', 'transactions.customer_id', 'customers.id')
             ->join('users', 'transactions.field_staff', 'users.id')
-            ->where('transaction_details.created_at', '<=',  $date_to)
-            ->where('transaction_details.created_at', '>=',  $date_from)
+            ->where('transaction_details.entry_date', '<=',  $date_to)
+            ->where('transaction_details.entry_date', '>=',  $date_from)
             ->where($condition)
             ->whereIn('transactions.field_staff', $sales_reps_ids)
             ->orderBy('transaction_details.id', 'DESC')
@@ -429,8 +429,11 @@ class ReportsController extends Controller
         $panel = 'quarter';
         $currency = $this->currency();
         if (isset($request->from, $request->to)) {
-            $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
-            $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
+            $date_from = date('Y-m-d', strtotime($request->from));
+            $date_to = date('Y-m-d', strtotime($request->to));
+        } else {
+            $date_from = date('Y-m-d', strtotime($date_from));
+            $date_to = date('Y-m-d', strtotime($date_to));
         }
         $condition = [];
         if (isset($request->customer_id) && $request->customer_id != 'all') {
@@ -442,8 +445,8 @@ class ReportsController extends Controller
         list($sales_reps, $sales_reps_ids) = $this->allTeamMembers($request->team_id);
         $visitsQuery = Visit::join('customers', 'visits.customer_id', 'customers.id')
             ->join('users', 'visits.visitor', 'users.id')
-            ->where('visits.created_at', '<=',  $date_to)
-            ->where('visits.created_at', '>=',  $date_from)
+            ->where('visits.visit_date', '<=',  $date_to)
+            ->where('visits.visit_date', '>=',  $date_from)
             ->where($condition)
             ->whereIn('visits.visitor', $sales_reps_ids)
             ->select('*', 'visits.id as id');
