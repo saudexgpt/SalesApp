@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\DB;
 
 class ReportsController extends Controller
 {
-    protected $start_date = '2022-08-01 12:00:00'; // the date the app started being in use
+    protected $start_date = '2022-12-01 12:00:00'; // the date the app started being in use
     //
     public function visitedCustomers(Request $request)
     {

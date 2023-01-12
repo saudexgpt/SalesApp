@@ -649,7 +649,70 @@ class TransactionsController extends Controller
         return $balance;
     }
 
+    public function repCustomersStatementSummary(Request $request)
+    {
+        $rep = User::find($request->rep_id);
+        $customers = $rep->customers()->orderBy('business_name')->get();
+        $date_from = Carbon::now()->startOfMonth();
+        $date_to = Carbon::now()->endOfMonth();
+        if (isset($request->from, $request->to)) {
+            $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
+            $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
+        }
+        foreach ($customers as $customer) {
+            list($total_debt_till_date, $past_payments_till_date, $payments, $debts) = $this->getRepCustomerTransactionsSummary($customer->id, $rep->id, $date_from, $date_to);
 
+            $past_debt = ($total_debt_till_date) ? $total_debt_till_date->total_amount_due : 0;
+            $past_payments = ($past_payments_till_date) ? $past_payments_till_date->total_amount_paid : 0;
+
+            $debt = ($debts) ? $debts->total_amount_due : 0;
+            $collections = ($payments) ? $payments->total_amount_paid : 0;
+
+            $opening_balance = (int)$past_debt - (int) $past_payments;
+            $closing_balance = $opening_balance + (int)$debt - (int) $collections;
+
+            $customer->opening_balance = $opening_balance;
+            $customer->closing_balance = $closing_balance;
+            $customer->debt = $debt;
+            $customer->collections = $collections;
+        }
+        $date_from_formatted = date('Y-m-d', strtotime($date_from));
+        $date_to_formatted = date('Y-m-d', strtotime($date_to));
+        return  response()->json(compact('customers', 'date_from_formatted', 'date_to_formatted'), 200);
+    }
+
+    private function getRepCustomerTransactionsSummary($customer_id, $rep_id, $date_from, $date_to)
+    {
+        $total_debt_till_date = CustomerDebt::groupBy('customer_id')
+            ->where('customer_id', $customer_id)
+            ->where('created_at', '<', $date_from)
+            ->where('field_staff', $rep_id)
+            // ->where('confirmed_by', '!=', null)
+            ->select('*', \DB::raw('SUM(amount) as total_amount_due'))
+            ->first();
+        $past_payments_till_date = Payment::groupBy('customer_id')
+            ->where('customer_id', $customer_id)
+            ->where('received_by', $rep_id)
+            ->where('payment_date', '<', $date_from)
+            // ->where('confirmed_by', '!=', null)
+            ->select('*', \DB::raw('SUM(amount) as total_amount_paid'))
+            ->first();
+        $payments = Payment::groupBy('customer_id')
+            ->where('customer_id', $customer_id)
+            ->where('payment_date', '>=', $date_from)
+            ->where('payment_date', '<=', $date_to)
+            ->where('received_by', $rep_id)
+            ->select('*', \DB::raw('SUM(amount) as total_amount_paid'))
+            ->first();
+        $debts = CustomerDebt::groupBy('customer_id')
+            ->where('customer_id', $customer_id)
+            ->where('field_staff', $rep_id)
+            ->where('created_at', '>=', $date_from)
+            ->where('created_at', '<=', $date_to)
+            ->select('*', \DB::raw('SUM(amount) as total_amount_due'))
+            ->first();
+        return array($total_debt_till_date, $past_payments_till_date, $payments, $debts);
+    }
     public function customerStatement(Request $request)
     {
         $customer_id = $request->customer_id;

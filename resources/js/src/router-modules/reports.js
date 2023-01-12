@@ -12,6 +12,17 @@ const reportsRoutes = {
     // //////////////////Settings///////////////////////////
     {
       hidden: false,
+      component: () => import('@/views/apps/reports/RepCustomersStatementSummary'),
+      path: '/reports/rep-customer-transaction-summary',
+      name: 'TransactionSummary',
+      slug: 'transaction-summary',
+      i18n: 'Transaction Summary',
+      meta: {
+        // permissions: [],
+      },
+    },
+    {
+      hidden: false,
       component: () => import('@/views/apps/transactions/Sales'),
       path: '/reports/sales',
       name: 'Sales',

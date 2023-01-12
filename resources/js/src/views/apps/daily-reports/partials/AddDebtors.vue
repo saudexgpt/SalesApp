@@ -201,7 +201,7 @@ export default {
           business_name: '',
           customer_id: '',
           customersList: [],
-          created_at: new Date(),
+          created_at: new Date('2022-12-31'),
           amount: '',
           rep_coordinate: '',
           manager_coordinate: '',

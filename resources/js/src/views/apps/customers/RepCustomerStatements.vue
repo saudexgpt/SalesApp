@@ -260,18 +260,18 @@ export default {
       );
       const balance = total_debt - total_paid;
       app.statements.push(
-        {
-          'type': 'debt',
-          'date': app.moment(app.form.to).format('ll'),
-          'description': 'Total',
-          'opening_bal': '',
-          'closing_bal': '',
-          'debt': (total_debt > 0) ? total_debt : '',
-          'paid': (total_paid > 0) ? total_paid : '',
-          // 'balance': '',
-          'color': '#EA5455',
-          'remark': 'total',
-        },
+        // {
+        //   'type': 'debt',
+        //   'date': app.moment(app.form.to).format('ll'),
+        //   'description': 'Total',
+        //   'opening_bal': '',
+        //   'closing_bal': '',
+        //   'debt': (total_debt > 0) ? total_debt : '',
+        //   'paid': (total_paid > 0) ? total_paid : '',
+        //   // 'balance': '',
+        //   'color': '#EA5455',
+        //   'remark': 'total',
+        // },
         {
           'type': 'debt',
           'date': app.moment(app.form.to).format('ll'),

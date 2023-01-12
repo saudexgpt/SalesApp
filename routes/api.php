@@ -278,6 +278,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
     Route::group(['prefix' => 'reports'], function () {
         Route::get('customer-statement', [TransactionsController::class, 'customerStatement']);
+        Route::get('rep-customer-statement-summary', [TransactionsController::class, 'repCustomersStatementSummary']);
+
 
         Route::get('fetch-returned-products', [ReturnsController::class, 'fetchReturnedProducts']);
 

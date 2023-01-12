@@ -1,33 +1,20 @@
 <template>
-  <el-card>
+  <div v-loading="load">
     <div class="no-print">
       <el-row :gutter="10">
-        <el-col :xs="24" :sm="12" :md="12">
-          <el-popover
-            placement="right"
-            trigger="click"
-          >
-            <date-range-picker :from="$route.query.from" :to="$route.query.to" :panel="panel" :panels="panels" :submit-title="submitTitle" :future="future" @update="setDateRange" />
-            <el-button id="pick_statement_date" slot="reference" type="success">
-              <i class="el-icon-date" /> Pick Date Range
-            </el-button>
-          </el-popover>
-        </el-col>
-        <el-col :xs="24" :sm="12" :md="12">
+        <el-col :xs="24" :sm="24" :md="24">
           <div class="no-print">
             <div class="box-header">
               <span class="pull-right">
-                <router-link
-                  :to="'/customers/index'"
-                >
-                  <el-button
-                    round
-                    class="filter-item"
-                    size="small"
-                    type="danger"
-                    icon="el-icon-back"
-                  />
-                </router-link>
+
+                <el-button
+                  round
+                  class="filter-item"
+                  size="small"
+                  type="danger"
+                  icon="el-icon-back"
+                  @click="$emit('back');"
+                />
                 <el-button :loading="downloadLoading" round type="primary" icon="document" @click="handleDownload">
                   Export Excel
                 </el-button>
@@ -45,9 +32,6 @@
       <div class="print-padded">
         <div class="col-xs-12 page-header" align="center">
           <img src="/images/logo.png" alt="Company Logo" width="80">
-          <span>
-            <!-- <label>{{ params.company_name }}</label> -->
-          </span>
           <h3><div class="label label-primary">Customer Statement</div></h3>
           <label>{{ table_title }}</label>
         </div>
@@ -101,7 +85,7 @@
       </div>
 
     </div>
-  </el-card>
+  </div>
 </template>
 <script>
 import moment from 'moment';
@@ -109,7 +93,16 @@ import Resource from '@/api/resource';
 const statementReport = new Resource('reports/customer-statement');
 // const deleteItemInStock = new Resource('stock/items-in-stock/delete');
 export default {
-  name: 'CustomerStatement',
+  props: {
+    customerId: {
+      type: Number,
+      default: null,
+    },
+    query: {
+      type: Object,
+      default: null,
+    },
+  },
   data() {
     return {
       running_balance: 0,
@@ -124,42 +117,28 @@ export default {
       page: {
         option: 'list',
       },
-      form: {
-        from: '',
-        to: '',
-        panel: '',
-      },
-      submitTitle: 'Fetch Report',
-      panel: 'month',
-      future: false,
-      panels: ['range', 'week', 'month', 'quarter', 'year'],
-      show_calendar: false,
       table_title: '',
       in_warehouse: '',
       selected_row_index: '',
       downloadLoading: false,
       running_total_array: [],
       packaging: '',
+      load: false,
     };
   },
-  computed: {
-    params() {
-      return this.$store.getters.params;
+  watch: {
+    query() {
+      console.log('Value Changed');
+      this.getStatement();
     },
   },
-  mounted() {
-    this.getstatement();
-  },
-  beforeDestroy() {
-
+  created() {
+    this.getStatement();
   },
   methods: {
     moment,
     printCard(){
       window.print();
-    },
-    showCalendar(){
-      this.show_calendar = !this.show_calendar;
     },
     setRunningBal(quantity_transacted, type, index) {
       const app = this;
@@ -171,57 +150,26 @@ export default {
       }
       app.statements[index].balance = app.running_balance;
     },
-    // fetchNecessaryParams() {
-    //   const app = this;
-    //   necessaryParams.list().then((response) => {
-    //     const params = response.params;
-    //     app.$store.dispatch('app/setNecessaryParams', params);
-    //     app.warehouses = params.warehouses;
-    //     app.form.warehouse_id = params.warehouses[0].id;
-    //     app.form.warehouse_index = 0;
-    //     app.items = params.items;
-    //     app.currency = params.currency;
-    //   });
-    // },
     format(date) {
       var month = date.toLocaleString('en-US', { month: 'short' });
       return month + ' ' + date.getDate() + ', ' + date.getFullYear();
     },
-    setDateRange(values){
+    getStatement() {
       const app = this;
-      document.getElementById('pick_statement_date').click();
-      let panel = app.panel;
-      let from = app.week_start;
-      let to = app.week_end;
-      if (values !== '') {
-        to = this.format(new Date(values.to));
-        from = this.format(new Date(values.from));
-        panel = values.panel;
-      }
-      app.form.from = from;
-      app.form.to = to;
-      app.form.panel = panel;
-      app.getstatement();
-    },
-    getstatement() {
-      const app = this;
-      // const loader = statementReport.loaderShow();
-      const id = this.$route.params && this.$route.params.id;
-      const param = app.form;
-      param.customer_id = id;
+      app.load = true;
+      const param = app.query;
+      param.customer_id = this.customerId;
       statementReport.list(param)
         .then(response => {
           app.statements = response.statements;
           app.brought_forward = response.brought_forward;
           app.running_balance = app.brought_forward;
-          app.form.from = response.date_from_formatted;
-          app.form.to = response.date_to_formatted;
-          app.table_title = response.customer.business_name + ' from ' + app.moment(app.form.from).format('ll') + ' to ' + app.moment(app.form.to).format('ll');
-          // loader.hide();
+          app.table_title = response.customer.business_name + ' from ' + app.moment(app.query.from).format('ll') + ' to ' + app.moment(app.query.to).format('ll');
+          app.load = false;
           app.setRunningTotalArray(app.statements);
         })
         .catch(error => {
-          // loader.hide();
+          app.load = false;
           console.log(error.message);
         });
     },
@@ -240,7 +188,7 @@ export default {
       app.statements.unshift(
         {
           'type': 'debt',
-          'date': app.moment(app.form.from).format('ll'),
+          'date': app.moment(app.query.from).format('ll'),
           'description': '',
           'opening_bal': Number(app.brought_forward).toLocaleString(),
           'closing_bal': '',
@@ -255,7 +203,7 @@ export default {
       app.statements.push(
         // {
         //   'type': 'debt',
-        //   'date': app.moment(app.form.to).format('ll'),
+        //   'date': app.moment(app.query.to).format('ll'),
         //   'description': 'Total',
         //   'opening_bal': '',
         //   'closing_bal': '',
@@ -267,7 +215,7 @@ export default {
         // },
         {
           'type': 'debt',
-          'date': app.moment(app.form.to).format('ll'),
+          'date': app.moment(app.query.to).format('ll'),
           'description': '',
           'opening_bal': '',
           'closing_bal': Number(balance).toLocaleString(),

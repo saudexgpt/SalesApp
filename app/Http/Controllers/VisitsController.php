@@ -299,9 +299,12 @@ class VisitsController extends Controller
             $limit = $request->limit;
         }
         if (isset($request->from, $request->to)) {
-            $date_from = date('Y-m-d', strtotime($request->from)) . ' 00:00:00';
-            $date_to = date('Y-m-d', strtotime($request->to)) . ' 23:59:59';
+            $date_from = date('Y-m-d', strtotime($request->from));
+            $date_to = date('Y-m-d', strtotime($request->to));
             $panel = $request->panel;
+        } else {
+            $date_from = date('Y-m-d', strtotime($date_from));
+            $date_to = date('Y-m-d', strtotime($date_to));
         }
         $condition = [];
         if (isset($request->customer_id) && $request->customer_id != 'all') {
@@ -315,8 +318,8 @@ class VisitsController extends Controller
 
             $visitsQuery = Visit::with('visitedBy', 'visitPartner', 'customer', 'contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item')
                 ->where('visitor',  $user->id)
-                ->where('created_at', '<=',  $date_to)
-                ->where('created_at', '>=',  $date_from)
+                ->where('visit_date', '<=',  $date_to)
+                ->where('visit_date', '>=',  $date_from)
                 ->where($condition);
         }
         // else if (!$user->isSuperAdmin() && !$user->isAdmin()) {
@@ -331,8 +334,8 @@ class VisitsController extends Controller
         else {
             list($sales_reps, $sales_reps_ids) = $this->teamMembers($request->team_id);
             $visitsQuery = Visit::with('visitedBy', 'customer.customerType',/*'visitPartner','contact', 'details', 'detailings.item', 'customerStockBalances.item', 'customerSamples.item'*/)
-                ->where('created_at', '<=',  $date_to)
-                ->where('created_at', '>=',  $date_from)
+                ->where('visit_date', '<=',  $date_to)
+                ->where('visit_date', '>=',  $date_from)
                 ->where($condition)
                 ->whereIn('visits.visitor', $sales_reps_ids);
         }
