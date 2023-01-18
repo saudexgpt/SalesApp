@@ -171,7 +171,7 @@ export default {
         'amount',
         'payment_type',
         'updated_at',
-        'customer.assigned_officer.name',
+        'staff.name',
         'payment_date',
         'confirmer.name',
         // 'attachments',
@@ -184,7 +184,7 @@ export default {
           'confirmer.name': 'Confirmed By',
           updated_at: 'Confirmed at',
           payment_date: 'Date',
-          'customer.assigned_officer.name': 'Field Staff',
+          'staff.name': 'Field Staff',
         },
         pagination: {
           dropdown: true,
@@ -305,7 +305,7 @@ export default {
     handleDownload() {
       this.downloadLoading = true;
       import('@/vendor/Export2Excel').then(excel => {
-        const multiHeader = [['Collections ' + this.sub_title, '', '', '', '', '', '', '']];
+        const multiHeader = [['Collections ' + this.sub_title, '', '', '', '', '', '', '', '', '']];
         const tHeader = [
           'ID',
           'CUSTOMER',
@@ -323,7 +323,7 @@ export default {
           'slip_no',
           'amount',
           'payment_type',
-          'customer.assigned_officer.name',
+          'staff.name',
           'payment_date',
           'confirmer.name',
           'updated_at',
@@ -354,8 +354,8 @@ export default {
           if (j === 'confirmer.name') {
             return (v['confirmer']) ? v['confirmer']['name'] : '';
           }
-          if (j === 'customer.assigned_officer.name') {
-            return (v['customer']) ? v['customer']['assigned_officer']['name'] : '';
+          if (j === 'staff.name') {
+            return (v['staff']) ? v['staff']['name'] : '';
           }
           return v[j];
         }),

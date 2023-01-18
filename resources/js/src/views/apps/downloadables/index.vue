@@ -201,11 +201,11 @@ export default {
       payments_columns: [
         'customer.business_name',
         'confirmer.name',
-        'total_amount',
+        'amount',
         'payment_date',
         'payment_type',
         'updated_at',
-        'customer.assigned_officer.name',
+        'staff.name',
       ],
       debts_columns: [
         'customer.business_name',
@@ -612,6 +612,9 @@ export default {
           if (j === 'date') {
             return moment(v['created_at']).format('DD/MM/YYYY');
           }
+          if (j === 'payment_date') {
+            return moment(v['payment_date']).format('DD/MM/YYYY');
+          }
           if (j === 'contact.name') {
             return (v['contact']) ? v['contact']['name'] : '';
           }
@@ -637,6 +640,11 @@ export default {
           if (j === 'assigned_officer.name') {
             if (v['assigned_officer'] !== null) {
               return v['assigned_officer']['name'];
+            }
+          }
+          if (j === 'staff.name') {
+            if (v['staff'] !== null) {
+              return v['staff']['name'];
             }
           }
           if (j === 'rep.name') {

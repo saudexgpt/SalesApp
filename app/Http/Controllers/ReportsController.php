@@ -357,7 +357,7 @@ class ReportsController extends Controller
         list($sales_reps, $sales_reps_ids) = $this->allTeamMembers($request->team_id);
         $paymentsQuery = Payment::groupBy('payment_date', 'customer_id')
             ->join('customers', 'payments.customer_id', 'customers.id')
-            ->join('users', 'customers.relating_officer', 'users.id')
+            ->join('users', 'payments.received_by', 'users.id')
             ->where('payment_date', '<=',  $date_to)
             ->where('payment_date', '>=',  $date_from)
             ->whereIn('received_by', $sales_reps_ids)

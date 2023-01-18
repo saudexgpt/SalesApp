@@ -79,7 +79,7 @@ class PaymentsController extends Controller
         // }
         else {
             list($sales_reps, $sales_reps_ids) = $this->teamMembers($request->team_id);
-            $paymentsQuery = Payment::with(['customer.assignedOfficer', 'confirmer', 'attachments' => function ($q) {
+            $paymentsQuery = Payment::with(['customer', 'staff', 'confirmer', 'attachments' => function ($q) {
                 $q->where('tnx_type', 'collections');
             }])
                 ->where('payment_date', '<=',  $date_to)
@@ -223,7 +223,7 @@ class PaymentsController extends Controller
      */
     public function show(Payment $payment)
     {
-        $payment = Payment::with(['customer', 'confirmer', 'attachments' => function ($q) {
+        $payment = Payment::with(['customer', 'confirmer', 'staff', 'attachments' => function ($q) {
             $q->where('tnx_type', 'collections');
         }])->find($payment->id);
         return response()->json(compact('payment'), 200);
