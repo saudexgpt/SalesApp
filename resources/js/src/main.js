@@ -110,12 +110,12 @@ Vue.use(Event);
 // })
 
 // Vuejs - Vue wrapper for hammerjs
-import { VueHammer } from 'vue2-hammer';
-Vue.use(VueHammer);
+// import { VueHammer } from 'vue2-hammer';
+// Vue.use(VueHammer);
 
 // PrismJS
-import 'prismjs';
-import 'prismjs/themes/prism-tomorrow.css';
+// import 'prismjs';
+// import 'prismjs/themes/prism-tomorrow.css';
 
 // Feather font icon
 require('@assets/css/iconfont.css');

@@ -47,25 +47,25 @@ export const constantRoutes = [
   // =============================================================================
   // PAGES
   // =============================================================================
-  {
+//   {
 
-    hidden: true,
-    path: '/callback',
-    name: 'auth-callback',
-    component: () => import('@/views/Callback.vue'),
-  },
+//     hidden: true,
+//     path: '/callback',
+//     name: 'auth-callback',
+//     component: () => import('@/views/Callback.vue'),
+//   },
   {
     hidden: true,
     path: '/login',
     name: 'page-login',
     component: () => import('@/views/auth/login/Login.vue'),
   },
-  {
-    hidden: true,
-    path: '/lock-screen',
-    name: 'page-lock-screen',
-    component: () => import('@/views/pages/LockScreen.vue'),
-  },
+  //   {
+  //     hidden: true,
+  //     path: '/lock-screen',
+  //     name: 'page-lock-screen',
+  //     component: () => import('@/views/pages/LockScreen.vue'),
+  //   },
   {
     hidden: true,
     path: '/comingsoon',
@@ -84,18 +84,18 @@ export const constantRoutes = [
     name: 'page-error-500',
     component: () => import('@/views/pages/Error500.vue'),
   },
-  {
-    hidden: true,
-    path: '/not-authorized',
-    name: 'page-not-authorized',
-    component: () => import('@/views/pages/NotAuthorized.vue'),
-  },
-  {
-    hidden: true,
-    path: '/maintenance',
-    name: 'page-maintenance',
-    component: () => import('@/views/pages/Maintenance.vue'),
-  },
+//   {
+//     hidden: true,
+//     path: '/not-authorized',
+//     name: 'page-not-authorized',
+//     component: () => import('@/views/pages/NotAuthorized.vue'),
+//   },
+//   {
+//     hidden: true,
+//     path: '/maintenance',
+//     name: 'page-maintenance',
+//     component: () => import('@/views/pages/Maintenance.vue'),
+//   },
 
 ];
 
