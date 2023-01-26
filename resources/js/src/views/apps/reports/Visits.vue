@@ -45,10 +45,14 @@
               slot-scope="props"
             >{{ (props.row.manager_latitude) ? props.row.manager_latitude + ', ' + props.row.manager_longitude : '-' }}
             </div>
+            <!-- <div
+              slot="visit_date"
+              slot-scope="props"
+            >{{ moment(props.row.visit_date).format('lll') }}</div>
             <div
               slot="created_at"
               slot-scope="props"
-            >{{ moment(props.row.created_at).format('lll') }}</div>
+            >{{ moment(props.row.created_at).format('lll') }}</div> -->
             <div
               slot="action"
               slot-scope="props"
@@ -223,6 +227,7 @@ export default {
         'visit_type',
         'manager_coordinate',
         'manager_proximity',
+        'visit_date',
         'created_at',
         // 'next_appointment_date',
         // 'contact.name',
@@ -257,7 +262,7 @@ export default {
           // 'customer.registrar.name': 'Registered By',
           'visited_by.name': 'REP',
           // 'contact.name': 'Personnel Contacted',
-          created_at: 'Date',
+          created_at: 'Entry Date',
           action: '',
         },
         rowAttributesCallback(row) {
@@ -405,7 +410,7 @@ export default {
     handleDownload(list, title) {
       this.downloadLoading = true;
       import('@/vendor/Export2Excel').then(excel => {
-        const multiHeader = [[title + ' ' + this.sub_title, '', '', '', '', '', '', '', '', '', '', '']];
+        const multiHeader = [[title + ' ' + this.sub_title, '', '', '', '', '', '', '', '', '', '', '', '']];
         const tHeader = [
           'CUSTOMER',
           'TYPE',
@@ -416,7 +421,8 @@ export default {
           'MODE',
           'MANAGER COORDINATE',
           'MANAGER-REP PROXIMITY(m)',
-          'DATE',
+          'VISIT DATE',
+          'ENTRY DATE',
         ];
         const filterVal = [
           'customer.business_name',
@@ -428,6 +434,7 @@ export default {
           'visit_type',
           'manager_coordinate',
           'manager_proximity',
+          'visit_date',
           'created_at',
         ];
         const data = this.formatJson(filterVal, list);
@@ -507,9 +514,9 @@ export default {
     formatJson(filterVal, jsonData) {
       return jsonData.map(v =>
         filterVal.map(j => {
-          if (j === 'created_at') {
-            return (v[j]) ? moment(v[j]).format('lll') : '';
-          }
+        //   if (j === 'created_at') {
+        //     return (v[j]) ? moment(v[j]).format('lll') : '';
+        //   }
           if (j === 'customer.business_name') {
             return (v['customer']) ? v['customer']['business_name'] : '';
           }
@@ -520,7 +527,7 @@ export default {
             return (v['rep_latitude']) ? v['rep_latitude'] + ',' + v['rep_longitude'] : '';
           }
           if (j === 'manager_coordinate') {
-            return (v['manager_latitude']) ? v['manager_latitude'] + ',' + v['manager_longitude']: '';
+            return (v['manager_latitude']) ? v['manager_latitude'] + ',' + v['manager_longitude'] : '';
           }
           if (j === 'customer.address') {
             return (v['customer']) ? v['customer']['address'] : '';

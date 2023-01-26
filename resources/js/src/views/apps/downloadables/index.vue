@@ -226,6 +226,7 @@ export default {
         'visit_type',
         'manager_coordinate',
         'manager_proximity',
+        'visit_date',
         'created_at',
       ],
       unvisited_cust_columns: [
@@ -429,7 +430,8 @@ export default {
         'MODE',
         'MANAGER COORDINATE',
         'MANAGER-REP PROXIMITY(m)',
-        'DATE',
+        'VISIT DATE',
+        'ENTRY DATE',
       ];
       //   const header2 = [
       //     'CUSTOMER',
@@ -542,7 +544,7 @@ export default {
     handleDownload(dataList, columns, tHeader, title) {
       this.downloadLoading = true;
       import('@/vendor/Export2Excel').then(excel => {
-        const multiHeader = [[title, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']];
+        const multiHeader = [[title, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']];
         const filterVal = columns;
         const list = dataList;
         const data = this.formatJson(filterVal, list);
@@ -608,6 +610,9 @@ export default {
           }
           if (j === 'created_at') {
             return moment(v['created_at']).format('DD/MM/YYYY');
+          }
+          if (j === 'visit_date') {
+            return moment(v['visit_date']).format('DD/MM/YYYY');
           }
           if (j === 'date') {
             return moment(v['created_at']).format('DD/MM/YYYY');

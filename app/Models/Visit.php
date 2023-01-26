@@ -76,7 +76,7 @@ class Visit extends Model
                 $visit = Visit::where([
                     'customer_id' => $customer_id,
                     'visitor' => $unsaved_visit->rep_id,
-                    'purpose' => $purpose,
+                    // 'purpose' => $purpose,
                     'visit_date' => $visit_date
                 ])
                     ->where('manager_latitude', NULL)
