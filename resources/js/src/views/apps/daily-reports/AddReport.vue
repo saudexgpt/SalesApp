@@ -4,7 +4,7 @@
     <div slot="header" class="clearfix">
       <span>Transaction Entry Form</span>
       <span class="pull-right">
-        <el-button :loading="loadButton" circle type="danger" icon="el-icon-refresh" @click="loadCustomers()" />
+        <el-button :loading="loadButton" circle type="danger" icon="el-icon-refresh" @click="loadCustomers(); loadProducts();" />
       </span>
 
     </div>
@@ -151,7 +151,7 @@ export default {
   },
   created() {
     this.fetchTeams();
-    this.loadCustomers();
+    // this.loadCustomers();
   },
   methods: {
     fetchTeams() {
@@ -191,6 +191,14 @@ export default {
       app.loadButton = true;
       app.$store.dispatch('customer/fetch').then(() => {
         app.$message('Customers Reloaded');
+        app.loadButton = false;
+      });
+    },
+    loadProducts(){
+      const app = this;
+      app.loadButton = true;
+      app.$store.dispatch('products/fetch').then(() => {
+        app.$message('Products Reloaded');
         app.loadButton = false;
       });
     },

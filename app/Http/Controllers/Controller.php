@@ -32,7 +32,31 @@ class Controller extends BaseController
 
 
     protected $user;
+    public function getSkippedInvoiceNumbers(Request $request)
+    {
+        $lower_limit = $request->lower_limit;
+        $used = $request->used;
+        $used_array = explode('~', $used);
+        sort($used_array);
+        $next_no = $lower_limit;
+        $skipped_nos = [];
+        foreach ($used_array as $number) {
+            if ($number > $next_no) {
+                $difference = $number - $next_no;
 
+                for ($i = 1; $i <= $difference; $i++) {
+                    $skipped_nos[] = $number - $i;
+                }
+
+                $next_no = $number + 1;
+            } else {
+
+                $next_no++;
+            }
+        }
+        sort($skipped_nos);
+        return $skipped_nos;
+    }
 
     public function addTeamProducts($team_id, $item_id)
     {

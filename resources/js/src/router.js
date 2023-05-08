@@ -39,6 +39,7 @@ import schedulesRoutes from '@/router-modules/schedules';
 import transactionsRoutes from '@/router-modules/transactions';
 import customersRoutes from '@/router-modules/customers';
 import inventoryRoutes from '@/router-modules/inventories';
+import invoiceBookletRoutes from '@/router-modules/invoice-booklets';
 // import dailyReportRoutes from '@/router-modules/daily-reports';
 import downloadablesRoutes from '@/router-modules/downloadables';
 
@@ -110,6 +111,7 @@ export const asyncRoutes = [
   // =============================================================================
   dashboardRoutes,
   customersRoutes,
+  invoiceBookletRoutes,
   transactionsRoutes,
   // dailyReportRoutes,
   schedulesRoutes,

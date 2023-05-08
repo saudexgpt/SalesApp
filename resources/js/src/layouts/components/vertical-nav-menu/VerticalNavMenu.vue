@@ -12,7 +12,6 @@
   <div class="parentx">
 
     <vs-sidebar
-      v-hammer:swipe="onMenuSwipe"
       ref="verticalNavMenu"
       v-model="isVerticalNavMenuActive"
       :click-not-close="clickNotClose"
@@ -133,7 +132,6 @@
 
     <!-- Swipe Gesture -->
     <div
-      v-hammer:swipe="onSwipeAreaSwipe"
       v-if="!isVerticalNavMenuActive"
       class="v-nav-menu-swipe-area" />
       <!-- /Swipe Gesture -->

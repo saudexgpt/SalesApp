@@ -38,6 +38,7 @@ const getters = {
   pStatus: state => state.user.p_status,
 
   customers: state => state.customer.customers,
+  allProducts: state => state.products.products,
 //   sidebar: state => state.app.sidebar,
 //   language: state => state.app.language,
 //   size: state => state.app.size,

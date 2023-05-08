@@ -14,6 +14,7 @@ use App\Http\Controllers\TransactionsController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\VisitsController;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\InvoiceBookletsController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\PaymentsController;
 use App\Http\Controllers\PermissionsController;
@@ -41,6 +42,8 @@ Route::get('update-customer-code', [CustomersController::class, 'updateCustomerC
 // Route::get('test', [VisitsController::class, 'test']);
 
 Route::get('contact-specialties', [Controller::class, 'contactSpecialties']);
+Route::get('skipped', [Controller::class, 'getSkippedInvoiceNumbers']);
+
 
 Route::group(['prefix' => 'auth'], function () {
     Route::post('login', [AuthController::class, 'login']);
@@ -131,6 +134,12 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::group(['prefix' => 'customer-types'], function () {
         Route::get('fetch', [CustomerTypesController::class, 'fetch']);
     });
+    Route::group(['prefix' => 'invoice-booklets'], function () {
+        Route::get('/', [InvoiceBookletsController::class, 'index']);
+        Route::get('fetch-rep', [InvoiceBookletsController::class, 'fetchRepInvoiceBooklets']);
+        Route::post('store', [InvoiceBookletsController::class, 'store']);
+    });
+
     Route::group(['prefix' => 'dashboard'], function () {
         Route::get('/', [DashboardController::class, 'dashboard']);
         Route::get('sales-rep', [DashboardController::class, 'saleRepDashboard']);

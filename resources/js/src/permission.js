@@ -26,6 +26,8 @@ router.beforeEach(async(to, from, next) => {
       } else {
         try {
           store.dispatch('customer/fetch');
+          store.dispatch('products/fetch');
+
           // get user info
           // note: roles must be a object array! such as: ['admin'] or ,['manager','editor']
           const { roles, permissions } = await store.dispatch('user/getInfo');
@@ -34,7 +36,7 @@ router.beforeEach(async(to, from, next) => {
           store.dispatch('permission/generateRoutes', { roles, permissions }).then(response => {
             // dynamically add accessible routes
             router.addRoutes(response);
-            // hack method to ensure that addRoutes is complete
+            // method to ensure that addRoutes is complete
             // set the replace: true, so the navigation will not leave a history record
             next({ ...to, replace: true });
           });

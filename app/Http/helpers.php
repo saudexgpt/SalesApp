@@ -48,16 +48,39 @@ function addSingleElementToString($parent_string, $child_string)
     if ($parent_string == '') {
         $str =  $child_string;
     } else {
-        $parent_string = str_replace(',', '~', $parent_string);
-        $string_array = explode('~', $parent_string);
+        $string_array = explode(',', $parent_string);
         if (!in_array($child_string, $string_array)) {
             $string_array[] = $child_string;
         }
-        $str = implode('~', $string_array);
+        $str = implode(',', $string_array);
     }
 
 
     return $str;
+}
+function deleteSingleElementFromString($parent_string, $child_string)
+{
+    $string_array = explode(',', $parent_string);
+
+    $count_array = count($string_array);
+
+    for ($i = 0; $i < ($count_array); $i++) {
+
+        if ($string_array[$i] == $child_string) {
+
+            unset($string_array[$i]);
+        }
+    }
+    return implode(',', array_unique($string_array));
+}
+function numbersArrayFromRange($lower_limit, $upper_limit)
+{
+    $number_array = [];
+    for ($i = $lower_limit; $i <= $upper_limit; $i++) {
+
+        $number_array[] = sprintf('%07d', $i);
+    }
+    return $number_array;
 }
 
 function mileToMetre($mile)

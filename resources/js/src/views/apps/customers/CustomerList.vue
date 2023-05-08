@@ -16,7 +16,7 @@
           />
         </div>
       </div>
-      <div class="vx-col lg:w-1/4 w-full">
+      <!-- <div class="vx-col lg:w-1/4 w-full">
         <div class="flex items-end px-3">
           <span class="pull-right">
             <router-link
@@ -32,7 +32,7 @@
             </router-link>
           </span>
         </div>
-      </div>
+      </div> -->
       <vs-divider />
     </div>
     <div>

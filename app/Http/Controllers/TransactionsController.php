@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\CustomerDebt;
+use App\Models\InvoiceBooklet;
 use App\Models\Item;
 use App\Models\Payment;
 use App\Models\ReturnedProduct;
@@ -338,9 +339,18 @@ class TransactionsController extends Controller
                     // $invoice->created_at = $invoice->entry_date;
                     // $invoice->updated_at = $invoice->entry_date;
                     if ($invoice->save()) {
+                        if ($unsaved_order->invoice_no !== '') {
 
-                        $invoice->invoice_no = $this->getInvoiceNo($prefix, $invoice->id);
+                            $invoice->invoice_no = $unsaved_order->invoice_no;
+                            if ($unsaved_order->booklet_id !== '') {
+                                $booklet = InvoiceBooklet::find($unsaved_order->booklet_id);
+                                $booklet->updateBookletFields($booklet, $invoice->invoice_no);
+                            }
+                        } else {
+                            $invoice->invoice_no = $this->getInvoiceNo($prefix, $invoice->id, 7);
+                        }
                         $invoice->save();
+
 
                         $this->addCustomerDebt($invoice);
                         if ($invoice_items !== NULL && !empty($invoice_items)) {
@@ -432,10 +442,10 @@ class TransactionsController extends Controller
             $invoice_item->transaction_id = $invoice->id;
             $invoice_item->field_staff = $invoice->field_staff;
             $invoice_item->item_id = $item->item_id;
-            $invoice_item->product = Item::find($item->item_id)->name;
+            $invoice_item->product = $item->item->name; // Item::find($item->item_id)->name;
             $invoice_item->quantity = $item->quantity;
-            $invoice_item->batch_no = $item->batch_no;
-            $invoice_item->expiry_date = $item->expiry_date;
+            // $invoice_item->batch_no = $item->batch_no;
+            // $invoice_item->expiry_date = $item->expiry_date;
 
             // if ($delivery_mode == 'now') {
             //     // set quantity for supply

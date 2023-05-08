@@ -24,7 +24,7 @@ class ItemsController extends Controller
     public function index()
     {
         //
-        $items = Item::with(['category', 'price'])->orderBy('name')->get();
+        $items = Item::with(['price'])->orderBy('name')->get();
 
         return response()->json(compact('items'));
     }

@@ -22,7 +22,7 @@
             </div>
           </td>
           <td>
-            <el-select v-model="rep_entry.rep_id" filterable style="width: 100%" @change="fetchCustomers($event, index)">
+            <el-select v-model="rep_entry.rep_id" filterable style="width: 100%" @change="fetchCustomers($event, index); fetchInvoiceBooklets($event, index);">
               <el-option
                 v-for="(rep, rep_index) in reps"
                 :key="rep_index"
@@ -70,12 +70,14 @@
               </el-option>
             </el-select> -->
             <!--Uncomment when you want to activate sales details-->
-            <!-- <br><br>
-            <el-button v-if="rep_entry.customer_id !== ''" round type="danger" icon="el-icon-goods" @click="setCustomerSales(index, rep_entry)">Add Sales Details</el-button> -->
           </td>
           <!-- <td>0</td> -->
           <td>
             <!-- {{ customer.amount }} -->
+
+            <el-button v-if="rep_entry.customer_id !== ''" round type="danger" icon="el-icon-goods" @click="setCustomerSales(index, rep_entry)">Add Sales Details</el-button>
+            <br><br>
+
             <el-input
               v-model="rep_entry.amount"
               placeholder="Enter Amount"
@@ -136,7 +138,19 @@
       :visible.sync="dialogVisible"
       :title="'Sales for ' + customer_name"
       width="90%">
-      <table class="table table-bordered">
+      <el-row :gutter="10">
+        <el-col :span="12">
+          <el-select v-model="selected_booklet" value-key="id" filterable style="width: 100%" placeholder="Select Booklet Range" @input="fetchUnusedInvoices()">
+            <el-option v-for="(booklet, booklet_index) in invoice_booklets" :key="booklet_index" :value="booklet" :label="`${booklet.lower_limit} - ${booklet.upper_limit}`"/>
+          </el-select>
+        </el-col>
+        <el-col :span="12">
+          <el-select v-model="selected_invoice_no" filterable style="width: 100%" placeholder="Select Invoice No." @input="setInvoiceNo()">
+            <el-option v-for="(invoice, invoice_index) in unused_invoice_nos" :key="invoice_index" :value="invoice" :label="invoice"/>
+          </el-select>
+        </el-col>
+      </el-row>
+      <table v-if="selected_invoice_no !== ''" class="table table-bordered">
         <thead>
           <tr>
             <th/>
@@ -155,24 +169,21 @@
                 <vs-button v-if="index + 1 === invoice_items.length" radius color="success" icon-pack="feather" icon="icon-plus" @click="addLine(index)" />
               </div>
             </td>
-            <td>
+            <td v-loading="loadProduct">
               <el-select
-                v-model="sale.item_index"
+                v-model="sale.item"
+                value-key="id"
                 placeholder="Select Product"
                 filterable
                 style="width: 100%"
-                @input="fetchItemDetails(index)"
+                @input="fetchItemDetails(index, $event)"
               >
                 <el-option
                   v-for="(product, item_index) in products"
                   :key="item_index"
-                  :value="item_index"
-                  :label="product.item.name + ' (Bal: ' + product.total_balance + ')'"
-                  :disabled="product.total_balance < 1"
-                >
-                  <span style="float: left">{{ product.item.name }}</span>
-                  <span style="float: right; color: #8492a6; font-size: 13px">{{ ' (Bal: ' + product.total_balance + ')' }}</span>
-                </el-option>
+                  :value="product"
+                  :label="product.name"
+                />
               </el-select>
             </td>
             <td>
@@ -182,7 +193,7 @@
                 outline
                 placeholder="Quantity"
                 min="1"
-                @input="calculateTotal(index); deductProduct(index);"
+                @input="calculateTotal(index);"
               >
                 <template slot="append">{{ sale.type }}</template>
               </el-input>
@@ -207,8 +218,8 @@
         </tbody>
       </table>
       <span slot="footer" class="dialog-footer">
-        <el-button @click="clearForm()">Clear</el-button>
-        <el-button type="danger" @click="cancelAction()">Cancel</el-button>
+        <el-button type="danger" @click="clearForm()">Cancel</el-button>
+        <!-- <el-button type="danger" @click="cancelAction()">Cancel</el-button> -->
         <el-button :disabled="isRowEmpty()" type="primary" @click="addCustomerSales()">Done</el-button>
       </span>
     </el-dialog>
@@ -245,6 +256,8 @@ export default {
       rep_entries: [],
       activeName: '1',
       invoice_items: [],
+      invoice_booklets: [],
+      unused_invoice_nos: [],
       customer_name: '',
       selected_index: '',
       total: 0,
@@ -255,10 +268,18 @@ export default {
       extra_customers: '',
       // eslint-disable-next-line no-array-constructor
       uploadedFiles: [],
-      products: [],
+      // products: [],
       load: false,
+      loadProduct: false,
       rowIndex: '',
+      selected_invoice_no: '',
+      selected_booklet: '',
     };
+  },
+  computed: {
+    products() {
+      return this.$store.getters.allProducts;
+    },
   },
   watch: {
     selectedCustomer(){
@@ -296,8 +317,14 @@ export default {
       return false;
     },
     setCustomerSales(index, customer) {
-      this.selected_index = index;
-      this.invoice_items = [];
+      const app = this;
+
+      app.selected_index = index;
+      app.invoice_booklets = app.rep_entries[index].invoice_booklets;
+      // const { rep_id } = customer;
+      // const param = { rep_id, team_id: app.teamId };
+      // app.fetchRepProducts(param);
+      app.invoice_items = [];
       if (!customer.invoice_items) {
         this.addLine();
       } else {
@@ -305,6 +332,15 @@ export default {
       }
       this.customer_name = customer.business_name;
       this.dialogVisible = true;
+    },
+    setInvoiceNo() {
+      const app = this;
+      app.rep_entries[app.selected_index].invoice_no = app.selected_invoice_no;
+    },
+    fetchUnusedInvoices() {
+      const app = this;
+      app.rep_entries[app.selected_index].booklet_id = app.selected_booklet.id;
+      app.unused_invoice_nos = app.selected_booklet.unused_invoice_numbers.split(',');
     },
     setCustomerDetails(customer, rowIndex){
       const app = this;
@@ -336,13 +372,17 @@ export default {
         //     this.invoice_items[index].grade = '';
         this.rep_entries.push({
           rep_id: '',
+          booklet_id: '',
+          invoice_no: '',
           customer_details: {},
           business_name: '',
           customer_id: '',
           customersList: [],
+          invoice_booklets: [],
           entry_date: new Date(),
           unique_sales_id: createUniqueString(),
           amount: '',
+          main_amount: '',
           rep_coordinate: '',
           manager_coordinate: '',
         });
@@ -403,53 +443,20 @@ export default {
         this.calculateTotal(null);
       }
     },
-    deductProduct(index) {
-      const app = this;
-      const item_index = app.invoice_items[index].item_index;
-      const quantity = Math.abs(parseInt(app.invoice_items[index].quantity));
-      const quantity_supplied = Math.abs(app.invoice_items[index].quantity_supplied);
-      let balance = parseInt(app.products[item_index].total_balance) + parseInt(quantity_supplied);
-      if (quantity !== null || quantity !== '') {
-        if (balance >= quantity){
-          balance -= parseInt(quantity);
-
-          app.invoice_items[index].quantity_supplied = quantity;
-        } else {
-          app.invoice_items[index].quantity = 0;
-
-          app.invoice_items[index].quantity_supplied = 0;
-          // balance += (quantity_supplied) ? parseInt(quantity_supplied) : 0;
-          app.$alert('You are out of van product for supply. Kindly restock your van under Inventory Menu');
-        }
-
-        app.products[item_index].total_balance = balance;
-      }
-
-      // const item = app.products[item_index].item;
-    },
     clearForm() {
-      const invoice_items = this.invoice_items;
-      for (let index = 0; index < invoice_items.length; index++) {
-        this.products[index].total_balance = parseInt(this.products[index].initial_total_balance);
-      }
       this.invoice_items = [];
       this.addLine();
       this.addCustomerSales();
     },
-    fetchItemDetails(index) {
+    fetchItemDetails(index, product) {
       const app = this;
-      const item_index = app.invoice_items[index].item_index;
-      const van_inventory = app.products[item_index];
-      const item = van_inventory.item;
-      app.products[item_index].initial_total_balance = parseInt(app.products[item_index].total_balance);
+      const item = product;
       app.invoice_items[index].main_rate = item.price.sale_price;
       app.invoice_items[index].rate = item.price.sale_price;
       app.invoice_items[index].item_id = item.id;
       app.invoice_items[index].type = (item.basic_unit) ? item.basic_unit : item.package_type;
       app.invoice_items[index].quantity_per_carton = item.quantity_per_carton;
       app.invoice_items[index].no_of_cartons = 0;
-      app.invoice_items[index].batch_no = van_inventory.batch_no;
-      app.invoice_items[index].expiry_date = van_inventory.expiry_date;
       app.calculateTotal(index);
     },
     // showItemsInStock(index) {
@@ -522,12 +529,25 @@ export default {
     //     });
     //   // }
     },
+    fetchInvoiceBooklets(rep_id, index) {
+      const app = this;
+      // if (!app.hideCustomersList) {
+      const customerResource = new Resource('invoice-booklets/fetch-rep');
+      const param = { rep_id };
+      customerResource.list(param)
+        .then(response => {
+          app.rep_entries[index].invoice_booklets = response.invoice_booklets;
+        });
+      // }
+    },
     fetchRepProducts(param) {
       const app = this;
+      app.loadProduct = true;
       const getProducts = new Resource('products/rep-products');
       getProducts.list(param).then((response) => {
         app.products = response.rep_products;
         app.all_products = response.team_products;
+        app.loadProduct = false;
       });
     },
     // onImageChange(e, index) {
@@ -577,12 +597,14 @@ export default {
               rep_id: entry.rep_id,
               customer_id: entry.customer_id,
               entry_date: entry.entry_date,
-              unique_sales_id: entry.unique_sales_id,
+              unique_sales_id: createUniqueString(),
               amount: entry.amount,
               rep_coordinate: entry.rep_coordinate,
               manager_coordinate: entry.manager_coordinate,
-              // invoice_items: entry.invoice_items,
-              // main_amount: entry.main_amount,
+              invoice_items: entry.invoice_items,
+              main_amount: entry.main_amount,
+              booklet_id: entry.booklet_id,
+              invoice_no: entry.invoice_no,
             });
           });
           const unsaved_orders = { unsaved_orders: formattedEntries };
