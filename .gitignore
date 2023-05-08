@@ -10,6 +10,8 @@
 /vendor
 .env
 .env.backup
+composer.json
+composer.lock
 .phpunit.result.cache
 docker-compose.override.yml
 Homestead.json
