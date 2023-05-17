@@ -44,25 +44,25 @@
       </v-client-table>
     </el-dialog>
     <el-tabs type="border-card">
-      <el-tab-pane label="Sales">
+      <el-tab-pane v-if="checkPermission(['create-sales'])" label="Sales">
         <sales-report :team-id="form.team_id" :reps="reps" :selected-customer="salesSelectedCustomer" @selectCustomer="selectCustomer" />
       </el-tab-pane>
-      <el-tab-pane label="Collections">
+      <el-tab-pane v-if="checkPermission(['create-payments'])" label="Collections">
         <collection-report :team-id="form.team_id" :reps="reps" :selected-customer="collectionSelectedCustomer" @selectCustomer="selectCustomer"/>
       </el-tab-pane>
-      <el-tab-pane label="Detailing/Clinical Meetings">
+      <el-tab-pane v-if="checkPermission(['manage-visits'])" label="Detailing/Clinical Meetings">
         <hospital-visit-report :team-id="form.team_id" :reps="reps" :selected-customer="detailingSelectedCustomer" @selectCustomer="selectCustomer"/>
       </el-tab-pane>
-      <el-tab-pane label="Returns">
+      <el-tab-pane v-if="checkPermission(['manage-returns'])" label="Returns">
         <returns-report :team-id="form.team_id" :reps="reps" :selected-customer="returnsSelectedCustomer" @selectCustomer="selectCustomer"/>
       </el-tab-pane>
-      <el-tab-pane label="Others">
+      <el-tab-pane v-if="checkPermission(['manage-visits'])" label="Others">
         <other-purposes :team-id="form.team_id" :reps="reps" :selected-customer="othersSelectedCustomer" @selectCustomer="selectCustomer"/>
       </el-tab-pane>
-      <el-tab-pane label="Managers' Entries">
+      <el-tab-pane v-if="checkPermission(['manage-visits'])" label="Managers' Entries">
         <managers-entries :team-id="form.team_id" :reps="reps" :selected-customer="managerSelectedCustomer" @selectCustomer="selectCustomer"/>
       </el-tab-pane>
-      <el-tab-pane label="Add Debtors">
+      <el-tab-pane v-if="checkPermission(['add-initial-debts'])" label="Add Debtors">
         <add-debtors :team-id="form.team_id" :reps="reps" :selected-customer="debtor" @selectCustomer="selectCustomer"/>
       </el-tab-pane>
     </el-tabs>
@@ -82,6 +82,7 @@ import OtherPurposes from './partials/OtherPurposes';
 import ManagersEntries from './partials/ManagersEntries';
 import AddDebtors from './partials/AddDebtors';
 import Resource from '@/api/resource';
+import checkPermission from '@/utils/permission';
 export default {
   components: {
     FormWizard,
@@ -154,6 +155,7 @@ export default {
     // this.loadCustomers();
   },
   methods: {
+    checkPermission,
     fetchTeams() {
       const app = this;
       // this.load_table = true;

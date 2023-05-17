@@ -7,7 +7,7 @@ const transactionsRoutes = {
   i18n: 'Transactions',
   redirect: '/transactions/sales',
   meta: {
-    // roles: ['super', 'admin'],
+    permissions: ['manage-data-entry'],
   },
   children: [
     // //////////////////transactions///////////////////////////

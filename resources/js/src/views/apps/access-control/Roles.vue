@@ -155,6 +155,71 @@
         <el-button type="success" @click="assignPermissions()">Submit</el-button>
       </el-row>
     </el-tab-pane>
+    <el-tab-pane label="Assign User Permission">
+      <aside>
+        <el-row :gutter="5">
+          <el-col
+            :lg="12"
+            :md="12"
+            :sm="12"
+            :xs="12"
+          >
+            <small>Select User</small>
+            <el-select
+              v-model="selected_user_index"
+              filterable
+              style="width: 100%"
+              @input="setUserPermissions()"
+            >
+              <el-option
+                v-for="(user, index) in users"
+                :key="index"
+                :value="index"
+                :label="user.name"
+              />
+            </el-select>
+          </el-col>
+        <!-- <el-col
+          :lg="12"
+          :md="12"
+          :sm="12"
+          :xs="12"
+        >
+          <small>Select relevant permissions to assign to selected role</small>
+          <el-select
+            v-model="new_permissions"
+            multiple
+            filterable
+            collapse-tags
+            style="width: 100%"
+            @change="assignPermissions()"
+          >
+            <el-option
+              v-for="(permission, index) in permissions"
+              :key="index"
+              :value="permission.id"
+              :label="permission.display_name"
+            />
+          </el-select>
+        </el-col> -->
+        </el-row>
+      </aside>
+      <el-row :gutter="5">
+        <h3>Avaliable Permissions</h3>
+        <el-checkbox-group v-model="new_user_permissions" size="small">
+          <el-checkbox
+            v-for="(permission, index) in permissions"
+            :key="index"
+            :label="permission.id"
+            border>
+            {{ permission.display_name }}
+          </el-checkbox>
+        </el-checkbox-group>
+      </el-row>
+      <el-row :gutter="5">
+        <el-button type="success" @click="assignUserPermissions()">Submit</el-button>
+      </el-row>
+    </el-tab-pane>
   </el-tabs>
 </template>
 
@@ -216,16 +281,20 @@ export default {
       },
       roles: [],
       permissions: [],
+      users: [],
       searchTerm: '',
       editable_row: '',
       selected_row_index: '',
       selected_role_index: '',
+      selected_user_index: '',
       new_permissions: [],
+      new_user_permissions: [],
     };
   },
   created() {
     this.fetchPermissions();
     this.fetchRoles();
+    this.fetchUsers();
   },
   methods: {
     fetchRoles() {
@@ -235,6 +304,16 @@ export default {
       fetchCurriculumSetupResource.list()
         .then(response => {
           app.roles = response.roles;
+          app.loading = false;
+        });
+    },
+    fetchUsers() {
+      const app = this;
+      app.loading = true;
+      const usersResource = new Resource('users/all');
+      usersResource.list()
+        .then(response => {
+          app.users = response.users;
           app.loading = false;
         });
     },
@@ -273,6 +352,21 @@ export default {
       });
       app.new_permissions = new_permissions;
     },
+    setUserPermissions() {
+      const app = this;
+      const userIndex = app.selected_user_index;
+      let userPermissions = app.users[userIndex].permissions;
+      const userRoles = app.users[userIndex].roles;
+      userRoles.forEach(role => {
+        userPermissions = userPermissions.concat(role.permissions);
+      });
+
+      const new_permissions = [];
+      userPermissions.forEach(permission => {
+        new_permissions.push(permission.id);
+      });
+      app.new_user_permissions = new_permissions;
+    },
     assignPermissions() {
       const app = this;
       const roleId = app.roles[app.selected_role_index].id;
@@ -281,6 +375,17 @@ export default {
       fetchCurriculumSetupResource.store(param)
         .then(response => {
           app.roles[app.selected_role_index].permissions = response.permissions;
+          app.$message('Permission Assigned Successfully');
+        });
+    },
+    assignUserPermissions() {
+      const app = this;
+      const userId = app.users[app.selected_user_index].id;
+      const assignUserPermissionResource = new Resource('acl/permissions/assign-user');
+      const param = { user_id: userId, permissions: app.new_user_permissions };
+      assignUserPermissionResource.store(param)
+        .then(response => {
+          app.users[app.selected_user_index].permissions = response.permissions;
           app.$message('Permission Assigned Successfully');
         });
     },

@@ -9,7 +9,7 @@
           <!-- <th>Opening Debt</th> -->
           <th>Total Sales (NGN)</th>
           <th>Date</th>
-          <th>Coordinates</th>
+          <!-- <th>Coordinates</th> -->
           <!-- <th>Attach File</th> -->
         </tr>
       </thead>
@@ -95,7 +95,7 @@
               value-format="yyyy-MM-dd"
             />
           </td>
-          <td>
+          <!-- <td>
             <strong>Rep's</strong>
             <el-input
               v-model="rep_entry.rep_coordinate"
@@ -107,7 +107,7 @@
               v-model="rep_entry.manager_coordinate"
               placeholder="6.5270161,3.3756094"
             />
-          </td>
+          </td> -->
           <!-- <td>
             <input
               type="file"
@@ -352,8 +352,8 @@ export default {
         (detail) =>
           detail.rep_id === '' ||
           detail.customer_id === '' ||
-          detail.amount === '' ||
-          detail.rep_coordinate === ''
+          detail.amount === ''
+          // detail.rep_coordinate === ''
       );
       if (checkEmptyLines.length > 0) {
         return true;
@@ -599,7 +599,7 @@ export default {
               entry_date: entry.entry_date,
               unique_sales_id: createUniqueString(),
               amount: entry.amount,
-              rep_coordinate: entry.rep_coordinate,
+              rep_coordinate: '6.547240860332957,3.3654287095494184', // entry.rep_coordinate,
               manager_coordinate: entry.manager_coordinate,
               invoice_items: entry.invoice_items,
               main_amount: entry.main_amount,

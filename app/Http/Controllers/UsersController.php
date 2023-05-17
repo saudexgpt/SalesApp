@@ -70,7 +70,7 @@ class UsersController extends Controller
         $userQuery->whereHas('roles', function ($q) {
             $q->whereNotIn('name', ['admin', 'super']);
         });
-        $users = $userQuery->get();
+        $users = $userQuery->with('roles.permissions', 'permissions')->get();
         return response()->json(compact('users'), 200);
     }
 

@@ -90,7 +90,7 @@ import moment from 'moment';
 import Pagination from '@/components/Pagination'; // Secondary package based on el-pagination
 import Resource from '@/api/resource';
 import permission from '@/directive/permission'; // Permission directive
-import checkPermission from '@/utils/permission'; // Permission checking
+import checkPermission from '@/utils/permission';// Permission checking
 import checkRole from '@/utils/role'; // Permission checking
 import FootPrints from './Footprints';
 const dailyReportResource = new Resource('daily-report/my-reports');

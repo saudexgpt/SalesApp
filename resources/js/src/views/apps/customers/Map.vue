@@ -74,7 +74,7 @@ export default {
     return {
       showByIndex: null,
       // /////////////for map /////////////////
-      center: { lat: 3.3792, lng: 6.5244 }, // default to greenlife office
+      center: { lat: 6.547240860332957, lng: 3.3654287095494184 }, // default to greenlife office
       zoom: 7,
       icon: '/images/map-marker.png',
       // ////////////////////////////////////

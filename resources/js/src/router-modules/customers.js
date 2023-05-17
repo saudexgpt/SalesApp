@@ -7,7 +7,7 @@ const customersRoutes = {
   i18n: 'Customers',
   slug: 'customers',
   redirect: '/customers/index',
-  // permissions: ['read-customers'],
+  permissions: ['read-customers'],
   children: [
     {
       hidden: true,
