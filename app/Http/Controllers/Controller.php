@@ -170,18 +170,18 @@ class Controller extends BaseController
         }
         $all_team_members = [];
         $all_team_member_ids = [];
-        $team_member = $user->memberOfTeam;
-        // foreach ($team_members as $team_member) {
-        if ($team_id == null) {
+        $team_members = $user->memberOfTeams;
+        foreach ($team_members as $team_member) {
+            if ($team_id == null) {
 
-            $team_id = $team_member->team_id;
+                $team_id = $team_member->team_id;
+            }
+            $my_members = TeamMember::where('team_id', $team_id)->where('user_id', '!=', $user->id)->get();
+            foreach ($my_members as $my_member) {
+                $all_team_members[] = $my_member->user;
+                $all_team_member_ids[] = $my_member->user->id;
+            }
         }
-        $my_members = TeamMember::where('team_id', $team_id)->where('user_id', '!=', $user->id)->get();
-        foreach ($my_members as $my_member) {
-            $all_team_members[] = $my_member->user;
-            $all_team_member_ids[] = $my_member->user->id;
-        }
-        // }
         return array($all_team_members, $all_team_member_ids);
     }
     public function allTeamMembers($team_id = null)
