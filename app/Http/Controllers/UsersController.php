@@ -101,12 +101,10 @@ class UsersController extends Controller
             $userQuery->whereHas('memberOfTeam', function ($q) use ($team_ids) {
                 $q->whereIn('team_id', $team_ids);
             });
-        } else {
-
-            $userQuery->whereHas('roles', function ($q) {
-                $q->where('name', 'sales_rep');
-            });
         }
+        $userQuery->whereHas('roles', function ($q) {
+            $q->where('name', 'sales_rep');
+        });
 
 
         $sales_reps = $userQuery->/*with('customers')->*/get();
