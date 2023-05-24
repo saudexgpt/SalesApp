@@ -74,21 +74,42 @@ class UsersController extends Controller
         return response()->json(compact('users'), 200);
     }
 
+    // public function fetchSalesReps()
+    // {
+    //     $user = $this->getUser();
+    //     if (!$user->isSuperAdmin() && !$user->isAdmin()) {
+    //         list($sales_reps, $sales_reps_ids) = $this->teamMembers();
+    //     } else {
+    //         $userQuery = User::query();
+
+    //         $userQuery->whereHas('roles', function ($q) {
+    //             $q->where('name', 'sales_rep');
+    //         });
+
+    //         $sales_reps = $userQuery->/*with('customers')->*/get();
+    //     }
+
+    //     return response()->json(compact('sales_reps'), 200);
+    // }
     public function fetchSalesReps()
     {
         $user = $this->getUser();
+
+        $userQuery = User::query();
         if (!$user->isSuperAdmin() && !$user->isAdmin()) {
-            list($sales_reps, $sales_reps_ids) = $this->teamMembers();
+            $team_ids = TeamMember::where('user_id', $user->id)->pluck('team_id');
+            $userQuery->whereHas('memberOfTeam', function ($q) use ($team_ids) {
+                $q->whereIn('team_id', $team_ids);
+            });
         } else {
-            $userQuery = User::query();
 
             $userQuery->whereHas('roles', function ($q) {
                 $q->where('name', 'sales_rep');
             });
-
-            $sales_reps = $userQuery->/*with('customers')->*/get();
         }
 
+
+        $sales_reps = $userQuery->/*with('customers')->*/get();
         return response()->json(compact('sales_reps'), 200);
     }
 
