@@ -451,9 +451,12 @@ export default {
       app.downloadLoading = true;
       salesResource.list(param)
         .then(response => {
+          app.downloadLoading = false;
           const sub_title = 'Visits from ' + response.date_from + ' to ' + response.date_to;
 
           app.handleDownload(response.visits, app.visits_columns, header, sub_title);
+        }).catch(() => {
+          app.downloadLoading = false;
         });
     //   const visitsResource = new Resource('visits/customer-visit-stat');
     //   visitsResource.list(param)
@@ -542,7 +545,7 @@ export default {
         });
     },
     handleDownload(dataList, columns, tHeader, title) {
-      this.downloadLoading = true;
+      this.downloadLoading = false;
       import('@/vendor/Export2Excel').then(excel => {
         const multiHeader = [[title, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']];
         const filterVal = columns;
@@ -556,7 +559,6 @@ export default {
           autoWidth: true,
           bookType: 'csv',
         });
-        this.downloadLoading = false;
       });
     },
     formatJson(filterVal, jsonData) {
@@ -665,7 +667,7 @@ export default {
             return v['item']['name'];
           }
           if (j === 'customer.customer_type.name') {
-            return (v['customer']) ? v['customer']['customer_type']['name'] : '';
+            return (v['customer']['customer_type']) ? v['customer']['customer_type']['name'] : '';
           }
           if (j === 'rep_coordinate') {
             return (v['rep_latitude']) ? v['rep_latitude'] + ',' + v['rep_longitude'] : '';

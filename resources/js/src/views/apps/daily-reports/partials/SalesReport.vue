@@ -22,7 +22,7 @@
             </div>
           </td>
           <td>
-            <el-select v-model="rep_entry.rep_id" filterable style="width: 100%" @change="fetchCustomers($event, index); fetchInvoiceBooklets($event, index);">
+            <el-select v-model="rep_entry.rep_id" filterable style="width: 100%" @change="fetchInvoiceBooklets($event, index);">
               <el-option
                 v-for="(rep, rep_index) in reps"
                 :key="rep_index"
@@ -139,15 +139,11 @@
       :title="'Sales for ' + customer_name"
       width="90%">
       <el-row :gutter="10">
-        <el-col :span="12">
-          <el-select v-model="selected_booklet" value-key="id" filterable style="width: 100%" placeholder="Select Booklet Range" @input="fetchUnusedInvoices()">
-            <el-option v-for="(booklet, booklet_index) in invoice_booklets" :key="booklet_index" :value="booklet" :label="`${booklet.lower_limit} - ${booklet.upper_limit}`"/>
-          </el-select>
+        <el-col :span="18">
+          <search-box :invoice-numbers="unused_invoice_nos" @selected="setInvoiceNo"/>
         </el-col>
-        <el-col :span="12">
-          <el-select v-model="selected_invoice_no" filterable style="width: 100%" placeholder="Select Invoice No." @input="setInvoiceNo()">
-            <el-option v-for="(invoice, invoice_index) in unused_invoice_nos" :key="invoice_index" :value="invoice" :label="invoice"/>
-          </el-select>
+        <el-col :span="6">
+          <h3 v-if="selected_invoice_no !== ''">Invoice Number: {{ selected_invoice_no }}</h3>
         </el-col>
       </el-row>
       <table v-if="selected_invoice_no !== ''" class="table table-bordered">
@@ -227,9 +223,13 @@
 </template>
 <script>
 import Resource from '@/api/resource';
+import SearchBox from './SearchBox';
 import { createUniqueString } from '@/utils/index';
 
 export default {
+  components: {
+    SearchBox,
+  },
   props: {
     teamId: {
       type: Number,
@@ -333,14 +333,18 @@ export default {
       this.customer_name = customer.business_name;
       this.dialogVisible = true;
     },
-    setInvoiceNo() {
+    setInvoiceNo(invoiceNumber) {
       const app = this;
-      app.rep_entries[app.selected_index].invoice_no = app.selected_invoice_no;
-    },
-    fetchUnusedInvoices() {
-      const app = this;
-      app.rep_entries[app.selected_index].booklet_id = app.selected_booklet.id;
-      app.unused_invoice_nos = app.selected_booklet.unused_invoice_numbers.split(',');
+      app.selected_invoice_no = invoiceNumber;
+      app.rep_entries[app.selected_index].invoice_no = invoiceNumber;
+
+      const ranges = app.rep_entries[app.selected_index].invoice_booklets;
+      ranges.forEach(range => {
+        invoiceNumber = parseInt(invoiceNumber);
+        if (invoiceNumber >= range.lower_limit && invoiceNumber <= range.upper_limit) {
+          app.rep_entries[app.selected_index].booklet_id = range.id;
+        }
+      });
     },
     setCustomerDetails(customer, rowIndex){
       const app = this;
@@ -352,7 +356,7 @@ export default {
         (detail) =>
           detail.rep_id === '' ||
           detail.customer_id === '' ||
-          detail.amount === ''
+          detail.amount === 0
           // detail.rep_coordinate === ''
       );
       if (checkEmptyLines.length > 0) {
@@ -400,10 +404,6 @@ export default {
       var total_sales = 0;
       var original_total_amount = 0;
       for (let count = 0; count < invoice_items.length; count++) {
-        // const tax_rate = app.invoice_items[count].tax;
-        // const quantity = app.invoice_items[count].quantity;
-        // const unit_rate = app.invoice_items[count].rate;
-        // total_tax += parseFloat(tax_rate * quantity * unit_rate);
         total_sales += parseFloat(app.invoice_items[count].amount);
         original_total_amount += parseFloat(app.invoice_items[count].main_amount);
       }
@@ -444,6 +444,7 @@ export default {
       }
     },
     clearForm() {
+      this.selected_invoice_no = '';
       this.invoice_items = [];
       this.addLine();
       this.addCustomerSales();
@@ -459,24 +460,6 @@ export default {
       app.invoice_items[index].no_of_cartons = 0;
       app.calculateTotal(index);
     },
-    // showItemsInStock(index) {
-    //   const app = this;
-    //   app.batches_of_items_in_stock =
-    //     app.invoice_items[index].batches_of_items_in_stock;
-    //   app.items_in_stock_dialog = true;
-    // },
-    // calculateNoOfCartons(index) {
-    //   const app = this;
-    //   if (index !== null) {
-    //     const quantity = app.invoice_items[index].quantity;
-    //     const quantity_per_carton =
-    //       app.invoice_items[index].quantity_per_carton;
-    //     if (quantity_per_carton > 0) {
-    //       const no_of_cartons = quantity / quantity_per_carton;
-    //       app.invoice_items[index].no_of_cartons = no_of_cartons; // + parseFloat(tax);
-    //     }
-    //   }
-    // },
     calculateTotal(index) {
       const app = this;
       // Get total amount for this item without tax
@@ -492,42 +475,11 @@ export default {
         ).toFixed(2);// + parseFloat(tax);
         // app.invoice_items[index].quantity_supplied = quantity;
       }
-
-      // we now calculate the running total of items invoiceed for with tax //////////
-      // let total_tax = 0;
-    //   let subtotal = 0;
-    //   for (let count = 0; count < app.invoice_items.length; count++) {
-    //     // const tax_rate = app.invoice_items[count].tax;
-    //     // const quantity = app.invoice_items[count].quantity;
-    //     // const unit_rate = app.invoice_items[count].rate;
-    //     // total_tax += parseFloat(tax_rate * quantity * unit_rate);
-    //     subtotal += parseFloat(app.invoice_items[count].amount);
-    //   }
-    //   // app.form.tax = total_tax.toFixed(2);
-    //   app.form.subtotal = subtotal.toFixed(2);
-    //   app.form.discount = parseFloat(
-    //     (app.discount_rate / 100) * subtotal,
-    //   ).toFixed(2);
-    //   // subtract discount
-    //   app.form.amount = parseFloat(subtotal - app.form.discount).toFixed(2);
     },
     requestCustomer(index) {
       const app = this;
       app.rowIndex = index;
       app.$emit('selectCustomer', 'sales');
-    },
-    fetchCustomers(rep_id, index) {
-    //   const app = this;
-    //   // if (!app.hideCustomersList) {
-    //   const customerResource = new Resource('customers/rep-customers');
-    //   const param = { rep_id, team_id: app.teamId };
-    //   app.fetchRepProducts(param);
-    //   customerResource.list(param)
-    //     .then(response => {
-    //       // app.customers = response.customers;
-    //       app.rep_entries[index].customersList = response.customers;
-    //     });
-    //   // }
     },
     fetchInvoiceBooklets(rep_id, index) {
       const app = this;
@@ -537,8 +489,18 @@ export default {
       customerResource.list(param)
         .then(response => {
           app.rep_entries[index].invoice_booklets = response.invoice_booklets;
+          app.setUnusedInvoiceNumbers(response.invoice_booklets);
         });
       // }
+    },
+    setUnusedInvoiceNumbers(invoiceBooklets) {
+      const app = this;
+      app.unused_invoice_nos = [];
+      let unused_invoices_str = '';
+      invoiceBooklets.forEach(booklet => {
+        unused_invoices_str = unused_invoices_str + ',' + booklet.unused_invoice_numbers;
+      });
+      app.unused_invoice_nos = unused_invoices_str.split(',');
     },
     fetchRepProducts(param) {
       const app = this;
@@ -550,34 +512,6 @@ export default {
         app.loadProduct = false;
       });
     },
-    // onImageChange(e, index) {
-    //   const app = this;
-    //   const files = e.target.files;
-    //   let filesToBeUploaded = '';
-    //   for (let i = 0; i < files.length; i++) {
-    //     filesToBeUploaded = e.target.files[i];
-    //     // console.log(file);
-    //     // const filesToBeUploaded = file[0];
-    //     app.submitUpload(filesToBeUploaded, index);
-    //   }
-    //   // app.rep_entries[index].files = filesToBeUploaded;
-    // },
-    // submitUpload(filesToBeUploaded, index) {
-    //   const app = this;
-    //   app.loading = true;
-    //   const formData = new FormData();
-    //   formData.append('files', filesToBeUploaded);
-    //   formData.append('type', 'sales');
-    //   const updatePhotoResource = new Resource('attach/files');
-    //   updatePhotoResource.store(formData)
-    //     .then(response => {
-    //       app.rep_entries[index].files.push(response);
-    //       app.uploadedFiles[index].files.push(response);
-    //     })
-    //     .catch(e => {
-    //       console.log(e);
-    //     });
-    // },
     submitSalesReport() {
       const app = this;
       app.$confirm('Are you sure you want to submit these sales entries?', 'Warning', {

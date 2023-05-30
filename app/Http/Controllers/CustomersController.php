@@ -233,7 +233,6 @@ class CustomersController extends Controller
     // fetch a particular rep customers. Queried by managera/ admin
     public function repCustomers(Request $request)
     {
-
         if (isset($request->rep_id) && $request->rep_id != '' && $request->rep_id != 'all') {
             $rep_id = $request->rep_id;
             $rep = User::find($rep_id);
