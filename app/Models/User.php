@@ -48,7 +48,6 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
-
     public function memberOfTeam()
     {
         return $this->hasOne(TeamMember::class);

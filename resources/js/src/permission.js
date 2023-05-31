@@ -22,7 +22,13 @@ router.beforeEach(async(to, from, next) => {
       const hasRoles = store.getters.roles && store.getters.roles.length > 0;
 
       if (hasRoles) {
-        next();
+        if (from.path === '/daily-reports/new') {
+          if (confirm('You may have unsaved entries. Are you sure you want to leave this page?')) {
+            next();
+          }
+        } else {
+          next();
+        }
       } else {
         try {
           store.dispatch('customer/fetch');

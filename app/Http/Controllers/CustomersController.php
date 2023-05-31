@@ -130,8 +130,8 @@ class CustomersController extends Controller
             $customers = $userQuery->with($relationships)->paginate($limit);
         }
         $customer_types = CustomerType::get();
-        $states = State::with('lgas')->get();
-        return response()->json(compact('customers', 'customer_types', 'states'), 200);
+        //$states = State::with('lgas')->get();
+        return response()->json(compact('customers', 'customer_types'/*, 'states'*/), 200);
     }
 
     public function prospectiveCustomers(Request $request)
