@@ -93,6 +93,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::get('/state-lga-customers', [CustomersController::class, 'fetchStateLGACustomers'])->middleware('permission:read-customers');
         Route::get('/sample', [CustomersController::class, 'sampleCustomers'])->middleware('permission:read-customers');
         Route::get('/', [CustomersController::class, 'index'])->middleware('permission:read-customers');
+        Route::get('/team-relationship', [CustomersController::class, 'customerTeamRelationship'])->middleware('permission:read-customers');
+
         Route::get('/prospective', [CustomersController::class, 'prospectiveCustomers'])->middleware('permission:read-customers');
 
         Route::get('/all', [CustomersController::class, 'all'])->middleware('permission:read-customers');
@@ -117,6 +119,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
 
         Route::get('fetch', [CustomersController::class, 'myCustomers'])->middleware('permission:read-customers');
         Route::get('rep-customers', [CustomersController::class, 'repCustomers']);
+        Route::get('rep-customers-with-unique-visits', [CustomersController::class, 'repCustomersWithUniqueVisits']);
+
 
         Route::put('verify/{customer}', [CustomersController::class, 'verify'])->middleware('permission:verify-customers');
         Route::put('confirm/{customer}', [CustomersController::class, 'confirmCustomer'])->middleware('permission:confirm-customers');

@@ -133,7 +133,36 @@ class CustomersController extends Controller
         //$states = State::with('lgas')->get();
         return response()->json(compact('customers', 'customer_types'/*, 'states'*/), 200);
     }
+    public function customerTeamRelationship(Request $request)
+    {
 
+        $user = $this->getUser();
+        $searchParams = $request->all();
+        $relationships = [
+            'customerType',
+            'reps.memberOfTeam.team',
+
+        ];
+        $userQuery = Customer::query();
+
+        $limit = Arr::get($searchParams, 'limit', static::ITEM_PER_PAGE);
+        $keyword = Arr::get($searchParams, 'keyword', '');
+        $verify_type = Arr::get($searchParams, 'verify_type', 'verified');
+        if (!empty($keyword)) {
+            $userQuery->where(function ($q) use ($keyword) {
+                $q->where('business_name', 'LIKE', $keyword . '%');
+                $q->orWhere('lga_text', 'LIKE', '%' . $keyword . '%');
+                $q->orWhere('address', 'LIKE', '%' . $keyword . '%');
+            });
+        }
+        $paginate_option = $request->paginate_option;
+        if ($paginate_option === 'all') {
+            $customers = $userQuery->with($relationships)->get();
+        } else {
+            $customers = $userQuery->with($relationships)->paginate($limit);
+        }
+        return response()->json(compact('customers'), 200);
+    }
     public function prospectiveCustomers(Request $request)
     {
         $user = $this->getUser();
@@ -266,7 +295,50 @@ class CustomersController extends Controller
         // })->get();
         return response()->json(compact('customers'), 200);
     }
+    public function repCustomersWithUniqueVisits(Request $request)
+    {
+        if (isset($request->rep_id) && $request->rep_id != '' && $request->rep_id != 'all') {
+            $rep_id = $request->rep_id;
+            $rep = User::find($rep_id);
 
+            $userQuery = $rep->customers();
+        } else {
+            $userQuery = Customer::query();
+            list($sales_reps, $sales_reps_ids) = $this->teamMembers($request->team_id);
+            $userQuery->whereHas('reps', function ($q) use ($sales_reps_ids) {
+                $q->whereIn('user_id', $sales_reps_ids);
+            });
+        }
+
+        $date_from = Carbon::now()->startOfMonth();
+        $date_to = Carbon::now()->endOfMonth();
+        if (isset($request->from, $request->to)) {
+            $date_from = date('Y-m-d', strtotime($request->from));
+            $date_to = date('Y-m-d', strtotime($request->to));
+        }
+        $customers = $userQuery->with([
+            'customerType',
+            'visits' => function ($q) use ($date_from, $date_to) {
+                $q->where('visit_date', '>=',  $date_from);
+                $q->where('visit_date', '<=',  $date_to);
+            },
+            'payments' => function ($q) use ($date_from, $date_to) {
+                $q->where('payment_date', '>=',  $date_from);
+                $q->where('payment_date', '<=',  $date_to);
+            },
+            'transactions' => function ($q) use ($date_from, $date_to) {
+                $q->where('entry_date', '>=',  $date_from);
+                $q->where('entry_date', '<=',  $date_to);
+            }
+        ]);
+        $paginate_option = $request->paginate_option;
+        if ($paginate_option === 'all') {
+            $customers = $userQuery->get();
+        } else {
+            $customers = $userQuery->paginate($request->limit);
+        }
+        return response()->json(compact('customers'), 200);
+    }
     // Fetch the details of a particular customer
     public function customerDetails(Request $request, Customer $customer)
     {
