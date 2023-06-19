@@ -297,38 +297,42 @@ class CustomersController extends Controller
     }
     public function repCustomersWithUniqueVisits(Request $request)
     {
-        if (isset($request->rep_id) && $request->rep_id != '' && $request->rep_id != 'all') {
-            $rep_id = $request->rep_id;
-            $rep = User::find($rep_id);
-
-            $userQuery = $rep->customers();
-        } else {
-            $userQuery = Customer::query();
-            list($sales_reps, $sales_reps_ids) = $this->teamMembers($request->team_id);
-            $userQuery->whereHas('reps', function ($q) use ($sales_reps_ids) {
-                $q->whereIn('user_id', $sales_reps_ids);
-            });
+        if (!isset($request->rep_id) || $request->rep_id === '' || $request->rep_id === 'all') {
+            return response()->json(['message' => 'Please select a rep'], 500);
         }
 
+        $rep_id = $request->rep_id;
+        $rep = User::find($rep_id);
+
+        $userQuery = $rep->customers();
         $date_from = Carbon::now()->startOfMonth();
         $date_to = Carbon::now()->endOfMonth();
         if (isset($request->from, $request->to)) {
             $date_from = date('Y-m-d', strtotime($request->from));
             $date_to = date('Y-m-d', strtotime($request->to));
         }
+        $userQuery = $userQuery->join('visits', 'visits.customer_id', 'customers.id')
+            ->groupBy('visits.customer_id')
+            ->where('visit_date', '>=',  $date_from)
+            ->where('visit_date', '<=',  $date_to)
+            ->where('visitor',  $rep_id)
+            ->select('customers.*');
         $customers = $userQuery->with([
             'customerType',
-            'visits' => function ($q) use ($date_from, $date_to) {
+            'visits' => function ($q) use ($date_from, $date_to, $rep_id) {
                 $q->where('visit_date', '>=',  $date_from);
                 $q->where('visit_date', '<=',  $date_to);
+                $q->where('visitor',  $rep_id);
             },
-            'payments' => function ($q) use ($date_from, $date_to) {
+            'payments' => function ($q) use ($date_from, $date_to, $rep_id) {
                 $q->where('payment_date', '>=',  $date_from);
                 $q->where('payment_date', '<=',  $date_to);
+                $q->where('received_by', $rep_id);
             },
-            'transactions' => function ($q) use ($date_from, $date_to) {
+            'transactions' => function ($q) use ($date_from, $date_to, $rep_id) {
                 $q->where('entry_date', '>=',  $date_from);
                 $q->where('entry_date', '<=',  $date_to);
+                $q->where('field_staff',  $rep_id);
             }
         ]);
         $paginate_option = $request->paginate_option;
