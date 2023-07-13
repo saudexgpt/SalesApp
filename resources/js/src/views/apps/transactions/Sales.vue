@@ -148,9 +148,13 @@
           class="alert alert-success"
         >{{ currency + Number(props.row.amount_due).toLocaleString() }}</div>
         <div
+          slot="entry_date"
+          slot-scope="props"
+        >{{ moment(props.row.entry_date).format('ll') }}</div>
+        <div
           slot="created_at"
           slot-scope="props"
-        >{{ moment(props.row.created_at).format('lll') }}</div>
+        >{{ moment(props.row.created_at).format('ll') }}</div>
         <template slot="attachments" slot-scope="{row}">
           <el-button
             v-if="row.attachments.length > 0"
@@ -243,6 +247,7 @@ export default {
         // 'batch_no',
         // 'expiry_date',
         'staff.name', // field staff
+        'entry_date',
         'created_at',
       ],
       sales_options: {
@@ -256,7 +261,8 @@ export default {
           //   'amount': 'Sell Amount',
           //   'main_amount': 'Original Amount',
           //   'main_rate': 'Original Rate',
-          'created_at': 'Date',
+          entry_date: 'Invoice Date',
+          'created_at': 'Entry Date',
         },
         pagination: {
           dropdown: true,
@@ -427,7 +433,8 @@ export default {
           // 'BATCH NO.',
           // 'EXPIRY DATE',
           'FIELD STAFF',
-          'DATE',
+          'INVOICE DATE',
+          'ENTRY DATE',
         ];
         const filterVal = [
           'customer.business_name',
@@ -436,6 +443,7 @@ export default {
           // 'batch_no',
           // 'expiry_date',
           'staff.name', // field staff
+          'entry_date',
           'created_at',
         ];
         const list = this.sales;

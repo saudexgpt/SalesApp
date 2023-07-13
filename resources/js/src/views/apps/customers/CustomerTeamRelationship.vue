@@ -45,6 +45,7 @@
         @click="handleDownload"
       >Export</el-button>
       <v-client-table
+        id="example"
         v-model="list"
         :columns="columns"
         :options="options"
@@ -227,6 +228,7 @@ export default {
           'ADDRESS',
           'DATE REGISTERED',
         ];
+        // excel.export_table_to_excel('example');
         const filterVal = this.columns;
         const data = this.formatJson(filterVal, export_data);
         excel.export_json_to_excel({

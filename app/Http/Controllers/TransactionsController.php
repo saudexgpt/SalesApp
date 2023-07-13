@@ -169,8 +169,8 @@ class TransactionsController extends Controller
                 ->with(['customer.assignedOfficer', 'details', 'attachments' => function ($q) {
                     $q->where('tnx_type', 'sales');
                 }])
-                ->where('created_at', '<=',  $date_to)
-                ->where('created_at', '>=',  $date_from)
+                ->where('entry_date', '<=',  $date_to)
+                ->where('entry_date', '>=',  $date_from)
                 ->where($condition)
                 ->orderBy('id', 'DESC');
         } else {
@@ -180,14 +180,14 @@ class TransactionsController extends Controller
             $salesQuery = Transaction::with(['customer', 'details', 'staff', 'attachments' => function ($q) {
                 $q->where('tnx_type', 'sales');
             }])
-                ->where('created_at', '<=',  $date_to)
-                ->where('created_at', '>=',  $date_from)
+                ->where('entry_date', '<=',  $date_to)
+                ->where('entry_date', '>=',  $date_from)
                 ->where($condition)
                 ->whereIn('field_staff', $sales_reps_ids)
                 ->orderBy('id', 'DESC');
 
-            $total_sales = Transaction::where('created_at', '<=',  $date_to)
-                ->where('created_at', '>=',  $date_from)
+            $total_sales = Transaction::where('entry_date', '<=',  $date_to)
+                ->where('entry_date', '>=',  $date_from)
                 ->where($condition)
                 ->whereIn('field_staff', $sales_reps_ids)
                 ->select(\DB::raw('SUM(amount_due) as total_amount'))->first();
@@ -238,8 +238,8 @@ class TransactionsController extends Controller
                 ->join('transactions', 'transactions.id', 'transaction_details.transaction_id')
                 ->join('users', 'transactions.field_staff', 'users.id')
                 ->where('transactions.field_staff', $user->id)
-                ->where('transaction_details.created_at', '<=',  $date_to)
-                ->where('transaction_details.created_at', '>=',  $date_from)
+                ->where('transactions.entry_date', '<=',  $date_to)
+                ->where('transactions.entry_date', '>=',  $date_from)
                 ->where($condition)
                 ->select('*', 'transaction_details.id as id')
                 ->orderBy('transaction_details.id', 'DESC');
@@ -261,8 +261,8 @@ class TransactionsController extends Controller
             )
                 ->join('transactions', 'transactions.id', 'transaction_details.transaction_id')
                 ->join('users', 'transactions.field_staff', 'users.id')
-                ->where('transaction_details.created_at', '<=',  $date_to)
-                ->where('transaction_details.created_at', '>=',  $date_from)
+                ->where('transactions.entry_date', '<=',  $date_to)
+                ->where('transactions.entry_date', '>=',  $date_from)
                 ->where($condition)
                 ->whereIn('transactions.field_staff', $sales_reps_ids)
                 ->select('*', 'transaction_details.id as id')
@@ -271,10 +271,11 @@ class TransactionsController extends Controller
             //     $q->orderBy('id', 'DESC');
             // }, 'details'])->where('created_at', '<=',  $date_to)->where('created_at', '>=',  $date_from)->where($condition)->orderBy('id', 'DESC')->paginate(50);
 
-            $total_sales = TransactionDetail::where('created_at', '<=',  $date_to)
-                ->where('created_at', '>=',  $date_from)
+            $total_sales = TransactionDetail::join('transactions', 'transactions.id', 'transaction_details.transaction_id')
+                ->where('transactions.entry_date', '<=',  $date_to)
+                ->where('transactions.entry_date', '>=',  $date_from)
                 ->where($condition)
-                ->whereIn('field_staff', $sales_reps_ids)
+                ->whereIn('transaction_details.field_staff', $sales_reps_ids)
                 ->select(\DB::raw('SUM(amount) as total_amount'))->first();
         }
         if ($paginate_option === 'all') {
