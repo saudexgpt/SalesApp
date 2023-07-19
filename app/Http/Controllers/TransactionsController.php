@@ -340,16 +340,16 @@ class TransactionsController extends Controller
                     // $invoice->created_at = $invoice->entry_date;
                     // $invoice->updated_at = $invoice->entry_date;
                     if ($invoice->save()) {
-                        if ($unsaved_order->invoice_no !== '') {
+                        $invoice_no = $this->getInvoiceNo($prefix, $invoice->id, 7);
+                        if ($unsaved_order->invoice_no != '' && $unsaved_order->invoice_no != NULL) {
 
-                            $invoice->invoice_no = $unsaved_order->invoice_no;
-                            if ($unsaved_order->booklet_id !== '') {
+                            $invoice_no = $unsaved_order->invoice_no;
+                            if ($unsaved_order->booklet_id != '') {
                                 $booklet = InvoiceBooklet::find($unsaved_order->booklet_id);
-                                $booklet->updateBookletFields($booklet, $invoice->invoice_no);
+                                $booklet->updateBookletFields($booklet, $invoice_no);
                             }
-                        } else {
-                            $invoice->invoice_no = $this->getInvoiceNo($prefix, $invoice->id, 7);
                         }
+                        $invoice->invoice_no = $invoice_no;
                         $invoice->save();
 
 
