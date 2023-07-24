@@ -282,7 +282,7 @@ class SalesRepDetailsRequest extends Command
         //
         // $this->updateScheduleDate();
         // $this->assignRepsToTheirCustomerSchedule();
-        // $this->fetchWarehouseProducts();
+        $this->fetchWarehouseProducts();
         // $this->updateAllEmptyVisitAddresses();
         $this->fetchWarehouseRepDetails();
         $this->updateManagerVisitProximity();
