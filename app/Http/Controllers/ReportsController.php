@@ -459,31 +459,7 @@ class ReportsController extends Controller
 
     public function customers(Request $request)
     {
-        $searchParams = $request->all();
-        $userQuery = Customer::query();
-        $today  = date('Y-m-d', strtotime('now'));
-        $relationships = [
-            'customerContacts',
-            'state',
-            'lga',
-            'customerType', 'registrar', 'assignedOfficer',
-
-
-            'lastVisited' => function ($q) {
-                $q->orderBy('id', 'DESC');
-            },
-
-        ];
-        $rep_field_name = 'relating_officer';
-        $condition = $this->setQueryConditions($request, $rep_field_name);
-        list($sales_reps, $sales_reps_ids) = $this->allTeamMembers($request->team_id);
-        $userQuery = $userQuery->join('users', 'customers.relating_officer', 'users.id')
-            ->where($condition)
-            ->whereIn('relating_officer', $sales_reps_ids)
-            ->orderBy('business_name')
-            ->select('*', 'customers.id as id');
-        $paginate_option = $request->paginate_option;
-        $customers = $userQuery->get();
+        $customers = Customer::orderBy('business_name')->get();
         return response()->json(compact('customers'), 200);
     }
 
