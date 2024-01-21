@@ -102,6 +102,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         Route::post('store', [CustomersController::class, 'store']);
         Route::post('store-bulk', [CustomersController::class, 'storeBulkCustomers'])->middleware('permission:create-customers');
         Route::post('store-bulk-debtors', [CustomersController::class, 'uploadBulkDebt'])->middleware('permission:create-customers');
+        Route::post('update-coordinates', [CustomersController::class, 'updateCoordinates']);
         Route::post('load-debts', [CustomersController::class, 'loadDebts']);
         Route::delete('delete-debt/{debt}', [CustomersController::class, 'deleteDebt']);
 

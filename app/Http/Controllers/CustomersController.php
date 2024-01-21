@@ -861,7 +861,39 @@ class CustomersController extends Controller
         return $this->customerDetails($customer);
     }
 
+    public function updateCoordinates(Request $request)
+    {
+        $customer_data = json_decode(json_encode($request->customer_data));
+        foreach ($customer_data as $data) {
+            $coordinate_1 = $data->coordinate_1;
+            $coordinate_2 = $data->coordinate_2;
+            $coordinate_3 = $data->coordinate_3;
+            $customer_id = $data->customer_id;
+            $customer = Customer::find($customer_id);
+            if ($customer) {
+                # code...
 
+                if ($coordinate_1 !== '') {
+                    $cordinate_1_array = explode(',', $coordinate_1);
+                    $customer->latitude = ($cordinate_1_array[0] != 'null') ? trim($cordinate_1_array[0]) : NULL;
+                    $customer->longitude = ($cordinate_1_array[1] != 'null') ?  trim($cordinate_1_array[1]) : NULL;
+                }
+                if ($coordinate_2 !== '') {
+                    $cordinate_2_array = explode(',', $coordinate_2);
+                    $customer->latitude2 = ($cordinate_2_array[0] != 'null') ? trim($cordinate_2_array[0]) : NULL;
+                    $customer->longitude2 = ($cordinate_2_array[1] != 'null') ? trim($cordinate_2_array[1]) : NULL;
+                }
+                if ($coordinate_3 !== '') {
+                    $cordinate_3_array = explode(',', $coordinate_3);
+                    $customer->latitude3 = ($cordinate_3_array[0] != 'null') ? trim($cordinate_3_array[0])
+                        : NULL;
+                    $customer->longitude3 = ($cordinate_3_array[1] != 'null') ? trim($cordinate_3_array[1])
+                        : NULL;
+                }
+                $customer->save();
+            }
+        }
+    }
     public function saveCustomerCalls(Request $request)
     {
         $user = $this->getUser();

@@ -3,6 +3,13 @@
     <el-tab-pane label="All Customers List">
       <customer-list />
     </el-tab-pane>
+
+    <el-tab-pane v-if="checkPermission(['create-customers'])" label="Register New Customer">
+      <add-new-customer />
+    </el-tab-pane>
+    <el-tab-pane v-if="checkPermission(['verify-customers'])" label="Verify Customers">
+      <verify-customers />
+    </el-tab-pane>
     <el-tab-pane label="Customer-Team Relationship">
       <customer-team-relationship />
     </el-tab-pane>
@@ -11,9 +18,6 @@
     </el-tab-pane>
     <el-tab-pane label="Unique Customers Visit List">
       <unique-customers-visit-list />
-    </el-tab-pane>
-    <el-tab-pane v-if="checkPermission(['create-customers'])" label="Register New Customer">
-      <add-new-customer />
     </el-tab-pane>
     <!-- <el-tab-pane v-if="checkPermission(['assign-field-staff'])" label="Assign Reps to Customers">
       <reassign-customers />
@@ -28,6 +32,7 @@
 import ReassignCustomers from './ReassignCustomers';
 import HandleDuplicates from './HandleDuplicates';
 import AddNewCustomer from './AddNewCustomer';
+import VerifyCustomers from './VerifyCustomers';
 import CustomerList from './CustomerList';
 import UniqueCustomersVisitList from './UniqueCustomersVisitList';
 import CustomerTeamRelationship from './CustomerTeamRelationship';
@@ -36,7 +41,7 @@ import checkPermission from '@/utils/permission';
 
 export default {
   name: 'Customers',
-  components: { ReassignCustomers, HandleDuplicates, CustomerList, CustomerTeamRelationship, RepCustomers, AddNewCustomer, UniqueCustomersVisitList },
+  components: { ReassignCustomers, HandleDuplicates, CustomerList, CustomerTeamRelationship, RepCustomers, AddNewCustomer, UniqueCustomersVisitList, VerifyCustomers },
   data() {
     return {
 
